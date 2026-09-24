@@ -1,9 +1,30 @@
-blinker==1.9.0
-click==8.4.2
 Flask==3.1.3
-gunicorn==26.0.0
-itsdangerous==2.2.0
+gunicorn==23.0.0
+Werkzeug==3.1.8
 Jinja2==3.1.6
 MarkupSafe==3.0.3
-packaging==26.3
-Werkzeug==3.1.8
+click==8.1.8
+blinker==1.9.0
+itsdangerous==2.2.0
+packaging==24.2
+
+# Auth & Social
+google-auth==2.38.0
+requests==2.32.3
+pywebpush==2.0.1
+
+# Babel / i18n
+Flask-Babel==4.0.0
+
+# Image & media
+Pillow==11.1.0
+qrcode==8.0
+
+# Database (Postgres for Neon)
+psycopg2-binary==2.9.10
+
+# Cloudflare R2 / S3
+boto3==1.36.16
+
+# Utils
+python-dotenv==1.0.1
