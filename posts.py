@@ -85,7 +85,7 @@ def register_posts_routes(app):
                     WHERE likes.post_id = posts.id
                 ) AS likes_count,
 
-                -- User ame-like?
+                -- User ame-like
                 (
                     SELECT COUNT(*)
                     FROM likes
@@ -100,7 +100,7 @@ def register_posts_routes(app):
                     WHERE saved_posts.post_id = posts.id
                 ) AS saved_count,
 
-                -- User ame-save?
+                -- User ame-save
                 (
                     SELECT COUNT(*)
                     FROM saved_posts
@@ -108,7 +108,7 @@ def register_posts_routes(app):
                     AND saved_posts.user_id = ?
                 ) AS user_saved,
 
-                -- User anamfollow owner?
+                -- User anamfollow owner
                 (
                     SELECT COUNT(*)
                     FROM follows
@@ -116,7 +116,7 @@ def register_posts_routes(app):
                     AND follows.following_id = posts.user_id
                 ) AS is_following,
 
-                -- Owner anamfollow user (follows you)?
+                -- Owner anamfollow user (follows you)
                 (
                     SELECT COUNT(*)
                     FROM follows
@@ -124,7 +124,7 @@ def register_posts_routes(app):
                     AND follows.following_id = ?
                 ) AS follows_you,
 
-                -- User amesha-view?
+                -- User amesha-view
                 (
                     SELECT COUNT(*)
                     FROM post_views
