@@ -464,23 +464,60 @@ def register_auth_routes(app):
             _reset_attempts(conn, f'register:{email}')
             conn.commit()
 
-            if send_otp_email(email, otp, purpose="register"):
-                session['pending_email'] = email
-                flash(
-                    'OTP imetumwa kwenye email yako. '
-                    'Thibitisha ndani ya dakika 5.',
-                    'success'
+            # ===== OTP DISABLED (temporary) — unda user moja kwa moja =====
+            # Gmail SMTP inatimeout kwenye Render → skip OTP for now.
+            try:
+                try:
+                    conn.execute(
+                        '''INSERT INTO users (
+                            username, email, password_hash, full_name,
+                            is_email_verified, auth_provider, role, created_at
+                        ) VALUES (?, ?, ?, ?, 1, 'local', 'user', ?)''',
+                        (username, email, password_hash, full_name, now_tz())
+                    )
+                except Exception:
+                    conn.execute(
+                        '''INSERT INTO users (
+                            username, email, password_hash, full_name,
+                            is_email_verified, role
+                        ) VALUES (?, ?, ?, ?, 1, 'user')''',
+                        (username, email, password_hash, full_name)
+                    )
+                conn.execute(
+                    'DELETE FROM pending_registrations WHERE email = ?',
+                    (email,)
                 )
-                return redirect(url_for('verify_otp'))
+                conn.commit()
 
-            # Email imeshindwa → futa pending
-            conn.execute(
-                'DELETE FROM pending_registrations WHERE email = ?',
-                (email,)
-            )
-            conn.commit()
-            flash('Imeshindwa kutuma OTP. Jaribu tena baadaye.', 'error')
-            return _reg_form(form_username=username, suggested_username=username)
+                new_user = conn.execute(
+                    'SELECT id, username, email, role FROM users WHERE email = ? COLLATE NOCASE LIMIT 1',
+                    (email,)
+                ).fetchone()
+
+                if new_user:
+                    session.clear()
+                    _set_login_session(
+                        new_user['id'],
+                        new_user['username'],
+                        new_user['email'],
+                        _row_get(new_user, 'role', 'user')
+                    )
+                    session['language'] = 'sw'
+                    flash('Akaunti imeundwa! Karibu.', 'success')
+                    return redirect(url_for('home'))
+
+                flash('Imeshindikana kuunda akaunti. Jaribu tena.', 'error')
+                return redirect(url_for('register'))
+            except Exception as e:
+                print('[register] auto-create error:', e)
+                traceback.print_exc()
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
+                flash('Imeshindikana kuunda akaunti. Jaribu tena.', 'error')
+                return redirect(url_for('register'))
+            # ===== END OTP DISABLED =====
 
         except sqlite3.IntegrityError:
             conn.rollback()
