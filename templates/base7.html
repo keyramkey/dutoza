@@ -1,0 +1,2532 @@
+<!DOCTYPE html>
+<html lang="{{ current_language or 'sw' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1EB53A">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Kijiji">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/icon-192.png') }}">
+    <title>Kijiji Tanzania</title>
+    <!-- Critical: splash first – no flash of page content -->
+    <style>
+        html.jamii-loading, html.jamii-loading body {
+            background: #06140c !important;
+            overflow: hidden !important;
+        }
+        html.jamii-loading body > *:not(#jamii-splash) {
+            visibility: hidden !important;
+        }
+        #jamii-splash {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 999999 !important;
+            background: linear-gradient(160deg, #06140c 0%, #0d2818 40%, #1a3d28 100%) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        html.jamii-noload #jamii-splash { display: none !important; }
+    </style>
+    <script>
+    (function () {
+        try {
+            if (sessionStorage.getItem('jamii_splash_shown') === '1') {
+                document.documentElement.className += ' jamii-noload';
+            } else {
+                document.documentElement.className += ' jamii-loading';
+            }
+        } catch (e) {
+            document.documentElement.className += ' jamii-loading';
+        }
+    })();
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}?v=9">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: #f0f2f5;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            padding-top: 65px;
+            padding-bottom: 65px;
+        }
+        .navbar {
+            position: fixed; top: 0; left: 0; right: 0; height: 60px;
+            background-color: #ffffff; display: flex; align-items: center;
+            justify-content: space-between; padding: 0 15px; z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        }
+        .navbar-left { display: flex; align-items: center; gap: 10px; }
+        .hamburger-btn {
+            background: #f0f2f5; border: none; font-size: 20px; color: #1c1e21;
+            width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .hamburger-btn:hover { background-color: #e4e6eb; }
+        .navbar-profile-btn {
+            width: 40px; height: 40px; border-radius: 50%; overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+            background: #e4e6eb; border: 2px solid #1EB53A; text-decoration: none;
+            flex-shrink: 0;
+        }
+        .navbar-profile-btn img {
+            width: 100%; height: 100%; object-fit: cover;
+        }
+        .navbar-profile-btn .fa-user {
+            font-size: 18px; color: #1EB53A;
+        }
+        .navbar-brand { font-size: 19px; font-weight: bold; color: #1EB53A; text-decoration: none; }
+        .sidebar-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4); z-index: 1050;
+        }
+        /* Menyu nyeupe NDOGO – height auto, inakua na content */
+        .sidebar-menu {
+            position: fixed;
+            top: 12px; left: -300px;
+            width: min(300px, calc(100vw - 24px));
+            height: auto;
+            max-height: calc(100vh - 24px);
+            background: #ffffff;
+            z-index: 1100;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+            transition: left 0.28s ease, opacity 0.2s ease;
+            padding: 14px;
+            display: flex; flex-direction: column;
+            overflow-y: auto;
+            border-radius: 16px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .sidebar-menu.active { left: 12px; }
+        .sidebar-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px; border-bottom: 1px solid #e4e6eb; padding-bottom: 10px;
+            flex-shrink: 0;
+        }
+        .sidebar-links { display: flex; flex-direction: column; gap: 8px; }
+        .sidebar-item {
+            display: flex; align-items: center; gap: 12px; padding: 11px 12px;
+            color: #050505; text-decoration: none; font-weight: 600; font-size: 13.5px;
+            border-radius: 10px; border: none; background: #fff; width: 100%;
+            text-align: left; cursor: pointer;
+        }
+        .sidebar-item:hover { background-color: #f0f2f5; }
+        .sidebar-badge-btn { background-color: #00A3DD; color: white !important; }
+        .sidebar-badge-btn:hover { background-color: #0088b8 !important; }
+
+        #sbWorkspace {
+            display: none;
+            background: linear-gradient(180deg, #f0fdf4 0%, #f8fafc 100%);
+            border: 1.5px solid #86efac;
+            border-radius: 12px;
+            padding: 10px;
+            margin-bottom: 4px;
+            animation: sbWorkIn .2s ease;
+        }
+        #sbWorkspace.is-visible { display: block; }
+        #sbWorkspace .sb-work-title {
+            font-size: 12px; font-weight: 800; color: #166534;
+            text-transform: uppercase; letter-spacing: .3px;
+            margin: 0 0 8px; padding: 0 2px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        #sbWorkspace .sb-work-title button {
+            border: none; background: #e2e8f0; color: #475569;
+            width: 26px; height: 26px; border-radius: 50%;
+            font-size: 16px; cursor: pointer; line-height: 1;
+        }
+        #sbWorkspace .sb-work-body { display: flex; flex-direction: column; gap: 4px; }
+        #sbWorkspace .sidebar-item {
+            border: 1px solid #e8eaed;
+            box-shadow: 0 1px 2px rgba(0,0,0,.03);
+        }
+        @keyframes sbWorkIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .sb-btn {
+            width: 100%;
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 14px;
+            border: 1.5px solid #e8eaed;
+            border-radius: 12px;
+            background: #fff;
+            font-family: inherit;
+            font-size: 14px; font-weight: 800;
+            color: #0f172a;
+            cursor: pointer;
+            text-align: left;
+        }
+        .sb-btn:active { transform: scale(0.98); }
+        .sb-btn.is-active {
+            border-color: #1EB53A;
+            background: linear-gradient(135deg, #ecfdf5, #e0f2fe);
+        }
+        .sb-btn .sb-ico {
+            width: 34px; height: 34px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, #ecfdf5, #e0f2fe);
+            color: #1EB53A; font-size: 14px; flex-shrink: 0;
+        }
+        .sb-btn.is-active .sb-ico { background: #1EB53A; color: #fff; }
+        .sb-template { display: none !important; }
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5); z-index: 2000;
+            justify-content: center; align-items: center;
+            padding: 12px; box-sizing: border-box;
+        }
+        .modal-box {
+            background: #ffffff; width: 90%; max-width: 420px; padding: 20px;
+            border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        /* ===== BADGE MODAL PRO MAX ===== */
+        #badgeModalOverlay {
+            background: rgba(15, 23, 42, 0.72);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 12000;
+            padding: 10px;
+            align-items: flex-end;
+        }
+        @media (min-width: 560px) {
+            #badgeModalOverlay { align-items: center; }
+        }
+        #badgeModalOverlay .modal-box.badge-pro {
+            max-width: 520px;
+            width: 100%;
+            max-height: 94vh;
+            overflow-y: auto;
+            padding: 0;
+            border-radius: 22px 22px 16px 16px;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            box-shadow: 0 24px 64px rgba(0,0,0,0.28), 0 0 0 1px rgba(255,255,255,0.4);
+            -webkit-overflow-scrolling: touch;
+            animation: badgeZoomIn 0.38s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+        }
+        @keyframes badgeZoomIn {
+            from { opacity: 0; transform: translateY(40px) scale(0.94); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .badge-pro-header {
+            position: sticky; top: 0; z-index: 5;
+            background: linear-gradient(135deg, #00A3DD 0%, #1EB53A 55%, #00c6ff 100%);
+            padding: 18px 18px 16px;
+            border-radius: 22px 22px 0 0;
+            color: #fff;
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+        }
+        .badge-pro-header-left { display: flex; align-items: center; gap: 12px; }
+        .badge-pro-icon {
+            width: 48px; height: 48px; border-radius: 14px;
+            background: rgba(255,255,255,0.22);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+            animation: badgeIconPulse 2.4s ease-in-out infinite;
+        }
+        @keyframes badgeIconPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 4px 14px rgba(0,0,0,0.12); }
+            50% { transform: scale(1.06); box-shadow: 0 6px 20px rgba(255,255,255,0.25); }
+        }
+        .badge-pro-header h3 {
+            margin: 0; font-size: 17px; font-weight: 800; letter-spacing: 0.2px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.12);
+        }
+        .badge-pro-header p {
+            margin: 3px 0 0; font-size: 12px; opacity: 0.92; font-weight: 500;
+        }
+        .badge-pro-close {
+            width: 38px; height: 38px; border-radius: 50%;
+            border: none; background: rgba(255,255,255,0.22);
+            color: #fff; font-size: 20px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.2s, background 0.2s;
+            flex-shrink: 0;
+        }
+        .badge-pro-close:hover { background: rgba(255,255,255,0.35); transform: rotate(90deg); }
+        .badge-pro-body { padding: 16px 18px 20px; }
+        .badge-pro-intro {
+            font-size: 13px; color: #475569; line-height: 1.5;
+            margin: 0 0 14px; padding: 12px 14px;
+            background: linear-gradient(135deg, rgba(0,163,221,0.08), rgba(30,181,58,0.08));
+            border-radius: 12px; border-left: 3px solid #00A3DD;
+        }
+        .badge-section-title {
+            font-size: 12px; font-weight: 800;
+            background: linear-gradient(90deg, #00A3DD, #1EB53A, #8b5cf6);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 18px 0 12px; padding-bottom: 8px;
+            border-bottom: 2px dashed #e2e8f0;
+            text-transform: uppercase; letter-spacing: 0.6px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .badge-section-title i {
+            -webkit-text-fill-color: #00A3DD; color: #00A3DD; font-size: 14px;
+        }
+        .badge-section-title:first-of-type { margin-top: 2px; }
+        .badge-fg {
+            margin-bottom: 14px; display: flex; flex-direction: column; gap: 6px;
+        }
+        .badge-fg label {
+            font-size: 13px; font-weight: 700; color: #0f172a;
+            display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
+        }
+        .badge-fg label .req { color: #ef4444; font-size: 14px; }
+        .badge-fg label .opt {
+            color: #64748b; font-weight: 500; font-size: 11px;
+            background: #f1f5f9; padding: 2px 7px; border-radius: 6px;
+        }
+        .badge-fg input, .badge-fg select, .badge-fg textarea {
+            width: 100%; padding: 13px 14px;
+            border: 2px solid #e2e8f0; border-radius: 12px;
+            font-size: 14px; outline: none;
+            background: #f8fafc; color: #0f172a;
+            box-sizing: border-box; font-family: inherit;
+            transition: border-color 0.25s, box-shadow 0.25s, background 0.25s, transform 0.15s;
+        }
+        .badge-fg input:focus, .badge-fg select:focus, .badge-fg textarea:focus {
+            background: #fff;
+            border-color: #00A3DD;
+            box-shadow: 0 0 0 4px rgba(0,163,221,0.18);
+            transform: translateY(-1px);
+        }
+        .badge-fg input:not(:placeholder-shown),
+        .badge-fg textarea:not(:placeholder-shown) {
+            border-color: #94a3b8; background: #fff;
+        }
+        .badge-fg small {
+            font-size: 11px; color: #64748b; line-height: 1.4;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .badge-fg textarea { resize: vertical; min-height: 78px; }
+        .badge-fg input[type="file"] {
+            padding: 12px; background: #fff;
+            border-style: dashed; border-color: #00A3DD;
+            cursor: pointer;
+        }
+        .badge-fg input[type="file"]:hover {
+            background: rgba(0,163,221,0.06);
+        }
+        .badge-pro-footer {
+            display: flex; gap: 10px;
+            margin-top: 8px; padding-top: 16px;
+            border-top: 1px solid #e2e8f0;
+            position: sticky; bottom: 0;
+            background: linear-gradient(180deg, rgba(248,250,252,0.92), #f8fafc 30%);
+            padding-bottom: 4px;
+        }
+        .badge-btn-cancel {
+            flex: 1; padding: 13px 14px; border: none; border-radius: 12px;
+            background: #e2e8f0; color: #334155;
+            font-weight: 700; font-size: 14px; cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+        }
+        .badge-btn-cancel:hover { background: #cbd5e1; }
+        .badge-btn-cancel:active { transform: scale(0.97); }
+        .badge-btn-submit {
+            flex: 1.5; padding: 13px 14px; border: none; border-radius: 12px;
+            background: linear-gradient(135deg, #00A3DD 0%, #1EB53A 100%);
+            color: #fff; font-weight: 800; font-size: 14px; cursor: pointer;
+            box-shadow: 0 6px 18px rgba(0,163,221,0.35);
+            transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .badge-btn-submit:hover {
+            box-shadow: 0 8px 24px rgba(30,181,58,0.4);
+            transform: translateY(-1px);
+        }
+        .badge-btn-submit:active { transform: scale(0.97); }
+        .badge-btn-submit:disabled {
+            opacity: 0.7; cursor: not-allowed; transform: none;
+        }
+
+        /* ===== SUGGESTED USERS (Watu wa kufollow) ===== */
+        .suggest-wrap {
+            background: #fff;
+            margin: 10px 10px 6px;
+            border-radius: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+        .suggest-head {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 14px 6px;
+        }
+        .suggest-head h4 {
+            margin: 0; font-size: 15px; font-weight: 800; color: #050505;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .suggest-head h4 i { color: #1EB53A; }
+        .suggest-row {
+            display: flex; gap: 12px;
+            overflow-x: auto;
+            padding: 8px 14px 16px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .suggest-row::-webkit-scrollbar { display: none; }
+        .suggest-card {
+            flex: 0 0 auto;
+            width: 132px;
+            background: #f8fafc;
+            border: 1px solid #e4e6eb;
+            border-radius: 14px;
+            padding: 14px 10px 12px;
+            text-align: center;
+            transition: opacity 0.35s, transform 0.35s;
+        }
+        .suggest-card.removing {
+            opacity: 0; transform: scale(0.85); pointer-events: none;
+        }
+        .suggest-card a.suggest-avatar-link {
+            display: block; text-decoration: none;
+        }
+        .suggest-avatar {
+            width: 64px; height: 64px; border-radius: 50%;
+            object-fit: cover; margin: 0 auto 8px;
+            border: 2.5px solid #1EB53A;
+            background: #e4e6eb;
+            display: block;
+        }
+        .suggest-name {
+            font-size: 13px; font-weight: 700; color: #050505;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            max-width: 100%;
+        }
+        .suggest-name .vbadge {
+            color: #00A3DD; font-size: 11px; margin-left: 2px;
+        }
+        .suggest-handle {
+            font-size: 11px; color: #65676b;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            margin-bottom: 10px;
+        }
+        .suggest-follow-btn {
+            width: 100%; border: none; border-radius: 8px;
+            padding: 8px 6px; font-size: 12px; font-weight: 800;
+            cursor: pointer; color: #fff;
+            background: linear-gradient(135deg, #1EB53A, #00A3DD);
+            transition: opacity 0.2s, transform 0.15s;
+        }
+        .suggest-follow-btn:active { transform: scale(0.96); }
+        .suggest-follow-btn:disabled { opacity: 0.65; cursor: wait; }
+        .suggest-follow-btn.done {
+            background: #e4e6eb; color: #050505;
+        }
+
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0; height: 55px;
+            background-color: #ffffff; display: flex; justify-content: space-around;
+            align-items: center; box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+            z-index: 1000; border-top: 1px solid #e4e6eb;
+        }
+        .bottom-nav a {
+            color: #65676b; text-decoration: none; font-size: 20px;
+            display: flex; align-items: center; justify-content: center;
+            flex: 1; height: 100%; position: relative;
+        }
+        .bottom-nav a.active, .bottom-nav a:hover { color: #1EB53A; }
+        .nav-badge {
+            position: absolute; top: 6px; right: 18%;
+            background: #e41e3f; color: white; font-size: 10px; font-weight: bold;
+            min-width: 16px; height: 16px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; padding: 0 3px;
+        }
+
+        /* GLOBAL CALL UI */
+        .global-call-overlay {
+            display: none; position: fixed; inset: 0; z-index: 50000;
+            background: linear-gradient(160deg, #0f2027, #203a43, #2c5364);
+            flex-direction: column; align-items: center; justify-content: space-between;
+            padding: 50px 20px 60px; color: #fff;
+        }
+        .global-call-overlay.show { display: flex; }
+        .global-call-overlay.video-mode { background: #111; }
+        .gc-status { text-align: center; margin-top: 30px; z-index: 2; }
+        .gc-avatar {
+            width: 110px; height: 110px; border-radius: 50%; object-fit: cover;
+            background: #333; margin: 0 auto 16px; border: 3px solid rgba(255,255,255,0.35);
+        }
+        .gc-status h2 { margin: 0 0 6px; font-size: 24px; font-weight: 600; }
+        .gc-status p { margin: 0; font-size: 15px; opacity: 0.85; }
+        .gc-timer { font-size: 14px; opacity: 0.7; margin-top: 8px; display: none; }
+        .gc-videos { position: absolute; inset: 0; z-index: 0; display: none; }
+        .gc-videos.show { display: block; }
+        .gc-videos video#gcRemoteVideo {
+            width: 100%; height: 100%; object-fit: cover; background: #000;
+        }
+        .gc-videos video#gcLocalVideo {
+            position: absolute; bottom: 150px; right: 16px;
+            width: 110px; height: 150px; object-fit: cover;
+            border-radius: 12px; border: 2px solid rgba(255,255,255,0.4);
+            background: #222; z-index: 2;
+        }
+        .gc-controls {
+            display: flex; gap: 18px; justify-content: center; z-index: 5; position: relative;
+        }
+        .gc-controls button {
+            width: 56px; height: 56px; border-radius: 50%; border: none;
+            font-size: 20px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .gc-controls .btn-mute { background: rgba(255,255,255,0.2); color: #fff; }
+        .gc-controls .btn-mute.active { background: #fff; color: #333; }
+        .gc-controls .btn-cam { background: rgba(255,255,255,0.2); color: #fff; display: none; }
+        .gc-controls .btn-cam.active { background: #fff; color: #333; }
+        .gc-controls .btn-hangup { background: #e41e3f; color: #fff; width: 64px; height: 64px; font-size: 22px; }
+        .gc-controls .btn-accept { background: #1EB53A; color: #fff; width: 64px; height: 64px; font-size: 22px; }
+        .gc-controls .btn-reject { background: #e41e3f; color: #fff; width: 64px; height: 64px; font-size: 22px; }
+        @keyframes gc-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(30,181,58,0.5); }
+            70% { box-shadow: 0 0 0 22px rgba(30,181,58,0); }
+            100% { box-shadow: 0 0 0 0 rgba(30,181,58,0); }
+        }
+        .global-call-overlay.incoming .gc-avatar { animation: gc-pulse 1.5s infinite; }
+
+        /* ===== PUSH SUBSCRIBE PROMPT ===== */
+        .push-prompt-banner {
+            display: none;
+            position: fixed;
+            bottom: 60px;
+            left: 10px;
+            right: 10px;
+            max-width: 420px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #1EB53A, #00A3DD);
+            color: #fff;
+            padding: 14px 16px;
+            border-radius: 14px;
+            box-shadow: 0 8px 28px rgba(0,0,0,0.25);
+            z-index: 40000;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            line-height: 1.35;
+        }
+        .push-prompt-banner.show { display: flex; }
+        .push-prompt-banner .pp-icon {
+            width: 42px; height: 42px; border-radius: 50%;
+            background: rgba(255,255,255,0.25);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; flex-shrink: 0;
+        }
+        .push-prompt-banner .pp-text { flex: 1; }
+        .push-prompt-banner .pp-text strong { display: block; font-size: 15px; margin-bottom: 2px; }
+        .push-prompt-banner .pp-actions { display: flex; flex-direction: column; gap: 6px; }
+        .push-prompt-banner .pp-btn {
+            border: none; border-radius: 8px; padding: 8px 12px;
+            font-weight: 700; font-size: 13px; cursor: pointer;
+            white-space:nowrap;
+        }
+        .push-prompt-banner .pp-btn-allow {
+            background: #fff; color: #1EB53A;
+        }
+        .push-prompt-banner .pp-btn-later {
+            background: transparent; color: #fff;
+            border: 1px solid rgba(255,255,255,0.5);
+            font-weight: 600;
+        }
+
+        .push-prompt-modal {
+            display: none;
+            position: fixed; inset: 0; z-index: 45000;
+            background: rgba(0,0,0,0.55);
+            align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .push-prompt-modal.show { display: flex; }
+        .push-prompt-modal .ppm-box {
+            background: #fff; border-radius: 16px; padding: 24px 20px;
+            max-width: 360px; width: 100%; text-align: center;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+        }
+        .push-prompt-modal .ppm-icon {
+            width: 64px; height: 64px; border-radius: 50%;
+            background: linear-gradient(135deg, #1EB53A, #00A3DD);
+            color: #fff; font-size: 28px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 14px;
+        }
+        .push-prompt-modal h3 { font-size: 18px; margin-bottom: 8px; color: #050505; }
+        .push-prompt-modal p { font-size: 14px; color: #65676b; line-height: 1.45; margin-bottom: 18px; }
+        .push-prompt-modal .ppm-btn-allow {
+            width: 100%; padding: 12px; border: none; border-radius: 10px;
+            background: linear-gradient(135deg, #1EB53A, #00A3DD);
+            color: #fff; font-weight: 700; font-size: 15px; cursor: pointer;
+            margin-bottom: 8px;
+        }
+        .push-prompt-modal .ppm-btn-later {
+            width: 100%; padding: 10px; border: none; border-radius: 10px;
+            background: #e4e6eb; color: #050505; font-weight: 600; font-size: 14px; cursor: pointer;
+        }
+
+        /* Floating push button - always visible when needed */
+        .push-float-btn {
+            display: none;
+            position: fixed;
+            bottom: 70px;
+            right: 14px;
+            z-index: 40001;
+            background: linear-gradient(135deg, #e41e3f, #f7b928);
+            color: #fff;
+            border: none;
+            border-radius: 28px;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 700;
+            box-shadow: 0 6px 20px rgba(228,30,63,0.45);
+            cursor: pointer;
+            align-items: center;
+            gap: 8px;
+            animation: pushPulse 2s infinite;
+        }
+        .push-float-btn.show { display: flex; }
+        @keyframes pushPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* ===== JAMII TANZANIA SPLASH / LOADING ===== */
+        #jamii-splash {
+            position: fixed;
+            inset: 0;
+            z-index: 999999;
+            background: linear-gradient(160deg, #06140c 0%, #0d2818 40%, #1a3d28 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.55s ease, visibility 0.55s ease;
+        }
+        #jamii-splash.hide {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .jamii-logo-wrap {
+            width: 92px;
+            height: 92px;
+            border-radius: 24px;
+            background: linear-gradient(145deg, #1EB53A, #00A3DD);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 28px;
+            box-shadow: 0 12px 40px rgba(30, 181, 58, 0.45);
+            animation: jamii-pop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+        .jamii-logo-wrap i {
+            font-size: 42px;
+            color: #fff;
+        }
+        @keyframes jamii-pop {
+            0% { transform: scale(0.3); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .jamii-type-wrap {
+            font-size: clamp(26px, 7vw, 36px);
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            color: #fff;
+            min-height: 1.3em;
+            text-align: center;
+            position: relative;
+        }
+        .jamii-type-wrap .cursor {
+            display: inline-block;
+            width: 3px;
+            height: 1.1em;
+            background: #1EB53A;
+            margin-left: 3px;
+            vertical-align: text-bottom;
+            animation: jamii-blink 0.7s step-end infinite;
+        }
+        @keyframes jamii-blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        .jamii-sub {
+            margin-top: 14px;
+            font-size: 13px;
+            color: rgba(255,255,255,0.55);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            opacity: 0;
+            animation: jamii-fadeup 0.6s 1.8s forwards;
+        }
+        @keyframes jamii-fadeup {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .jamii-bar {
+            width: 120px;
+            height: 3px;
+            background: rgba(255,255,255,0.12);
+            border-radius: 4px;
+            margin-top: 32px;
+            overflow: hidden;
+            opacity: 0;
+            animation: jamii-fadeup 0.5s 2s forwards;
+        }
+        .jamii-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #1EB53A, #00A3DD);
+            border-radius: 4px;
+            animation: jamii-load 1.6s 2.1s ease-out forwards;
+        }
+        @keyframes jamii-load {
+            to { width: 100%; }
+        }
+
+        /* ===== INSTALL GUIDE MODAL ===== */
+        .jamii-install-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 60000;
+            background: rgba(0,0,0,0.55);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .jamii-install-modal.show { display: flex; }
+        .jamii-install-box {
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px 20px;
+            max-width: 360px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+        }
+        .jamii-install-box .ji-icon {
+            width: 64px; height: 64px; border-radius: 16px;
+            background: linear-gradient(145deg, #1EB53A, #00A3DD);
+            color: #fff; font-size: 28px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 14px;
+        }
+        .jamii-install-box h3 {
+            font-size: 18px; margin: 0 0 8px; color: #050505;
+        }
+        .jamii-install-box p {
+            font-size: 14px; color: #65676b; line-height: 1.5; margin: 0 0 16px;
+        }
+        .jamii-install-steps {
+            text-align: left;
+            background: #f0f2f5;
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            color: #050505;
+            line-height: 1.6;
+        }
+        .jamii-install-steps strong { color: #1EB53A; }
+        .jamii-install-box .ji-btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #1EB53A, #00A3DD);
+            color: #fff;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+        }
+        .jamii-install-box .ji-btn-later {
+            width: 100%;
+            margin-top: 8px;
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            background: #e4e6eb;
+            color: #050505;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        /* ===== UPDATE PROGRESS MODAL ===== */
+        .jamii-update-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 70000;
+            background: rgba(6, 20, 12, 0.92);
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            flex-direction: column;
+        }
+        .jamii-update-overlay.show { display: flex; }
+        .jamii-update-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 28px 22px;
+            max-width: 340px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.35);
+        }
+        .jamii-update-card .ju-logo {
+            width: 72px; height: 72px; border-radius: 18px;
+            background: linear-gradient(145deg, #1EB53A, #00A3DD);
+            color: #fff; font-size: 32px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 16px;
+            animation: ju-pulse 1.4s ease-in-out infinite;
+        }
+        @keyframes ju-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.06); }
+        }
+        .jamii-update-card h3 {
+            font-size: 18px; margin: 0 0 6px; color: #050505;
+        }
+        .jamii-update-card .ju-status {
+            font-size: 13px; color: #65676b; margin-bottom: 18px; min-height: 1.4em;
+        }
+        .jamii-update-bar-wrap {
+            background: #e4e6eb;
+            border-radius: 10px;
+            height: 12px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        .jamii-update-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #1EB53A, #00A3DD);
+            border-radius: 10px;
+            transition: width 0.35s ease;
+        }
+        .jamii-update-pct {
+            font-size: 22px;
+            font-weight: 800;
+            color: #1EB53A;
+            margin-bottom: 14px;
+        }
+        .jamii-update-steps {
+            text-align: left;
+            font-size: 12px;
+            color: #65676b;
+            line-height: 1.7;
+        }
+        .jamii-update-steps .done { color: #1EB53A; }
+        .jamii-update-steps .active { color: #050505; font-weight: 700; }
+        .jamii-update-steps .pending { color: #bcc0c4; }
+
+
+        /* ===== OFFLINE BANNER ===== */
+        #kijiji-offline-banner {
+            display: none;
+            position: fixed;
+            top: 60px;
+            left: 0;
+            right: 0;
+            z-index: 10050;
+            background: #b45309;
+            color: #fff;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            cursor: pointer;
+            text-decoration: none;
+        }
+        #kijiji-offline-banner:active { opacity: 0.9; }
+        html.is-offline #kijiji-offline-banner { display: block; }
+        html.is-offline body { padding-top: 97px; }
+</style>
+</head>
+<body>
+    <a id="kijiji-offline-banner" href="/offline" role="status">📡 Uko offline — bonyeza hapa · Video & kurasa zilizohifadhiwa. Chat/post zinahitaji mtandao.</a>
+
+    <!-- ===== JAMII TANZANIA LOADING SPLASH (mara moja tu, hakuna flash ya page) ===== -->
+    <div id="jamii-splash">
+        <div class="jamii-logo-wrap">
+            <i class="fa-solid fa-campground"></i>
+        </div>
+        <div class="jamii-type-wrap">
+            <span id="jamii-type-text"></span><span class="cursor"></span>
+        </div>
+        <div class="jamii-sub">Kijiji Tanzania</div>
+        <div class="jamii-bar"><div class="jamii-bar-fill"></div></div>
+    </div>
+    <script>
+    (function () {
+        var KEY = 'jamii_splash_shown';
+        var splash = document.getElementById('jamii-splash');
+        if (!splash) return;
+
+        // Tayari imeonekana kwenye session → ondoa
+        try {
+            if (sessionStorage.getItem(KEY) === '1') {
+                document.documentElement.classList.remove('jamii-loading');
+                document.documentElement.classList.add('jamii-noload');
+                if (splash.parentNode) splash.parentNode.removeChild(splash);
+                return;
+            }
+        } catch (e) {}
+
+        var fullText = 'JAMII TANZANIA';
+        var el = document.getElementById('jamii-type-text');
+        var i = 0;
+        var speed = 85;
+
+        function type() {
+            if (i < fullText.length) {
+                el.textContent += fullText.charAt(i);
+                i++;
+                var delay = speed + (Math.random() * 40 - 20);
+                setTimeout(type, delay);
+            }
+        }
+        setTimeout(type, 450);
+
+        function hideSplash() {
+            try { sessionStorage.setItem(KEY, '1'); } catch (e) {}
+            splash.classList.add('hide');
+            document.documentElement.classList.remove('jamii-loading');
+            setTimeout(function () {
+                if (splash.parentNode) splash.parentNode.removeChild(splash);
+            }, 600);
+        }
+
+        setTimeout(hideSplash, 3400);
+        if (document.readyState === 'complete') {
+            setTimeout(hideSplash, 2800);
+        } else {
+            window.addEventListener('load', function () {
+                setTimeout(hideSplash, 2800);
+            });
+        }
+    })();
+    </script>
+
+    <nav class="navbar">
+        <div class="navbar-left">
+            {# Feed (/home): profile pic kushoto kama zamani | pages zingine: hambaga #}
+            {% set is_feed = (request.path == '/home' or request.path == '/' or request.path == '/feed' or request.endpoint == 'home') %}
+            {% if is_feed %}
+            {% if identity_is_linkup and identity_url %}
+            <a href="{{ identity_url }}" class="navbar-profile-btn" title="{{ identity_name or 'Linkup' }}" style="border-color:#00A3DD;">
+                <img src="{{ (identity_pic or my_profile_pic or session.get('profile_pic'))|avatar(identity_name or session.get('username')) }}"
+                     onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ (identity_name or 'L')|urlencode }}&background=00A3DD&color=fff&size=128&bold=true';"
+                     alt="Linkup">
+            </a>
+            {% else %}
+            <a href="/profile/{{ session.get('username', '') }}" class="navbar-profile-btn" title="{{ t('my_profile', 'Profile Yangu') }}">
+                <img src="{{ (my_profile_pic or session.get('profile_pic'))|avatar(my_full_name or session.get('full_name') or session.get('username')) }}"
+                     onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ (session.get('username') or 'U')|urlencode }}&background=random&color=fff&size=128&bold=true';"
+                     alt="Profile">
+            </a>
+            {% endif %}
+            {% else %}
+            <button class="hamburger-btn" onclick="toggleSidebar()" type="button" aria-label="{{ t('menu', 'Menyu') }}">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            {% endif %}
+            <a href="/home" class="navbar-brand">Kijiji Tanzania</a>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+            {% if session.get('is_admin') %}
+            <a href="/admin" title="{{ t('admin_panel', 'Admin Panel') }}" style="background: #e4e6eb; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #1EB53A; text-decoration: none;">
+                <i class="fa-solid fa-shield-halved"></i>
+            </a>
+            {% endif %}
+            <a href="{{ url_for('kijiji') }}" title="Kijiji" style="background: #e4e6eb; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #1EB53A; text-decoration: none;">
+                <i class="fa-solid fa-campground"></i>
+            </a>
+            <a href="/inbox" title="{{ t('inbox') }}" style="background: #e4e6eb; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #00A3DD; text-decoration: none; position: relative;">
+                <i class="fa-solid fa-comments"></i>
+                {% if unread_messages and unread_messages > 0 %}
+                <span style="position: absolute; top: -2px; right: -2px; background: #e41e3f; color: white; font-size: 10px; font-weight: bold; min-width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0 3px;">
+                    {{ unread_messages }}
+                </span>
+                {% endif %}
+            </a>
+            {% if is_feed %}
+            {# FEED PEKEE: mahali pa notification → hambaga (inafungua menyu yote) #}
+            <button class="hamburger-btn" onclick="toggleSidebar()" type="button" title="{{ t('menu', 'Menyu') }}" aria-label="{{ t('menu', 'Menyu') }}">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            {% else %}
+            {# Pages zingine: notification kama zamani #}
+            <a href="/notifications" title="{{ t('notifications') }}" style="background: #e4e6eb; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: black; text-decoration: none; position: relative;">
+                <i class="fa-solid fa-bell"></i>
+                {% if unread_notifs and unread_notifs > 0 %}
+                <span style="position: absolute; top: -2px; right: -2px; background: #e41e3f; color: white; font-size: 10px; font-weight: bold; min-width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0 3px;">
+                    {{ unread_notifs }}
+                </span>
+                {% endif %}
+            </a>
+            {% endif %}
+        </div>
+    </nav>
+    {# Banner Unatumia kama - IMEONDOLEWA #}
+    <script>
+    window.__switchBackToProfile = function() {
+      fetch('/linkup/switch', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        credentials: 'same-origin',
+        body: JSON.stringify({linkup_id: null})
+      }).then(function(r){ return r.json(); }).then(function(data){
+        if (data && data.message && window.KijijiToast) KijijiToast(data.message, 'success');
+        setTimeout(function(){
+          window.location.href = (data && data.redirect_url) ? data.redirect_url : '/';
+        }, 400);
+      }).catch(function(){ window.location.reload(); });
+    };
+    </script>
+
+
+    <!-- SIDEBAR -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    <div class="sidebar-menu" id="sidebarMenu">
+        <div class="sidebar-header">
+            <h3 style="font-size: 16px;"><i class="fa-solid fa-bars"></i> {{ t('main_menu', 'Menyu Kuu') }}</h3>
+            <button type="button" onclick="toggleSidebar()" style="background:none; border:none; font-size:22px; cursor:pointer; line-height:1;">&times;</button>
+        </div>
+        <div class="sidebar-links">
+            <div id="sbWorkspace">
+                <div class="sb-work-title">
+                    <span id="sbWorkTitle">—</span>
+                    <button type="button" onclick="closeSbWorkspace()" aria-label="Funga">&times;</button>
+                </div>
+                <div class="sb-work-body" id="sbWorkBody"></div>
+            </div>
+
+            <button type="button" class="sb-btn" data-sec="nyumbani" onclick="openSbWorkspace('nyumbani', this)">
+                <span class="sb-ico"><i class="fa-solid fa-house"></i></span> Nyumbani
+            </button>
+            <button type="button" class="sb-btn" data-sec="kijiji" onclick="openSbWorkspace('kijiji', this)">
+                <span class="sb-ico"><i class="fa-solid fa-campground"></i></span> Kijiji &amp; Linkup
+            </button>
+            <button type="button" class="sb-btn" data-sec="mawasiliano" onclick="openSbWorkspace('mawasiliano', this)">
+                <span class="sb-ico"><i class="fa-solid fa-comments"></i></span> Mawasiliano
+            </button>
+            <button type="button" class="sb-btn" data-sec="akaunti" onclick="openSbWorkspace('akaunti', this)">
+                <span class="sb-ico"><i class="fa-solid fa-user-gear"></i></span> Akaunti
+            </button>
+
+            <div class="sb-template" id="sb-tpl-nyumbani" data-title="Nyumbani">
+                <a href="/home" class="sidebar-item" onclick="toggleSidebar()"><i class="fa-solid fa-house" style="color:#1EB53A;"></i> Machapisho</a>
+                <a href="/explore" class="sidebar-item" onclick="toggleSidebar()"><i class="fa-solid fa-compass" style="color:#1EB53A;"></i> Explore</a>
+                <a href="/trending" class="sidebar-item" onclick="toggleSidebar()"><i class="fa-solid fa-fire" style="color:#e67e22;"></i> Trending</a>
+                <a href="/drafts" class="sidebar-item" onclick="toggleSidebar()"><i class="fa-solid fa-file-lines" style="color:#00A3DD;"></i> Drafts</a>
+            </div>
+            <div class="sb-template" id="sb-tpl-kijiji" data-title="Kijiji &amp; Linkup">
+                <a href="/kijiji" class="sidebar-item" onclick="toggleSidebar()"><i class="fa-solid fa-campground" style="color:#1EB53A;"></i> Kijiji</a>
+                {% if identity_is_linkup and identity_url %}
+                <a href="{{ identity_url }}" class="sidebar-item" onclick="toggleSidebar()"><i class="fa-solid fa-link" style="color:#00A3DD;"></i> {{ identity_name or 'Linkup' }}</a>
+                {% else %}
+                <a href="/profile/{{ session.get('username', '') }}" class="sidebar-item" onclick="toggleSidebar()"><i class="fa-solid fa-user" style="color:#1EB53A;"></i> Profile Yangu</a>
+                {% endif %}
+                <a href="/community" class="sidebar-item" onclick="toggleSidebar()"><i class="fa-solid fa-users" style="color:#1EB53A;"></i> Jamii</a>
+            </div>
+            <div class="sb-template" id="sb-tpl-mawasiliano" data-title="Mawasiliano">
+                <a href="/inbox" class="sidebar-item" onclick="toggleSidebar()"><i class="fa-solid fa-comments" style="color:#00A3DD;"></i> Ujumbe
+                    {% if unread_messages and unread_messages > 0 %}
+                    <span style="background:#e41e3f;color:#fff;font-size:11px;padding:2px 6px;border-radius:10px;margin-left:auto;">{{ unread_messages }}</span>
+                    {% endif %}
+                </a>
+                <a href="/notifications" class="sidebar-item" onclick="toggleSidebar()"><i class="fa-solid fa-bell" style="color:#f7b928;"></i> Taarifa
+                    {% if unread_notifs and unread_notifs > 0 %}
+                    <span style="background:#e41e3f;color:#fff;font-size:11px;padding:2px 6px;border-radius:10px;margin-left:auto;">{{ unread_notifs }}</span>
+                    {% endif %}
+                </a>
+            </div>
+            <div class="sb-template" id="sb-tpl-akaunti" data-title="Akaunti">
+                <button type="button" class="sidebar-item sidebar-badge-btn" onclick="openBadgeModal(); toggleSidebar();">
+                    <i class="fa-solid fa-certificate"></i> Omba beji ya uthibitisho
+                </button>
+                {% if session.get('is_admin') %}
+                <a href="/admin" class="sidebar-item" onclick="toggleSidebar()" style="color:#1EB53A;"><i class="fa-solid fa-shield-halved"></i> Paneli ya msimamizi</a>
+                {% endif %}
+                <a href="/settings" class="sidebar-item" onclick="toggleSidebar()"><i class="fa-solid fa-gear" style="color:#65676b;"></i> Mipangilio</a>
+                <button type="button" class="sidebar-item" style="color:#dc2626;" onclick="openLogoutModal();">
+                    <i class="fa-solid fa-right-from-bracket"></i> Toka
+                </button>
+            </div>
+        </div>
+        <script>
+        function openSbWorkspace(sec, btn) {
+            var tpl = document.getElementById('sb-tpl-' + sec);
+            var ws = document.getElementById('sbWorkspace');
+            var body = document.getElementById('sbWorkBody');
+            var title = document.getElementById('sbWorkTitle');
+            if (!tpl || !ws || !body) return;
+            if (ws.classList.contains('is-visible') && ws.getAttribute('data-sec') === sec) {
+                closeSbWorkspace();
+                return;
+            }
+            body.innerHTML = tpl.innerHTML;
+            title.textContent = tpl.getAttribute('data-title') || sec;
+            ws.setAttribute('data-sec', sec);
+            ws.classList.add('is-visible');
+            var btns = document.querySelectorAll('#sidebarMenu .sb-btn');
+            for (var i = 0; i < btns.length; i++) btns[i].classList.remove('is-active');
+            if (btn) btn.classList.add('is-active');
+        }
+        function closeSbWorkspace() {
+            var ws = document.getElementById('sbWorkspace');
+            if (ws) {
+                ws.classList.remove('is-visible');
+                ws.removeAttribute('data-sec');
+            }
+            var btns = document.querySelectorAll('#sidebarMenu .sb-btn');
+            for (var i = 0; i < btns.length; i++) btns[i].classList.remove('is-active');
+        }
+        </script>
+    </div>
+
+    <!-- LOGOUT MODAL -->
+    <div class="modal-overlay" id="logoutModalOverlay" onclick="if(event.target===this) closeLogoutModal();">
+        <div class="modal-box" style="text-align:center;">
+            <div style="width:56px;height:56px;border-radius:50%;background:#fdecea;color:#dc3545;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:24px;">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </div>
+            <h3 style="font-size:18px;margin-bottom:8px;color:#050505;">{{ t('please', 'Tafadhali') }}</h3>
+            <p style="font-size:14px;color:#65676b;line-height:1.45;margin-bottom:18px;">
+                {{ t('confirm_logout', 'Una uhakika unataka kutoka kwenye akaunti yako?') }}
+            </p>
+            <div style="display:flex;gap:10px;">
+                <button type="button" onclick="closeLogoutModal()" style="flex:1;padding:10px 14px;border:none;background:#e4e6eb;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px;">{{ t('cancel') }}</button>
+                <button type="button" onclick="window.location.href='/logout'" style="flex:1;padding:10px 14px;border:none;background:#dc3545;color:#fff;border-radius:8px;cursor:pointer;font-weight:700;font-size:14px;">{{ t('logout') }}</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- BADGE MODAL PRO MAX -->
+    <div class="modal-overlay" id="badgeModalOverlay" onclick="if(event.target===this) closeBadgeModal();">
+        <div class="modal-box badge-pro">
+            <div class="badge-pro-header">
+                <div class="badge-pro-header-left">
+                    <div class="badge-pro-icon"><i class="fa-solid fa-certificate"></i></div>
+                    <div>
+                        <h3>{{ t('request_badge', 'Omba Verified Badge') }}</h3>
+                        <p id="badgeModalSubtitle">Thibitisha akaunti yako · Kijiji Tanzania</p>
+                    </div>
+                </div>
+                <button type="button" class="badge-pro-close" onclick="closeBadgeModal()" aria-label="Funga">&times;</button>
+            </div>
+
+            <div class="badge-pro-body">
+                <form id="badgeForm" onsubmit="sendBadgeRequest(event)" enctype="multipart/form-data">
+                    <input type="hidden" id="badge_request_type" name="request_type" value="user">
+                    <input type="hidden" id="badge_linkup_id" name="linkup_id" value="">
+                    <p class="badge-pro-intro">
+                        <i class="fa-solid fa-circle-info" style="color:#00A3DD;"></i>
+                        Jaza taarifa sahihi ili tathmini iwe rahisi. Fields zenye <span style="color:#ef4444;font-weight:700;">*</span> ni lazima.
+                    </p>
+
+                    <div class="badge-section-title"><i class="fa-solid fa-user"></i> 1. Taarifa za Utambulisho</div>
+
+                    <div class="badge-fg">
+                        <label for="badge_account_type">Aina ya Akaunti <span class="req">*</span></label>
+                        <select id="badge_account_type" name="account_type" required>
+                            <option value="">Chagua aina ya akaunti yako</option>
+                            <option value="Mtu Binafsi">Mtu Binafsi / Public Figure</option>
+                            <option value="Biashara / Kampuni">Biashara / Kampuni</option>
+                            <option value="Shirika / Taasisi">Shirika / Taasisi / NGO</option>
+                            <option value="Mzalishaji wa Maudhui / Msanii">Creator / Msanii / Influencer</option>
+                        </select>
+                    </div>
+
+                    <div class="badge-fg">
+                        <label for="badge_full_name">Jina Kamili (kama lilivyo kwenye hati) <span class="req">*</span></label>
+                        <input type="text" id="badge_full_name" name="full_name" placeholder="Andika jina lako kamili au jina la kampuni" required autocomplete="name">
+                    </div>
+
+                    <div class="badge-fg">
+                        <label for="badge_alias_name">Jina la Utani / Brand <span class="opt">si lazima</span></label>
+                        <input type="text" id="badge_alias_name" name="alias_name" placeholder="Jina unalotumia mtandaoni (kama lipo)">
+                    </div>
+
+                    <div class="badge-fg">
+                        <label for="badge_email">Barua pepe <span class="req">*</span></label>
+                        <input type="email" id="badge_email" name="email" placeholder="Andika email yako (mfano: jina@gmail.com)" required autocomplete="email">
+                    </div>
+
+                    <div class="badge-fg">
+                        <label for="badge_phone">Nambari ya simu <span class="req">*</span></label>
+                        <input type="tel" id="badge_phone" name="phone" placeholder="Andika namba yako (mfano: 07XX XXX XXX)" required autocomplete="tel">
+                    </div>
+
+                    <div class="badge-fg">
+                        <label for="badge_category">Kazi / Sekta unayowakilisha <span class="req">*</span></label>
+                        <select id="badge_category" name="category" required>
+                            <option value="">Chagua sekta yako</option>
+                            <option value="Teknolojia &amp; Ubunifu">Teknolojia &amp; Ubunifu</option>
+                            <option value="Sanaa, Muziki &amp; Burudani">Sanaa, Muziki &amp; Burudani</option>
+                            <option value="Biashara &amp; Ujasiriamali">Biashara &amp; Ujasiriamali</option>
+                            <option value="Michezo">Michezo</option>
+                            <option value="Habari &amp; Vyombo vya Habari">Habari &amp; Media</option>
+                            <option value="Kiongozi wa Umma">Kiongozi wa Umma</option>
+                            <option value="Nyingine">Nyingine</option>
+                        </select>
+                    </div>
+
+                    <div class="badge-section-title"><i class="fa-solid fa-id-card"></i> 2. Kitambulisho</div>
+
+                    <div class="badge-fg">
+                        <label for="badge_id_type">Aina ya hati <span class="req">*</span></label>
+                        <select id="badge_id_type" name="id_type" required>
+                            <option value="">Chagua aina ya hati</option>
+                            <option value="NIDA">NIDA (Kitambulisho cha Taifa)</option>
+                            <option value="Pasipoti">Pasipoti</option>
+                            <option value="Leseni ya Udereva">Leseni ya Udereva</option>
+                            <option value="Usajili wa Biashara / BRELA">Usajili wa Biashara / BRELA</option>
+                        </select>
+                    </div>
+
+                    <div class="badge-fg">
+                        <label for="badge_id_number">Namba ya hati <span class="req">*</span></label>
+                        <input type="text" id="badge_id_number" name="id_number" placeholder="Andika namba iliyo kwenye hati yako" required>
+                    </div>
+
+                    <div class="badge-fg">
+                        <label for="badge_id_document">Pakia picha ya hati <span class="req">*</span></label>
+                        <input type="file" id="badge_id_document" name="id_document" accept="image/*,.pdf" required>
+                        <small><i class="fa-solid fa-image"></i> JPG, PNG au PDF · max 5MB · hakikisha inaonekana wazi</small>
+                    </div>
+
+                    <div class="badge-section-title"><i class="fa-solid fa-globe"></i> 3. Ushahidi (si lazima)</div>
+
+                    <div class="badge-fg">
+                        <label for="badge_website">Tovuti / Portfolio <span class="opt">si lazima</span></label>
+                        <input type="url" id="badge_website" name="website_link" placeholder="Weka link ya tovuti yako kama unayo">
+                    </div>
+
+                    <div class="badge-fg">
+                        <label for="badge_media_links">Link za habari / makala <span class="opt">si lazima</span></label>
+                        <textarea id="badge_media_links" name="media_links" rows="2" placeholder="Weka link za makala au habari zinazokutaja (kila link mstari mpya)"></textarea>
+                    </div>
+
+                    <div class="badge-fg">
+                        <label for="badge_other_socials">Mitandao mingine <span class="opt">si lazima</span></label>
+                        <input type="text" id="badge_other_socials" name="other_socials" placeholder="Mfano: Instagram @jina, TikTok @jina, X @jina">
+                    </div>
+
+                    <div class="badge-fg">
+                        <label for="badge_reason">Kwa nini unahitaji badge? <span class="req">*</span></label>
+                        <textarea id="badge_reason" name="reason" rows="3" placeholder="Eleza kwa ufupi: unajulikana kwa nini, au kama kuna akaunti bandia zinazokujifanya wewe..." required></textarea>
+                    </div>
+
+                    <div class="badge-pro-footer">
+                        <button type="button" class="badge-btn-cancel" onclick="closeBadgeModal()">{{ t('cancel', 'Ghairi') }}</button>
+                        <button type="submit" class="badge-btn-submit" id="submitBadgeBtn">
+                            <i class="fa-solid fa-paper-plane"></i> {{ t('send_request', 'Tuma Ombi') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {# "Watu wa kufollow" imeondolewa hapa — inatolewa na feed-1.html ndani ya content block, si mara mbili. #}
+
+    {% block content %}
+    {% endblock %}
+
+    <!-- BOTTOM NAV -->
+    <nav class="bottom-nav">
+        <a href="/home" title="{{ t('home') }}"><i class="fa-solid fa-house"></i></a>
+        <a href="/search" title="{{ t('search') }}"><i class="fa-solid fa-magnifying-glass"></i></a>
+        <a href="/community" title="{{ t('community') }}"><i class="fa-solid fa-users"></i></a>
+        <a href="javascript:void(0)" onclick="openOfflineVideos()" title="Offline" id="navOfflineBtn" style="position:relative;">
+            <i class="fa-solid fa-download"></i>
+            <span class="nav-badge" id="navOfflineBadge" style="display:none;background:#1EB53A;">0</span>
+        </a>
+        <a href="/notifications" title="{{ t('notifications') }}" style="position:relative;">
+            <i class="fa-solid fa-bell"></i>
+            {% if unread_notifs and unread_notifs > 0 %}
+            <span class="nav-badge">{{ unread_notifs }}</span>
+            {% endif %}
+        </a>
+        {# Profile / Linkup: kwenye feed icon iko navbar; pages zingine bottom nav #}
+        {% if not (request.path == '/home' or request.path == '/' or request.path == '/feed' or request.endpoint == 'home') %}
+            {% if identity_is_linkup and identity_url %}
+            <a href="{{ identity_url }}" title="{{ identity_name or 'Linkup' }}"><i class="fa-solid fa-link"></i></a>
+            {% else %}
+            <a href="/profile/{{ session.get('username', '') }}" title="{{ t('profile') }}"><i class="fa-solid fa-user"></i></a>
+            {% endif %}
+        {% endif %}
+    </nav>
+
+
+
+    <!-- Floating Push Button (inaonekana kila wakati kama haijasubscribe) -->
+    <button type="button" class="push-float-btn" id="pushFloatBtn" onclick="KijijiPush.forceSubscribe()">
+        <i class="fa-solid fa-bell"></i> {{ t('enable_notifications', 'Washa Taarifa') }}
+    </button>
+
+    <!-- ===== PUSH SUBSCRIBE PROMPT ===== -->
+    <div class="push-prompt-banner" id="pushPromptBanner">
+        <div class="pp-icon"><i class="fa-solid fa-bell"></i></div>
+        <div class="pp-text">
+            <strong>{{ t('enable_notifications', 'Washa Taarifa') }}</strong>
+            Usikose like, comment, ujumbe na taarifa zingine.
+        </div>
+        <div class="pp-actions">
+            <button type="button" class="pp-btn pp-btn-allow" onclick="KijijiPush.forceSubscribe()">Ruhusu</button>
+            <button type="button" class="pp-btn pp-btn-later" onclick="KijijiPush.dismissBanner()">Baadaye</button>
+        </div>
+    </div>
+
+    <div class="push-prompt-modal" id="pushPromptModal">
+        <div class="ppm-box">
+            <div class="ppm-icon"><i class="fa-solid fa-bell"></i></div>
+            <h3>{{ t('enable_notifications', 'Washa Notifications') }}</h3>
+            <p>
+                Ili upokee taarifa za <strong>like, comment, ujumbe, share</strong> na mengineyo
+                hata ukiwa nje ya app, ruhusu notifications sasa.
+            </p>
+            <button type="button" class="ppm-btn-allow" onclick="KijijiPush.forceSubscribe()">
+                <i class="fa-solid fa-bell"></i> Ruhusu Notifications
+            </button>
+            <button type="button" class="ppm-btn-later" onclick="KijijiPush.dismissModal()">Si sasa</button>
+        </div>
+    </div>
+
+    <!-- GLOBAL CALL OVERLAY -->
+    <div class="global-call-overlay" id="globalCallOverlay">
+        <div class="gc-videos" id="gcVideos">
+            <video id="gcRemoteVideo" autoplay playsinline></video>
+            <video id="gcLocalVideo" autoplay playsinline muted></video>
+        </div>
+        <div class="gc-status">
+            <img class="gc-avatar" id="gcAvatar" src="https://via.placeholder.com/110" alt="">
+            <h2 id="gcName">User</h2>
+            <p id="gcStateText">Call inakuja...</p>
+            <div class="gc-timer" id="gcTimer">0:00</div>
+        </div>
+        <div class="gc-controls" id="gcIncomingControls" style="display:none;">
+            <button type="button" class="btn-reject" onclick="GlobalCall.reject()" title="Reject">
+                <i class="fa-solid fa-phone-slash"></i>
+            </button>
+            <button type="button" class="btn-accept" onclick="GlobalCall.accept()" title="Accept">
+                <i class="fa-solid fa-phone"></i>
+            </button>
+        </div>
+        <div class="gc-controls" id="gcActiveControls" style="display:none;">
+            <button type="button" class="btn-mute" id="gcBtnMute" onclick="GlobalCall.toggleMute()" title="Mute">
+                <i class="fa-solid fa-microphone"></i>
+            </button>
+            <button type="button" class="btn-cam" id="gcBtnCam" onclick="GlobalCall.toggleCam()" title="Camera">
+                <i class="fa-solid fa-video"></i>
+            </button>
+            <button type="button" class="btn-hangup" onclick="GlobalCall.hangup()" title="Hang up">
+                <i class="fa-solid fa-phone-slash"></i>
+            </button>
+        </div>
+    </div>
+
+    <audio id="gcRingtone" loop>
+        <source src="{{ url_for('static', filename='uploads/ringtone.mp3') }}" type="audio/mp3">
+    </audio>
+
+    <script>
+        // ========== SIDEBAR ==========
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebarMenu');
+            const overlay = document.getElementById('sidebarOverlay');
+            if (!sidebar || !overlay) return;
+
+            const isOpen = sidebar.classList.contains('active');
+            if (isOpen) {
+                sidebar.classList.remove('active');
+                overlay.style.display = 'none';
+                document.body.style.overflow = '';
+            } else {
+                sidebar.classList.add('active');
+                overlay.style.display = 'block';
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function openLogoutModal() {
+            const sidebar = document.getElementById('sidebarMenu');
+            const overlay = document.getElementById('sidebarOverlay');
+            if (sidebar) sidebar.classList.remove('active');
+            if (overlay) overlay.style.display = 'none';
+            document.body.style.overflow = '';
+            document.getElementById('logoutModalOverlay').style.display = 'flex';
+        }
+        function closeLogoutModal() {
+            document.getElementById('logoutModalOverlay').style.display = 'none';
+        }
+        var __badgeModalOpen = false;
+        function openBadgeModal(linkupId, linkupName) {
+            var m = document.getElementById('badgeModalOverlay');
+            if (!m) return;
+            var typeField = document.getElementById('badge_request_type');
+            var linkupField = document.getElementById('badge_linkup_id');
+            var subtitle = document.getElementById('badgeModalSubtitle');
+            if (linkupId) {
+                if (typeField) typeField.value = 'linkup';
+                if (linkupField) linkupField.value = linkupId;
+                if (subtitle) subtitle.textContent = 'Thibitisha Linkup: ' + (linkupName || '') ;
+            } else {
+                if (typeField) typeField.value = 'user';
+                if (linkupField) linkupField.value = '';
+                if (subtitle) subtitle.textContent = 'Thibitisha akaunti yako · Kijiji Tanzania';
+            }
+            m.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            __badgeModalOpen = true;
+            try {
+                if (!history.state || !history.state.badgeModal) {
+                    history.pushState({ badgeModal: 1 }, '');
+                }
+            } catch (e) {}
+        }
+        (function () {
+            try {
+                var params = new URLSearchParams(window.location.search);
+                if (params.get('open_badge') === '1') {
+                    var lu = params.get('linkup_id');
+                    var luName = params.get('linkup_name');
+                    openBadgeModal(lu, luName);
+                    params.delete('open_badge');
+                    params.delete('linkup_id');
+                    params.delete('linkup_name');
+                    var qs = params.toString();
+                    var newUrl = window.location.pathname + (qs ? '?' + qs : '') + window.location.hash;
+                    history.replaceState(history.state, '', newUrl);
+                }
+            } catch (e) {}
+        })();
+        function closeBadgeModal() {
+            var m = document.getElementById('badgeModalOverlay');
+            if (m) m.style.display = 'none';
+            document.body.style.overflow = '';
+            if (__badgeModalOpen) {
+                __badgeModalOpen = false;
+                try {
+                    if (history.state && history.state.badgeModal) {
+                        history.back();
+                    }
+                } catch (e) {}
+            }
+        }
+        window.addEventListener('popstate', function () {
+            var m = document.getElementById('badgeModalOverlay');
+            if (m && m.style.display === 'flex') {
+                __badgeModalOpen = false;
+                m.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+        });
+        function sendBadgeRequest(event) {
+            event.preventDefault();
+            var form = event.target;
+            var submitBtn = document.getElementById('submitBadgeBtn');
+            var fileInput = document.getElementById('badge_id_document');
+
+            if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                if (fileInput.files[0].size > 5 * 1024 * 1024) {
+                    alert('Faili ni kubwa sana. Pakia faili isiyozidi 5MB.');
+                    return;
+                }
+            }
+
+            var formData = new FormData(form);
+            var originalHtml = submitBtn ? submitBtn.innerHTML : '';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Inatumwa...';
+            }
+
+            var linkupField = document.getElementById('badge_linkup_id');
+            var linkupId = linkupField ? linkupField.value : '';
+            var endpoint = linkupId ? ('/linkup/' + linkupId + '/request_badge') : '/request_badge';
+
+            fetch(endpoint, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                alert(data.message || 'Ombi limetumwa');
+                if (data.success) {
+                    closeBadgeModal();
+                    form.reset();
+                }
+            })
+            .catch(function () {
+                alert('Kuna hitilafu. Jaribu tena.');
+            })
+            .finally(function () {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalHtml;
+                }
+            });
+        }
+
+        // ========== SUGGESTED FOLLOW ==========
+        function followSuggested(username, btn, userId) {
+            if (!username || !btn) return;
+            btn.disabled = true;
+            btn.textContent = '...';
+            fetch('/follow/' + encodeURIComponent(username), {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data && data.success && data.following !== false) {
+                    btn.textContent = 'Following';
+                    btn.classList.add('done');
+                    var card = document.getElementById('suggest-' + userId)
+                        || (btn.closest && btn.closest('.suggest-card'));
+                    if (card) {
+                        card.classList.add('removing');
+                        setTimeout(function () {
+                            card.remove();
+                            var row = document.getElementById('suggestRow');
+                            var wrap = document.getElementById('suggestWrap');
+                            if (row && row.children.length === 0 && wrap) {
+                                wrap.style.transition = 'opacity 0.3s';
+                                wrap.style.opacity = '0';
+                                setTimeout(function () { wrap.remove(); }, 300);
+                            }
+                        }, 380);
+                    }
+                } else {
+                    btn.disabled = false;
+                    btn.textContent = 'Follow';
+                    if (data && data.message) alert(data.message);
+                }
+            })
+            .catch(function () {
+                btn.disabled = false;
+                btn.textContent = 'Follow';
+                alert('Imeshindikana. Jaribu tena.');
+            });
+        }
+        window.followSuggested = followSuggested;
+
+        // ========== GLOBAL CALL ==========
+        var GlobalCall = (function () {
+            var ICE = {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun2.l.google.com:19302' },
+                    { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+                    { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+                    { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+                ]
+            };
+
+            var pc = null;
+            var localStream = null;
+            var callType = null;
+            var callRole = null;
+            var callActive = false;
+            var pendingOffer = null;
+            var peerUserId = null;
+            var peerName = '';
+            var lastSignalId = 0;
+            var isMuted = false;
+            var isCamOff = false;
+            var callStartTime = null;
+            var timerInterval = null;
+            var myUserId = {{ session.get('user_id') or 0 }};
+            var myUsername = {{ (session.get('username') or '')|tojson }};
+            var pendingIce = [];
+
+            function $(id) { return document.getElementById(id); }
+
+            function playRingtone() {
+                var r = $('gcRingtone');
+                if (r) r.play().catch(function () {});
+            }
+            function stopRingtone() {
+                var r = $('gcRingtone');
+                if (r) { r.pause(); r.currentTime = 0; }
+            }
+
+            function sendSignal(toId, type, payload) {
+                return fetch('/call/signal', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    body: JSON.stringify({ to_user_id: toId, type: type, payload: payload || {} })
+                }).catch(function () {});
+            }
+
+            function showUI(mode) {
+                var ov = $('globalCallOverlay');
+                if (!ov) return;
+                ov.classList.add('show');
+                ov.classList.remove('incoming', 'video-mode');
+                $('gcName').textContent = peerName || 'User';
+                $('gcAvatar').src = 'https://via.placeholder.com/110';
+                $('gcTimer').style.display = 'none';
+
+                if (mode === 'incoming') {
+                    ov.classList.add('incoming');
+                    $('gcIncomingControls').style.display = 'flex';
+                    $('gcActiveControls').style.display = 'none';
+                    $('gcStateText').textContent = (callType === 'video' ? 'Video' : 'Voice') + ' call inakuja...';
+                    $('gcVideos').classList.remove('show');
+                    playRingtone();
+                } else if (mode === 'outgoing') {
+                    $('gcIncomingControls').style.display = 'none';
+                    $('gcActiveControls').style.display = 'flex';
+                    $('gcStateText').textContent = (callType === 'video' ? 'Video' : 'Voice') + ' call inapiga...';
+                    $('gcBtnCam').style.display = callType === 'video' ? 'flex' : 'none';
+                } else if (mode === 'active') {
+                    ov.classList.remove('incoming');
+                    $('gcIncomingControls').style.display = 'none';
+                    $('gcActiveControls').style.display = 'flex';
+                    $('gcStateText').textContent = callType === 'video' ? 'Video call' : 'Voice call';
+                    $('gcBtnCam').style.display = callType === 'video' ? 'flex' : 'none';
+                    stopRingtone();
+                    callStartTime = Date.now();
+                    $('gcTimer').style.display = 'block';
+                    if (timerInterval) clearInterval(timerInterval);
+                    timerInterval = setInterval(function () {
+                        var e = Math.floor((Date.now() - callStartTime) / 1000);
+                        var m = Math.floor(e / 60), s = e % 60;
+                        $('gcTimer').textContent = m + ':' + (s < 10 ? '0' : '') + s;
+                    }, 1000);
+                }
+            }
+
+            function hideUI() {
+                var ov = $('globalCallOverlay');
+                if (ov) ov.classList.remove('show', 'incoming', 'video-mode');
+                $('gcVideos').classList.remove('show');
+                $('gcIncomingControls').style.display = 'none';
+                $('gcActiveControls').style.display = 'none';
+                $('gcTimer').style.display = 'none';
+                stopRingtone();
+                if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+            }
+
+            function createPC() {
+                pc = new RTCPeerConnection(ICE);
+
+                pc.onicecandidate = function (e) {
+                    if (e.candidate && peerUserId) {
+                        sendSignal(peerUserId, 'ice', { candidate: e.candidate });
+                    }
+                };
+
+                pc.ontrack = function (e) {
+                    $('gcRemoteVideo').srcObject = e.streams[0];
+                    if (callType === 'video') {
+                        $('gcVideos').classList.add('show');
+                        $('globalCallOverlay').classList.add('video-mode');
+                    }
+                };
+
+                pc.onconnectionstatechange = function () {
+                    if (pc.connectionState === 'connected') {
+                        showUI('active');
+                    } else if (['failed', 'disconnected', 'closed'].indexOf(pc.connectionState) >= 0) {
+                        if (callActive) hangup(true);
+                    }
+                };
+
+                pc.oniceconnectionstatechange = function () {
+                    if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
+                        showUI('active');
+                    }
+                };
+            }
+
+            function addLocalTracks(stream) {
+                localStream = stream;
+                stream.getTracks().forEach(function (t) {
+                    pc.addTrack(t, stream);
+                });
+                if (callType === 'video') {
+                    $('gcVideos').classList.add('show');
+                    $('globalCallOverlay').classList.add('video-mode');
+                    var lv = $('gcLocalVideo');
+                    lv.srcObject = stream;
+                    lv.muted = true;
+                }
+            }
+
+            function flushPendingIce() {
+                pendingIce.forEach(function (c) {
+                    pc.addIceCandidate(new RTCIceCandidate(c)).catch(function () {});
+                });
+                pendingIce = [];
+            }
+
+            function cleanup() {
+                callActive = false;
+                callRole = null;
+                pendingOffer = null;
+                peerUserId = null;
+                peerName = '';
+                pendingIce = [];
+                if (localStream) {
+                    localStream.getTracks().forEach(function (t) { t.stop(); });
+                    localStream = null;
+                }
+                if (pc) {
+                    try { pc.close(); } catch (e) {}
+                    pc = null;
+                }
+                if ($('gcRemoteVideo')) $('gcRemoteVideo').srcObject = null;
+                if ($('gcLocalVideo')) $('gcLocalVideo').srcObject = null;
+                isMuted = false;
+                isCamOff = false;
+                var btnMute = $('gcBtnMute');
+                var btnCam = $('gcBtnCam');
+                if (btnMute) {
+                    btnMute.classList.remove('active');
+                    btnMute.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+                }
+                if (btnCam) {
+                    btnCam.classList.remove('active');
+                    btnCam.innerHTML = '<i class="fa-solid fa-video"></i>';
+                }
+                hideUI();
+            }
+
+            function start(toUserId, type, name) {
+                if (!myUserId) { alert('Login required'); return; }
+                if (callActive) { alert('Tayari uko kwenye call'); return; }
+
+                peerUserId = toUserId;
+                peerName = name || ('User #' + toUserId);
+                callType = type || 'voice';
+                callRole = 'caller';
+                callActive = true;
+
+                showUI('outgoing');
+
+                var constraints = {
+                    audio: true,
+                    video: callType === 'video'
+                        ? { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
+                        : false
+                };
+
+                navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
+                    createPC();
+                    addLocalTracks(stream);
+                    return pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: callType === 'video' });
+                }).then(function (offer) {
+                    return pc.setLocalDescription(offer);
+                }).then(function () {
+                    return sendSignal(peerUserId, 'offer', {
+                        sdp: pc.localDescription,
+                        call_type: callType,
+                        from_username: myUsername
+                    });
+                }).catch(function (err) {
+                    console.error(err);
+                    alert('Imeshindikana kufungua mic/kamera: ' + (err.message || err.name || ''));
+                    hangup(true);
+                });
+            }
+
+            function accept() {
+                if (!pendingOffer || !peerUserId) return;
+                stopRingtone();
+                $('gcStateText').textContent = 'Inaunganisha...';
+                $('gcIncomingControls').style.display = 'none';
+                $('gcActiveControls').style.display = 'flex';
+                $('gcBtnCam').style.display = callType === 'video' ? 'flex' : 'none';
+
+                var constraints = {
+                    audio: true,
+                    video: callType === 'video'
+                        ? { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
+                        : false
+                };
+
+                navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
+                    createPC();
+                    addLocalTracks(stream);
+                    return pc.setRemoteDescription(new RTCSessionDescription(pendingOffer));
+                }).then(function () {
+                    flushPendingIce();
+                    return pc.createAnswer();
+                }).then(function (answer) {
+                    return pc.setLocalDescription(answer);
+                }).then(function () {
+                    return sendSignal(peerUserId, 'answer', { sdp: pc.localDescription });
+                }).then(function () {
+                    pendingOffer = null;
+                    callRole = 'callee';
+                }).catch(function (err) {
+                    console.error(err);
+                    alert('Imeshindikana kukubali call');
+                    hangup();
+                });
+            }
+
+            function reject() {
+                if (peerUserId) sendSignal(peerUserId, 'reject', {});
+                cleanup();
+            }
+
+            function hangup(silent) {
+                if (!silent && peerUserId) sendSignal(peerUserId, 'hangup', {});
+                cleanup();
+            }
+
+            function toggleMute() {
+                if (!localStream) return;
+                isMuted = !isMuted;
+                localStream.getAudioTracks().forEach(function (t) { t.enabled = !isMuted; });
+                var btn = $('gcBtnMute');
+                if (btn) {
+                    btn.classList.toggle('active', isMuted);
+                    btn.innerHTML = isMuted
+                        ? '<i class="fa-solid fa-microphone-slash"></i>'
+                        : '<i class="fa-solid fa-microphone"></i>';
+                }
+            }
+
+            function toggleCam() {
+                if (!localStream) return;
+                isCamOff = !isCamOff;
+                localStream.getVideoTracks().forEach(function (t) { t.enabled = !isCamOff; });
+                var btn = $('gcBtnCam');
+                if (btn) {
+                    btn.classList.toggle('active', isCamOff);
+                    btn.innerHTML = isCamOff
+                        ? '<i class="fa-solid fa-video-slash"></i>'
+                        : '<i class="fa-solid fa-video"></i>';
+                }
+            }
+
+            function handleSignal(sig) {
+                var type = sig.type;
+                var payload = typeof sig.payload === 'string' ? JSON.parse(sig.payload) : (sig.payload || {});
+
+                if (type === 'offer') {
+                    if (callActive) {
+                        sendSignal(sig.from_user_id, 'busy', {});
+                        return;
+                    }
+                    callActive = true;
+                    callType = payload.call_type || 'voice';
+                    peerUserId = sig.from_user_id;
+                    peerName = payload.from_username || ('User #' + sig.from_user_id);
+                    pendingOffer = payload.sdp;
+                    showUI('incoming');
+                    $('gcBtnCam').style.display = callType === 'video' ? 'flex' : 'none';
+                }
+                else if (type === 'answer') {
+                    if (pc && callRole === 'caller' && payload.sdp) {
+                        pc.setRemoteDescription(new RTCSessionDescription(payload.sdp))
+                            .then(function () { flushPendingIce(); })
+                            .catch(function (e) { console.error('setRemoteDescription answer', e); });
+                    }
+                }
+                else if (type === 'ice') {
+                    if (!payload.candidate) return;
+                    if (pc && pc.remoteDescription) {
+                        pc.addIceCandidate(new RTCIceCandidate(payload.candidate)).catch(function () {});
+                    } else {
+                        pendingIce.push(payload.candidate);
+                    }
+                }
+                else if (type === 'hangup' || type === 'reject' || type === 'busy') {
+                    if (callActive) {
+                        if (type === 'busy') alert('Mtu yuko busy');
+                        else if (type === 'reject') alert('Call imekataliwa');
+                        cleanup();
+                    }
+                }
+            }
+
+            function poll() {
+                if (!myUserId) return;
+                fetch('/call/signals?after_id=' + lastSignalId)
+                    .then(function (r) { return r.json(); })
+                    .then(function (d) {
+                        if (!d.signals || !d.signals.length) return;
+                        d.signals.forEach(function (sig) {
+                            if (sig.id > lastSignalId) lastSignalId = sig.id;
+                            handleSignal(sig);
+                        });
+                    }).catch(function () {});
+            }
+
+            if (myUserId) {
+                setInterval(poll, 1500);
+                setTimeout(poll, 400);
+            }
+
+            window.addEventListener('beforeunload', function () {
+                if (callActive) hangup();
+            });
+
+            return {
+                start: start,
+                accept: accept,
+                reject: reject,
+                hangup: hangup,
+                toggleMute: toggleMute,
+                toggleCam: toggleCam,
+                isActive: function () { return callActive; }
+            };
+        })();
+    </script>
+
+    <!-- ========== SERVICE WORKER + PUSH + INSTALL ========== -->
+    <script>
+    (function () {
+        // ========== 1. Service Worker + Update Banner ==========
+        if ('serviceWorker' in navigator) {
+            var UPDATE_BANNER_ID = 'jamii-update-banner';
+
+            function setUpdateProgress(pct, status, stepNum) {
+                var bar = document.getElementById('jamiiUpdateBar');
+                var pctEl = document.getElementById('jamiiUpdatePct');
+                var statusEl = document.getElementById('jamiiUpdateStatus');
+                var steps = document.getElementById('jamiiUpdateSteps');
+                if (bar) bar.style.width = pct + '%';
+                if (pctEl) pctEl.textContent = Math.round(pct) + '%';
+                if (statusEl) statusEl.textContent = status || '';
+                if (steps && stepNum) {
+                    var labels = {
+                        1: 'Inapakua version mpya',
+                        2: 'Inasafisha cache ya zamani',
+                        3: 'Inawezesha Service Worker',
+                        4: 'Inasasisha logo na content',
+                        5: 'Inafungua app upya'
+                    };
+                    var kids = steps.querySelectorAll('[data-step]');
+                    kids.forEach(function (el) {
+                        var n = parseInt(el.getAttribute('data-step'), 10);
+                        el.classList.remove('done', 'active', 'pending');
+                        var label = labels[n] || el.textContent;
+                        if (n < stepNum) {
+                            el.classList.add('done');
+                            el.textContent = '✓ ' + label;
+                        } else if (n === stepNum) {
+                            el.classList.add('active');
+                            el.textContent = '● ' + label;
+                        } else {
+                            el.classList.add('pending');
+                            el.textContent = '○ ' + label;
+                        }
+                    });
+                }
+            }
+
+            function runUpdateSequence(reg) {
+                var ov = document.getElementById('jamiiUpdateOverlay');
+                if (ov) ov.classList.add('show');
+                setUpdateProgress(8, 'Inaandaa update...', 1);
+
+                setTimeout(function () {
+                    setUpdateProgress(28, 'Inapakua version mpya...', 1);
+                    if (reg && reg.waiting) {
+                        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+                    }
+                }, 500);
+
+                setTimeout(function () {
+                    setUpdateProgress(48, 'Inasafisha cache ya zamani...', 2);
+                }, 1400);
+
+                setTimeout(function () {
+                    setUpdateProgress(68, 'Inawezesha Service Worker...', 3);
+                }, 2200);
+
+                setTimeout(function () {
+                    setUpdateProgress(88, 'Inasasisha logo na content...', 4);
+                }, 3000);
+
+                var reloaded = false;
+                function doReload() {
+                    if (reloaded) return;
+                    reloaded = true;
+                    setUpdateProgress(100, 'Inafungua app upya...', 5);
+                    setTimeout(function () { window.location.reload(); }, 500);
+                }
+
+                setTimeout(doReload, 4000);
+
+                navigator.serviceWorker.addEventListener('controllerchange', function () {
+                    doReload();
+                });
+            }
+
+            function showUpdateBanner(reg) {
+                if (document.getElementById(UPDATE_BANNER_ID)) return;
+                var banner = document.createElement('div');
+                banner.id = UPDATE_BANNER_ID;
+                banner.innerHTML =
+                    '<div style="position:fixed;bottom:70px;left:12px;right:12px;max-width:420px;margin:0 auto;' +
+                    'background:linear-gradient(135deg,#1EB53A,#00A3DD);color:#fff;padding:14px 16px;border-radius:14px;' +
+                    'z-index:50000;display:flex;align-items:center;gap:12px;box-shadow:0 8px 28px rgba(0,0,0,0.28);font-size:14px;">' +
+                    '<div style="flex:1;line-height:1.35;">' +
+                    '<strong style="display:block;font-size:15px;">🔄 App mpya ipo!</strong>' +
+                    '<span style="opacity:0.9;">Sasisha sasa ili upate logo, jina na maboresho.</span></div>' +
+                    '<button id="jamii-update-btn" style="border:none;background:#fff;color:#1EB53A;font-weight:700;' +
+                    'padding:10px 14px;border-radius:10px;cursor:pointer;white-space:nowrap;">Sasisha</button></div>';
+                document.body.appendChild(banner);
+                document.getElementById('jamii-update-btn').onclick = function () {
+                    banner.remove();
+                    runUpdateSequence(reg);
+                };
+            }
+
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                    .then(function (reg) {
+                        console.log('JAMII SW registered:', reg.scope);
+                        if (reg.waiting) {
+                            showUpdateBanner(reg);
+                        }
+                        reg.addEventListener('updatefound', function () {
+                            var newWorker = reg.installing;
+                            if (!newWorker) return;
+                            newWorker.addEventListener('statechange', function () {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    showUpdateBanner(reg);
+                                }
+                            });
+                        });
+                        // Check for updates every 30 min
+                        setInterval(function () {
+                            reg.update().catch(function () {});
+                        }, 30 * 60 * 1000);
+                    })
+                    .catch(function (err) {
+                        console.error('SW registration failed:', err);
+                    });
+            });
+        }
+
+
+        // ========== Online / Offline indicator ==========
+        (function () {
+            function syncNet() {
+                var offline = !navigator.onLine;
+                document.documentElement.classList.toggle('is-offline', offline);
+            }
+            window.addEventListener('online', function () {
+                syncNet();
+                try {
+                    var t = document.createElement('div');
+                    t.textContent = '✅ Umerudi online';
+                    t.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#1EB53A;color:#fff;padding:10px 16px;border-radius:10px;z-index:50000;font-weight:700;font-size:14px;';
+                    document.body.appendChild(t);
+                    setTimeout(function () { t.remove(); }, 2500);
+                } catch (e) {}
+            });
+            window.addEventListener('offline', syncNet);
+            syncNet();
+        })();
+
+        // ========== 2. Install PWA (modal, si alert) ==========
+        var deferredPrompt = null;
+        window.addEventListener('beforeinstallprompt', function (e) {
+            e.preventDefault();
+            deferredPrompt = e;
+        });
+        window.addEventListener('appinstalled', function () {
+            deferredPrompt = null;
+        });
+        function isRunningAsPWA() {
+            return window.matchMedia('(display-mode: standalone)').matches ||
+                   window.navigator.standalone === true;
+        }
+        function getInstallStepsHTML() {
+            var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (isIOS) {
+                return '<strong>1.</strong> Bonyeza kitufe cha <strong>Share</strong> (□↑) chini<br>' +
+                       '<strong>2.</strong> Scroll chini → chagua <strong>"Add to Home Screen"</strong><br>' +
+                       '<strong>3.</strong> Bonyeza <strong>Add</strong>';
+            }
+            return '<strong>1.</strong> Bonyeza <strong>⋮</strong> (menu) juu kulia<br>' +
+                   '<strong>2.</strong> Chagua <strong>"Install app"</strong> au <strong>"Add to Home screen"</strong><br>' +
+                   '<strong>3.</strong> Thibitisha';
+        }
+        window.closeJamiiInstallModal = function () {
+            var m = document.getElementById('jamiiInstallModal');
+            if (m) m.classList.remove('show');
+        };
+        window.installPWA = function () {
+            if (isRunningAsPWA()) {
+                var steps = document.getElementById('jamiiInstallSteps');
+                if (steps) steps.innerHTML = 'App <strong>tayari imewekwa</strong>.<br>Angalia <strong>home screen</strong> yako.';
+                var m = document.getElementById('jamiiInstallModal');
+                if (m) m.classList.add('show');
+                return;
+            }
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then(function () { deferredPrompt = null; });
+                return;
+            }
+            // Hakuna prompt → onyesha modal ya maelekezo (SI alert)
+            var stepsEl = document.getElementById('jamiiInstallSteps');
+            if (stepsEl) stepsEl.innerHTML = getInstallStepsHTML();
+            var modal = document.getElementById('jamiiInstallModal');
+            if (modal) modal.classList.add('show');
+        };
+
+        // ========== 3. FORCE PUSH SUBSCRIBE ==========
+        function urlBase64ToUint8Array(base64String) {
+            var padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+            var base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+            var rawData = window.atob(base64);
+            var outputArray = new Uint8Array(rawData.length);
+            for (var i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
+        }
+
+        var DISMISS_KEY = 'kijiji_push_dismiss_until';
+
+        function isDismissed() {
+            try {
+                var until = parseInt(localStorage.getItem(DISMISS_KEY) || '0', 10);
+                return Date.now() < until;
+            } catch (e) { return false; }
+        }
+        function setDismiss(hours) {
+            try {
+                localStorage.setItem(DISMISS_KEY, String(Date.now() + hours * 3600 * 1000));
+            } catch (e) {}
+        }
+
+        function el(id) { return document.getElementById(id); }
+        function showBanner() {
+            var b = el('pushPromptBanner');
+            if (b) b.classList.add('show');
+            var f = el('pushFloatBtn');
+            if (f) f.classList.add('show');
+        }
+        function hideAllPrompts() {
+            var b = el('pushPromptBanner');
+            if (b) b.classList.remove('show');
+            var m = el('pushPromptModal');
+            if (m) m.classList.remove('show');
+            var f = el('pushFloatBtn');
+            if (f) f.classList.remove('show');
+        }
+        function showModal() {
+            var m = el('pushPromptModal');
+            if (m) m.classList.add('show');
+            var f = el('pushFloatBtn');
+            if (f) f.classList.add('show');
+        }
+
+        async function doSubscribe() {
+            if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+                alert('Browser yako haiungi mkono push. Tumia Chrome au Edge.');
+                return false;
+            }
+            var permission = Notification.permission;
+            if (permission === 'default') {
+                permission = await Notification.requestPermission();
+            }
+            if (permission !== 'granted') {
+                if (permission === 'denied') {
+                    alert('Notifications zimezimwa kwenye browser.\n\n1. Bonyeza ikoni ya kufuli kushoto kwa address bar\n2. Notifications → Allow\n3. Refresh ukurasa');
+                }
+                return false;
+            }
+            var reg = await navigator.serviceWorker.ready;
+            var pkRes = await fetch('/api/push/public-key', { credentials: 'same-origin' });
+            if (!pkRes.ok) throw new Error('Public key failed');
+            var pkData = await pkRes.json();
+            if (!pkData || !pkData.publicKey) throw new Error('No public key');
+
+            var sub = await reg.pushManager.getSubscription();
+            if (!sub) {
+                sub = await reg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(pkData.publicKey)
+                });
+            }
+            var res = await fetch('/api/push/subscribe', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(sub.toJSON())
+            });
+            var data = await res.json();
+            console.log('Push subscribe success:', data);
+            return true;
+        }
+
+        var KijijiPush = {
+            forceSubscribe: async function () {
+                try {
+                    var ok = await doSubscribe();
+                    if (ok) {
+                        hideAllPrompts();
+                        try { localStorage.removeItem(DISMISS_KEY); } catch (e) {}
+                        var t = document.createElement('div');
+                        t.textContent = '✅ Notifications zimewashwa!';
+                        t.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#1EB53A;color:#fff;padding:12px 20px;border-radius:10px;z-index:50000;font-weight:700;font-size:15px;box-shadow:0 4px 16px rgba(0,0,0,0.25);';
+                        document.body.appendChild(t);
+                        setTimeout(function () { t.remove(); }, 3500);
+                    } else {
+                        showBanner();
+                    }
+                } catch (err) {
+                    console.error('forceSubscribe error:', err);
+                    alert('Imeshindikana: ' + (err.message || err));
+                    showBanner();
+                }
+            },
+            dismissBanner: function () {
+                var b = el('pushPromptBanner');
+                if (b) b.classList.remove('show');
+                setDismiss(4);
+                // float button remains
+                var f = el('pushFloatBtn');
+                if (f) f.classList.add('show');
+            },
+            dismissModal: function () {
+                var m = el('pushPromptModal');
+                if (m) m.classList.remove('show');
+                setDismiss(2);
+                showBanner();
+            },
+            checkAndPrompt: function () {
+                if (!window.Notification) {
+                    console.log('No Notification API');
+                    return;
+                }
+                console.log('KijijiPush permission =', Notification.permission);
+
+                if (Notification.permission === 'granted') {
+                    // Tayari ameruhusu notifications — asionywe/asiombwe tena,
+                    // hata kama kujaribu ku-subscribe kunashindikana kwa sababu
+                    // hakuna mtandao (data/wifi imezimwa). Hiyo si tatizo la
+                    // permission, ni tatizo la mtandao tu, hivyo halihitaji banner.
+                    hideAllPrompts();
+                    if (navigator.onLine) {
+                        doSubscribe().catch(function (e) {
+                            console.error('Push resubscribe failed (network issue, not re-prompting):', e);
+                        });
+                    }
+                    return;
+                }
+
+                // Not granted → ALWAYS show something visible
+                showBanner();
+                if (Notification.permission === 'default' && !isDismissed()) {
+                    showModal();
+                }
+            }
+        };
+
+        window.KijijiPush = KijijiPush;
+        window.registerKijijiPush = function () { return KijijiPush.forceSubscribe(); };
+
+        // Run as soon as possible
+        function startPushUI() {
+            var loggedIn = {{ 'true' if session.get('user_id') else 'false' }};
+            console.log('KijijiPush loggedIn =', loggedIn);
+            if (!loggedIn) {
+                console.log('KijijiPush: not logged in, skip prompt');
+                return;
+            }
+            // Show float button immediately so user always sees it if needed
+            setTimeout(function () {
+                KijijiPush.checkAndPrompt();
+            }, 800);
+            // Again after 3s in case SW was slow
+            setTimeout(function () {
+                if (Notification.permission !== 'granted') {
+                    showBanner();
+                }
+            }, 3000);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', startPushUI);
+        } else {
+            startPushUI();
+        }
+    })();
+    </script>
+
+    <!-- ===== INSTALL GUIDE MODAL ===== -->
+    <div class="jamii-install-modal" id="jamiiInstallModal" onclick="if(event.target===this) closeJamiiInstallModal();">
+        <div class="jamii-install-box">
+            <div class="ji-icon"><i class="fa-solid fa-download"></i></div>
+            <h3>Weka App</h3>
+            <p>Fuata hatua hizi ili uweke <strong>JAMII TANZANIA</strong> kwenye home screen yako:</p>
+            <div class="jamii-install-steps" id="jamiiInstallSteps"></div>
+            <button type="button" class="ji-btn" onclick="closeJamiiInstallModal()">Nimeelewa</button>
+            <button type="button" class="ji-btn-later" onclick="closeJamiiInstallModal()">Funga</button>
+        </div>
+    </div>
+
+    <!-- ===== UPDATE PROGRESS MODAL ===== -->
+    <div class="jamii-update-overlay" id="jamiiUpdateOverlay">
+        <div class="jamii-update-card">
+            <div class="ju-logo"><i class="fa-solid fa-rotate"></i></div>
+            <h3>Inasasisha App...</h3>
+            <div class="ju-status" id="jamiiUpdateStatus">Inaandaa...</div>
+            <div class="jamii-update-pct" id="jamiiUpdatePct">0%</div>
+            <div class="jamii-update-bar-wrap">
+                <div class="jamii-update-bar-fill" id="jamiiUpdateBar"></div>
+            </div>
+            <div class="jamii-update-steps" id="jamiiUpdateSteps">
+                <div class="pending" data-step="1">○ Inapakua version mpya</div>
+                <div class="pending" data-step="2">○ Inasafisha cache ya zamani</div>
+                <div class="pending" data-step="3">○ Inawezesha Service Worker</div>
+                <div class="pending" data-step="4">○ Inasasisha logo na content</div>
+                <div class="pending" data-step="5">○ Inafungua app upya</div>
+            </div>
+        </div>
+    </div>
+
+<style>
+/* ===== OFFLINE VIDEOS FULLSCREEN ===== */
+#offlineVideosModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 60000;
+  background: #0a0a0a;
+  flex-direction: column;
+  color: #fff;
+}
+#offlineVideosModal.show { display: flex; }
+.ov-full-head {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  padding-top: max(14px, env(safe-area-inset-top));
+  background: #121212;
+  border-bottom: 1px solid #222;
+}
+.ov-full-head button.ov-back {
+  background: transparent; border: none; color: #fff;
+  font-size: 22px; cursor: pointer; width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+}
+.ov-full-head h3 { margin: 0; font-size: 18px; flex: 1; }
+.ov-full-head .ov-count { font-size: 13px; color: #888; }
+#offlineVideosList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  padding-bottom: calc(70px + env(safe-area-inset-bottom));
+}
+.ov-item {
+  display: flex; gap: 12px; align-items: center;
+  padding: 12px 10px; border-radius: 12px;
+  background: #1c1c1e; margin-bottom: 10px;
+}
+.ov-item video, .ov-item .ov-thumb {
+  width: 96px; height: 64px; object-fit: cover;
+  border-radius: 8px; background: #333; flex-shrink: 0;
+}
+.ov-meta { flex: 1; min-width: 0; }
+.ov-meta strong { display: block; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ov-meta small { display: block; color: #aaa; font-size: 12px; margin-top: 2px; }
+.ov-actions { display: flex; flex-direction: column; gap: 6px; }
+.ov-actions button {
+  border: none; border-radius: 8px; padding: 8px 12px;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.ov-play { background: #1EB53A; color: #fff; }
+.ov-del { background: #2a2a2a; color: #f66; }
+.ov-empty { text-align: center; color: #888; padding: 48px 16px; font-size: 15px; line-height: 1.5; }
+.ov-progress-wrap {
+  display: none; position: fixed; left: 12px; right: 12px; bottom: 80px; z-index: 60001;
+  background: #1c1c1e; color: #fff; border-radius: 12px; padding: 12px 14px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.35); max-width: 420px; margin: 0 auto;
+}
+.ov-progress-wrap.show { display: block; }
+.ov-bar { height: 8px; background: #333; border-radius: 6px; overflow: hidden; margin-top: 8px; }
+.ov-bar > div { height: 100%; width: 0%; background: linear-gradient(90deg,#1EB53A,#00A3DD); transition: width 0.2s; }
+</style>
+
+<div id="offlineVideosModal" aria-hidden="true">
+  <div class="ov-full-head">
+    <button type="button" class="ov-back" onclick="closeOfflineVideos()" aria-label="Back"><i class="fa-solid fa-chevron-left"></i></button>
+    <h3>📥 Video Offline</h3>
+    <span class="ov-count" id="ovCountLabel"></span>
+  </div>
+  <div id="offlineVideosList"></div>
+</div>
+<div class="ov-progress-wrap" id="ovProgressWrap">
+  <div id="ovProgressText">Inapakua video...</div>
+  <div class="ov-bar"><div id="ovProgressBar"></div></div>
+</div>
+
+<script>
+(function () {
+  var OFFLINE_CACHE_NAME = 'jamii-offline-videos';
+  var OFFLINE_INDEX_KEY = 'kijiji_offline_videos';
+
+  function getOfflineIndex() {
+    try { return JSON.parse(localStorage.getItem(OFFLINE_INDEX_KEY) || '[]'); }
+    catch (e) { return []; }
+  }
+  function setOfflineIndex(list) {
+    try { localStorage.setItem(OFFLINE_INDEX_KEY, JSON.stringify(list || [])); } catch (e) {}
+  }
+  function formatBytes(n) {
+    n = Number(n) || 0;
+    if (n < 1024) return n + ' B';
+    if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
+    return (n / 1048576).toFixed(1) + ' MB';
+  }
+
+  function refreshOfflineBadge() {
+    var n = getOfflineIndex().length;
+    var badge = document.getElementById('navOfflineBadge');
+    if (!badge) return;
+    if (n > 0) {
+      badge.style.display = '';
+      badge.textContent = n > 99 ? '99+' : String(n);
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  window.getOfflineIndex = getOfflineIndex;
+  window.setOfflineIndex = setOfflineIndex;
+  window.formatOfflineBytes = formatBytes;
+  window.OFFLINE_CACHE_NAME = OFFLINE_CACHE_NAME;
+  window.OFFLINE_INDEX_KEY = OFFLINE_INDEX_KEY;
+
+  window.openOfflineVideos = function () {
+    var modal = document.getElementById('offlineVideosModal');
+    var box = document.getElementById('offlineVideosList');
+    if (!modal || !box) return;
+    var list = getOfflineIndex();
+    var countEl = document.getElementById('ovCountLabel');
+    if (countEl) countEl.textContent = list.length ? (list.length + ' video') : '';
+    if (!list.length) {
+      box.innerHTML = '<div class="ov-empty">Bado huna video offline.<br><br>Fungua video kwenye feed → bonyeza <strong>Offline</strong> ili upakue kamili kwenye simu yako.</div>';
+    } else {
+      box.innerHTML = list.map(function (item, idx) {
+        var title = item.content || ('Video ya @' + (item.username || 'user'));
+        var when = item.savedAt ? new Date(item.savedAt).toLocaleString() : '';
+        var safeTitle = String(title).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return (
+          '<div class="ov-item">' +
+          '<video class="ov-thumb" src="' + item.src + '#t=0.5" muted preload="metadata" playsinline></video>' +
+          '<div class="ov-meta"><strong>@' + (item.username || 'user') + '</strong>' +
+          '<small>' + safeTitle + '</small>' +
+          '<small>' + formatBytes(item.size) + (when ? ' · ' + when : '') + '</small></div>' +
+          '<div class="ov-actions">' +
+          '<button type="button" class="ov-play" onclick="playOfflineVideo(' + idx + ')">Cheza</button>' +
+          '<button type="button" class="ov-del" onclick="deleteOfflineVideo(' + idx + ')">Futa</button>' +
+          '</div></div>'
+        );
+      }).join('');
+    }
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    // history for phone back
+    try {
+      if (!window.__offlineModalPushed) {
+        history.pushState({ kijijiOffline: 1 }, '');
+        window.__offlineModalPushed = true;
+      }
+    } catch (e) {}
+    refreshOfflineBadge();
+  };
+
+  window.closeOfflineVideos = function () {
+    var modal = document.getElementById('offlineVideosModal');
+    if (modal) {
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+    document.body.style.overflow = '';
+    if (window.__offlineModalPushed) {
+      window.__offlineModalPushed = false;
+      try {
+        if (history.state && history.state.kijijiOffline) history.back();
+      } catch (e) {}
+    }
+  };
+
+  window.playOfflineVideo = function (idx) {
+    var list = getOfflineIndex();
+    var item = list[idx];
+    if (!item) return;
+    window.__offlineModalPushed = false;
+    var modal = document.getElementById('offlineVideosModal');
+    if (modal) modal.classList.remove('show');
+    document.body.style.overflow = '';
+    // Prefer feed VDA if available
+    if (typeof openVideoDetail === 'function' && item.postId && document.getElementById('player-' + item.postId)) {
+      openVideoDetail(item.postId);
+      return;
+    }
+    // Fallback player page-like
+    if (typeof openVideoDetail === 'function' && item.postId) {
+      // try anyway
+      try { openVideoDetail(item.postId); return; } catch (e) {}
+    }
+    // Simple fullscreen video
+    var w = window.open('', '_blank');
+    if (w) {
+      w.document.write('<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Offline</title></head><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh"><video src="' + item.src + '" controls autoplay playsinline style="width:100%;max-height:100vh"></video></body></html>');
+    } else {
+      location.href = item.src;
+    }
+  };
+
+  window.deleteOfflineVideo = async function (idx) {
+    var list = getOfflineIndex();
+    var item = list[idx];
+    if (!item) return;
+    if (!confirm('Futa video hii kwenye offline?')) return;
+    try {
+      var cache = await caches.open(OFFLINE_CACHE_NAME);
+      await cache.delete(item.src);
+    } catch (e) {}
+    list.splice(idx, 1);
+    setOfflineIndex(list);
+    openOfflineVideos();
+    refreshOfflineBadge();
+  };
+
+  window.addEventListener('popstate', function () {
+    var modal = document.getElementById('offlineVideosModal');
+    if (modal && modal.classList.contains('show')) {
+      window.__offlineModalPushed = false;
+      modal.classList.remove('show');
+      document.body.style.overflow = '';
+    }
+  });
+
+  document.addEventListener('DOMContentLoaded', refreshOfflineBadge);
+  refreshOfflineBadge();
+})();
+</script>
+
+</body>
+</html>
