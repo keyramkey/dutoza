@@ -1,51 +1,255 @@
 """
 db.py — Database layer for Kijiji Tanzania
-Contains: get_db_connection, allowed_badge_file, init_db (full schema)
+Neon Postgres (production) + SQLite fallback (local only)
 """
 import os
-import sqlite3
+import re
+from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
 
+# ====================== PATHS ======================
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-DB_PATH = os.path.join(BASE_DIR, 'database.db')
-UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads')
-UPLOAD_BADGES_FOLDER = os.path.join(BASE_DIR, 'uploads', 'badges')
-ALLOWED_BADGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
+DB_PATH = os.path.join(BASE_DIR, "database.db")
+UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
+UPLOAD_BADGES_FOLDER = os.path.join(BASE_DIR, "uploads", "badges")
+ALLOWED_BADGE_EXTENSIONS = {"png", "jpg", "jpeg", "pdf"}
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(UPLOAD_BADGES_FOLDER, exist_ok=True)
 
+# ====================== DETECT DATABASE ======================
+DATABASE_URL = (
+    os.environ.get("DATABASE_URL")
+    or os.environ.get("DATABASE_URL_UNPOOLED")
+    or ""
+).strip()
 
-def get_db_connection():
+USE_POSTGRES = bool(DATABASE_URL and DATABASE_URL.startswith(("postgres://", "postgresql://")))
+
+
+def _normalize_database_url(url: str) -> str:
+    """Render/Heroku sometimes use postgres:// — psycopg2 wants postgresql://"""
+    if url.startswith("postgres://"):
+        url = "postgresql://" + url[len("postgres://") :]
+    # Neon pooler works fine with sslmode=require
+    if "sslmode=" not in url:
+        sep = "&" if "?" in url else "?"
+        url = url + sep + "sslmode=require"
+    return url
+
+
+# ====================== SQLITE (local fallback) ======================
+def _sqlite_connect():
+    import sqlite3
+
     conn = sqlite3.connect(DB_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
-    conn.execute('PRAGMA busy_timeout=30000;')
     try:
-        conn.execute('PRAGMA journal_mode=WAL;')
+        conn.execute("PRAGMA busy_timeout=30000;")
+        conn.execute("PRAGMA journal_mode=WAL;")
+        conn.execute("PRAGMA foreign_keys = ON;")
     except Exception:
         pass
     return conn
 
 
+# ====================== POSTGRES ======================
+class _PgRow(dict):
+    """Dict that also supports index access like sqlite3.Row (row[0], row['col'])."""
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return list(self.values())[key]
+        return super().__getitem__(key)
+
+    def keys(self):
+        return super().keys()
+
+
+class _PgCursor:
+    """Cursor wrapper: converts ? → %s and returns row-like objects."""
+
+    def __init__(self, real_cursor):
+        self._c = real_cursor
+        self.lastrowid = None
+        self.rowcount = -1
+
+    def _adapt_sql(self, sql: str) -> str:
+        if not sql:
+            return sql
+        s = sql
+        # Placeholders
+        s = s.replace("?", "%s")
+        # Common SQLite → Postgres
+        s = re.sub(r"\bAUTOINCREMENT\b", "", s, flags=re.IGNORECASE)
+        s = re.sub(
+            r"INSERT\s+OR\s+IGNORE\s+INTO",
+            "INSERT INTO",
+            s,
+            flags=re.IGNORECASE,
+        )
+        # COLLATE NOCASE → just drop (use ILIKE in app when needed)
+        s = re.sub(r"\s+COLLATE\s+NOCASE", "", s, flags=re.IGNORECASE)
+        # datetime('now', '-24 hours') style — basic mapping
+        s = re.sub(
+            r"datetime\s*\(\s*'now'\s*,\s*'-(\d+)\s+hours?'\s*\)",
+            r"(NOW() - INTERVAL '\1 hours')",
+            s,
+            flags=re.IGNORECASE,
+        )
+        s = re.sub(
+            r"datetime\s*\(\s*'now'\s*,\s*'-(\d+)\s+seconds?'\s*\)",
+            r"(NOW() - INTERVAL '\1 seconds')",
+            s,
+            flags=re.IGNORECASE,
+        )
+        s = re.sub(
+            r"datetime\s*\(\s*'now'\s*\)",
+            "NOW()",
+            s,
+            flags=re.IGNORECASE,
+        )
+        s = re.sub(r"\bCURRENT_TIMESTAMP\b", "NOW()", s, flags=re.IGNORECASE)
+        # strftime for Postgres (limited)
+        s = re.sub(
+            r"strftime\s*\(\s*'%H'\s*,\s*([^)]+)\)",
+            r"EXTRACT(HOUR FROM \1)::INTEGER",
+            s,
+            flags=re.IGNORECASE,
+        )
+        s = re.sub(
+            r"strftime\s*\(\s*'%w'\s*,\s*([^)]+)\)",
+            r"EXTRACT(DOW FROM \1)::INTEGER",
+            s,
+            flags=re.IGNORECASE,
+        )
+        return s
+
+    def execute(self, sql, params=None):
+        adapted = self._adapt_sql(sql)
+        params = params if params is not None else ()
+        if isinstance(params, list):
+            params = tuple(params)
+        try:
+            self._c.execute(adapted, params)
+        except Exception as e:
+            # If INSERT OR IGNORE was stripped and hits unique conflict, ignore
+            err = str(e).lower()
+            if "duplicate key" in err or "unique constraint" in err:
+                self.rowcount = 0
+                self.lastrowid = None
+                return self
+            raise
+        self.rowcount = self._c.rowcount
+        # lastrowid: try RETURNING id pattern — not available here; use currval when needed
+        try:
+            if self._c.description is None and "INSERT" in adapted.upper():
+                # best-effort lastrowid
+                self._c.execute("SELECT lastval()")
+                row = self._c.fetchone()
+                self.lastrowid = row[0] if row else None
+        except Exception:
+            self.lastrowid = None
+        return self
+
+    def executemany(self, sql, seq_of_params):
+        adapted = self._adapt_sql(sql)
+        self._c.executemany(adapted, seq_of_params)
+        self.rowcount = self._c.rowcount
+        return self
+
+    def fetchone(self):
+        row = self._c.fetchone()
+        if row is None:
+            return None
+        if isinstance(row, dict):
+            return _PgRow(row)
+        cols = [d[0] for d in self._c.description] if self._c.description else []
+        return _PgRow(dict(zip(cols, row)))
+
+    def fetchall(self):
+        rows = self._c.fetchall()
+        if not rows:
+            return []
+        if isinstance(rows[0], dict):
+            return [_PgRow(r) for r in rows]
+        cols = [d[0] for d in self._c.description] if self._c.description else []
+        return [_PgRow(dict(zip(cols, r))) for r in rows]
+
+    def close(self):
+        try:
+            self._c.close()
+        except Exception:
+            pass
+
+
+class _PgConnection:
+    def __init__(self, real_conn):
+        self._conn = real_conn
+
+    def cursor(self):
+        from psycopg2.extras import RealDictCursor
+
+        return _PgCursor(self._conn.cursor(cursor_factory=RealDictCursor))
+
+    def execute(self, sql, params=None):
+        cur = self.cursor()
+        cur.execute(sql, params)
+        return cur
+
+    def commit(self):
+        self._conn.commit()
+
+    def rollback(self):
+        self._conn.rollback()
+
+    def close(self):
+        try:
+            self._conn.close()
+        except Exception:
+            pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.close()
+
+
+def _postgres_connect():
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+
+    url = _normalize_database_url(DATABASE_URL)
+    raw = psycopg2.connect(url, connect_timeout=15)
+    raw.autocommit = False
+    return _PgConnection(raw)
+
+
+# ====================== PUBLIC API ======================
+def get_db_connection():
+    """Return connection (Postgres on Render/Neon, SQLite locally)."""
+    if USE_POSTGRES:
+        return _postgres_connect()
+    return _sqlite_connect()
+
+
 def allowed_badge_file(filename):
-    """Ruhusu faili za kitambulisho pekee (badge)."""
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_BADGE_EXTENSIONS
+    return (
+        "." in filename
+        and filename.rsplit(".", 1)[1].lower() in ALLOWED_BADGE_EXTENSIONS
+    )
 
 
-def init_db():
-    conn = sqlite3.connect(DB_PATH, timeout=30.0)
-    cursor = conn.cursor()
+# ====================== SCHEMA (Postgres) ======================
+def _init_postgres():
+    """Create tables on Neon if they do not exist."""
+    conn = _postgres_connect()
+    cur = conn.cursor()
 
-    # ====================== DATABASE SETTINGS ======================
-
-    cursor.execute('PRAGMA journal_mode=WAL;')
-    cursor.execute('PRAGMA busy_timeout=30000;')
-    cursor.execute('PRAGMA foreign_keys = ON;')
-
-    # ====================== USERS ======================
-
-    cursor.execute('''
+    statements = [
+        """
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             username TEXT UNIQUE NOT NULL,
             email TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
@@ -56,247 +260,153 @@ def init_db():
             is_blocked INTEGER DEFAULT 0,
             warning_message TEXT,
             post_visibility TEXT DEFAULT 'public',
-            is_email_verified INTEGER DEFAULT 1
+            is_email_verified INTEGER DEFAULT 1,
+            full_name TEXT,
+            language TEXT DEFAULT 'sw',
+            created_at TIMESTAMP DEFAULT NOW(),
+            auth_provider TEXT DEFAULT 'local',
+            is_deactivated INTEGER DEFAULT 0,
+            deactivated_at TEXT,
+            warning_count INTEGER DEFAULT 0,
+            restricted_until TEXT,
+            village_mode INTEGER DEFAULT 0,
+            profile_category TEXT,
+            birthday TEXT,
+            join_year TEXT,
+            sex TEXT,
+            marital_status TEXT,
+            cover_photo TEXT,
+            website TEXT,
+            facebook TEXT,
+            instagram TEXT,
+            tiktok TEXT,
+            youtube TEXT,
+            whatsapp TEXT,
+            telegram TEXT,
+            x TEXT,
+            linkedin TEXT,
+            snapchat TEXT,
+            pinterest TEXT,
+            reddit TEXT,
+            discord TEXT,
+            github TEXT,
+            twitch TEXT,
+            spotify TEXT,
+            threads TEXT,
+            tumblr TEXT,
+            vimeo TEXT,
+            wordpress TEXT,
+            medium TEXT,
+            blogger TEXT,
+            facebook_id TEXT
         )
-    ''')
-
-    # ====================== USER EXTRA COLUMNS ======================
-
-    for col, typ in [
-        ('is_verified', 'INTEGER DEFAULT 0'),
-        ('is_blocked', 'INTEGER DEFAULT 0'),
-        ('warning_message', 'TEXT'),
-        ('post_visibility', "TEXT DEFAULT 'public'"),
-        ('is_email_verified', 'INTEGER DEFAULT 1'),
-        ('full_name', 'TEXT'),
-        ('language', "TEXT DEFAULT 'sw'"),
-        ('created_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP'),
-        ('auth_provider', "TEXT DEFAULT 'local'"),
-        ('is_deactivated', 'INTEGER DEFAULT 0'),
-        ('deactivated_at', 'TEXT'),
-        ('warning_count', 'INTEGER DEFAULT 0'),
-        ('restricted_until', 'TEXT'),
-        ('village_mode', 'INTEGER DEFAULT 0'),
-        ('profile_category', 'TEXT'),
-    ]:
-        try:
-            cursor.execute(
-                f'ALTER TABLE users ADD COLUMN {col} {typ}'
-            )
-        except sqlite3.OperationalError:
-            pass
-
-    try:
-        cursor.execute(
-            "UPDATE users SET auth_provider = 'google' "
-            "WHERE (bio = 'Joined with Google' OR profile_pic LIKE 'http%') "
-            "AND (auth_provider IS NULL OR auth_provider = 'local')"
-        )
-    except Exception:
-        pass
-
-    # ====================== PENDING REGISTRATIONS ======================
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS pending_registrations (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             username TEXT NOT NULL,
             email TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
             otp TEXT NOT NULL,
-            expires_at DATETIME NOT NULL,
-            resend_available_at DATETIME,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            expires_at TIMESTAMP NOT NULL,
+            resend_available_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT NOW(),
             full_name TEXT
         )
-    ''')
-
-    try:
-        cursor.execute(
-            'ALTER TABLE pending_registrations ADD COLUMN full_name TEXT'
-        )
-    except sqlite3.OperationalError:
-        pass
-
-    cursor.execute(
-        'CREATE INDEX IF NOT EXISTS idx_pending_email '
-        'ON pending_registrations(email)'
-    )
-
-    # ====================== POSTS ======================
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS posts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
             content TEXT,
             file_path TEXT,
             media_type TEXT,
             shares INTEGER DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users (id)
+            created_at TIMESTAMP DEFAULT NOW(),
+            category TEXT DEFAULT 'general',
+            moderation_status TEXT DEFAULT 'approved',
+            nsfw_score REAL DEFAULT 0,
+            repost_of INTEGER,
+            is_draft INTEGER DEFAULT 0,
+            scheduled_at TEXT,
+            published_at TEXT,
+            linkup_id INTEGER
         )
-    ''')
-
-    try:
-        cursor.execute(
-            "ALTER TABLE posts ADD COLUMN category TEXT DEFAULT 'general'"
-        )
-    except sqlite3.OperationalError:
-        pass
-
-    # ====================== POST MODERATION (NSFW) ======================
-    for col, typ in [
-        ('moderation_status', "TEXT DEFAULT 'approved'"),
-        ('nsfw_score', 'REAL DEFAULT 0'),
-    ]:
-        try:
-            cursor.execute(
-                f'ALTER TABLE posts ADD COLUMN {col} {typ}'
-            )
-        except sqlite3.OperationalError:
-            pass
-
-    # ====================== REPOST (caption + frame ya post asili) ======================
-    try:
-        cursor.execute('ALTER TABLE posts ADD COLUMN repost_of INTEGER')
-    except sqlite3.OperationalError:
-        pass
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS moderation_flags (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            post_id INTEGER NOT NULL,
-            user_id INTEGER NOT NULL,
-            flag_type TEXT NOT NULL,      -- 'manual_review' au 'escalation'
+            id SERIAL PRIMARY KEY,
+            post_id INTEGER NOT NULL REFERENCES posts(id),
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            flag_type TEXT NOT NULL,
             nsfw_score REAL,
             labels TEXT,
-            status TEXT DEFAULT 'pending', -- pending / resolved
+            status TEXT DEFAULT 'pending',
             admin_note TEXT,
             created_at TEXT,
             reviewed_at TEXT,
-            reviewed_by INTEGER,
-            FOREIGN KEY (post_id) REFERENCES posts (id),
-            FOREIGN KEY (user_id) REFERENCES users (id)
+            reviewed_by INTEGER
         )
-    ''')
-
-    # ====================== COMMENTS ======================
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS comments (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            post_id INTEGER NOT NULL,
-            user_id INTEGER NOT NULL,
+            id SERIAL PRIMARY KEY,
+            post_id INTEGER NOT NULL REFERENCES posts(id),
+            user_id INTEGER NOT NULL REFERENCES users(id),
             content TEXT NOT NULL,
             parent_id INTEGER,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (post_id) REFERENCES posts (id),
-            FOREIGN KEY (user_id) REFERENCES users (id),
-            FOREIGN KEY (parent_id) REFERENCES comments (id) ON DELETE CASCADE
+            created_at TIMESTAMP DEFAULT NOW(),
+            is_hidden INTEGER DEFAULT 0,
+            updated_at TIMESTAMP,
+            linkup_id INTEGER
         )
-    ''')
-
-    try:
-        cursor.execute(
-            "ALTER TABLE comments ADD COLUMN is_hidden INTEGER DEFAULT 0"
-        )
-    except sqlite3.OperationalError:
-        pass
-
-    try:
-        cursor.execute(
-            "ALTER TABLE comments ADD COLUMN updated_at TIMESTAMP"
-        )
-    except sqlite3.OperationalError:
-        pass
-
-    # ====================== COMMENT LIKES ======================
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS comment_likes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            comment_id INTEGER NOT NULL,
-            FOREIGN KEY (user_id) REFERENCES users (id),
-            FOREIGN KEY (comment_id) REFERENCES comments (id) ON DELETE CASCADE
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            comment_id INTEGER NOT NULL REFERENCES comments(id) ON DELETE CASCADE
         )
-    ''')
-
-    # ====================== LIKES ======================
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS likes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            post_id INTEGER NOT NULL,
-            FOREIGN KEY (user_id) REFERENCES users (id),
-            FOREIGN KEY (post_id) REFERENCES posts (id)
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            post_id INTEGER NOT NULL REFERENCES posts(id)
         )
-    ''')
-
-    # ====================== SAVED POSTS ======================
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS saved_posts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            post_id INTEGER NOT NULL,
-            FOREIGN KEY (user_id) REFERENCES users (id),
-            FOREIGN KEY (post_id) REFERENCES posts (id)
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            post_id INTEGER NOT NULL REFERENCES posts(id)
         )
-    ''')
-
-    # ====================== NOTIFICATIONS ======================
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS notifications (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            sender_id INTEGER NOT NULL,
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            sender_id INTEGER NOT NULL REFERENCES users(id),
             type TEXT NOT NULL,
             post_id INTEGER,
             message TEXT,
             is_read INTEGER DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users (id),
-            FOREIGN KEY (sender_id) REFERENCES users (id)
+            created_at TIMESTAMP DEFAULT NOW()
         )
-    ''')
-
-    try:
-        cursor.execute(
-            "ALTER TABLE notifications ADD COLUMN message TEXT"
-        )
-    except sqlite3.OperationalError:
-        pass
-
-    # ====================== HISTORY ======================
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
             action_description TEXT NOT NULL,
             post_id INTEGER,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users (id)
+            created_at TIMESTAMP DEFAULT NOW()
         )
-    ''')
-
-    try:
-        cursor.execute(
-            "ALTER TABLE history ADD COLUMN post_id INTEGER"
-        )
-    except sqlite3.OperationalError:
-        pass
-
-    # ====================== BADGE REQUESTS ======================
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS badge_requests (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
             username TEXT NOT NULL,
             account_type TEXT,
             full_name TEXT,
@@ -312,578 +422,280 @@ def init_db():
             other_socials TEXT,
             reason TEXT NOT NULL,
             status TEXT DEFAULT 'pending',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users (id)
+            created_at TIMESTAMP DEFAULT NOW(),
+            request_type TEXT DEFAULT 'user',
+            linkup_id INTEGER
         )
-    ''')
-
-    # Ongeza columns mpya kama database ya zamani haina
-    for col, typ in [
-        ('account_type', 'TEXT'),
-        ('full_name', 'TEXT'),
-        ('alias_name', 'TEXT'),
-        ('email', 'TEXT'),
-        ('phone', 'TEXT'),
-        ('category', 'TEXT'),
-        ('id_type', 'TEXT'),
-        ('id_number', 'TEXT'),
-        ('id_document_path', 'TEXT'),
-        ('website_link', 'TEXT'),
-        ('media_links', 'TEXT'),
-        ('other_socials', 'TEXT'),
-        # Phase 3: Linkup verification badge
-        ('request_type', "TEXT DEFAULT 'user'"),  # 'user' | 'linkup'
-        ('linkup_id', 'INTEGER'),
-    ]:
-        try:
-            cursor.execute(
-                f'ALTER TABLE badge_requests ADD COLUMN {col} {typ}'
-            )
-        except sqlite3.OperationalError:
-            pass
-
-
-    # ====================== ADMIN MESSAGES ======================
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS admin_messages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             name TEXT,
             email TEXT,
             message TEXT,
             admin_reply TEXT,
             status TEXT DEFAULT 'pending',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP DEFAULT NOW()
         )
-    ''')
-
-    # ====================== FOLLOWS ======================
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS follows (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            follower_id INTEGER,
-            following_id INTEGER,
-            FOREIGN KEY (follower_id) REFERENCES users(id),
-            FOREIGN KEY (following_id) REFERENCES users(id)
+            id SERIAL PRIMARY KEY,
+            follower_id INTEGER REFERENCES users(id),
+            following_id INTEGER REFERENCES users(id),
+            source_post_id INTEGER
         )
-    ''')
-
-    # source_post_id: ikiwa follow ilitokea kwa kubonyeza Follow ndani ya
-    # post fulani, tunahifadhi post id hiyo ili Insights ionyeshe
-    # "Followers wapya kupitia post hii" (Kijiji Mode - dashboard).
-    for col, typ in [
-        ('source_post_id', 'INTEGER'),
-    ]:
-        try:
-            cursor.execute(f'ALTER TABLE follows ADD COLUMN {col} {typ}')
-        except sqlite3.OperationalError:
-            pass
-
-    # ====================== REPOSTS ======================
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS reposts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            original_post_id INTEGER NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users (id),
-            FOREIGN KEY (original_post_id) REFERENCES posts (id),
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            original_post_id INTEGER NOT NULL REFERENCES posts(id),
+            created_at TIMESTAMP DEFAULT NOW(),
             UNIQUE(user_id, original_post_id)
         )
-    ''')
-
-    # ====================== REPORTS ======================
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS reports (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            post_id INTEGER NOT NULL,
-            reporter_id INTEGER NOT NULL,
+            id SERIAL PRIMARY KEY,
+            post_id INTEGER NOT NULL REFERENCES posts(id),
+            reporter_id INTEGER NOT NULL REFERENCES users(id),
             reason TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (post_id) REFERENCES posts (id),
-            FOREIGN KEY (reporter_id) REFERENCES users (id)
+            created_at TIMESTAMP DEFAULT NOW(),
+            status TEXT DEFAULT 'pending',
+            admin_note TEXT,
+            reviewed_at TEXT,
+            reviewed_by INTEGER
         )
-    ''')
-
-    # ====================== BLOCKS ======================
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS blocks (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            blocker_id INTEGER NOT NULL,
-            blocked_id INTEGER NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(blocker_id, blocked_id),
-            FOREIGN KEY (blocker_id) REFERENCES users (id),
-            FOREIGN KEY (blocked_id) REFERENCES users (id)
+            id SERIAL PRIMARY KEY,
+            blocker_id INTEGER NOT NULL REFERENCES users(id),
+            blocked_id INTEGER NOT NULL REFERENCES users(id),
+            created_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE(blocker_id, blocked_id)
         )
-    ''')
-
-    # ====================== POST VIEWS ======================
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS post_views (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            post_id INTEGER NOT NULL,
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            post_id INTEGER NOT NULL REFERENCES posts(id),
             watch_seconds REAL DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id),
-            FOREIGN KEY (post_id) REFERENCES posts(id)
+            created_at TIMESTAMP DEFAULT NOW()
         )
-    ''')
-
-    # ====================== COMMUNITY & GROUPS ======================
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS community_groups (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             name TEXT NOT NULL,
             description TEXT,
             category TEXT DEFAULT 'general',
-            creator_id INTEGER NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (creator_id) REFERENCES users (id)
+            creator_id INTEGER NOT NULL REFERENCES users(id),
+            created_at TIMESTAMP DEFAULT NOW()
         )
-    ''')
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS group_members (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            group_id INTEGER NOT NULL,
-            user_id INTEGER NOT NULL,
-            joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(group_id, user_id),
-            FOREIGN KEY (group_id) REFERENCES community_groups (id),
-            FOREIGN KEY (user_id) REFERENCES users (id)
+            id SERIAL PRIMARY KEY,
+            group_id INTEGER NOT NULL REFERENCES community_groups(id),
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            joined_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE(group_id, user_id)
         )
-    ''')
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS group_messages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            group_id INTEGER NOT NULL,
-            user_id INTEGER NOT NULL,
+            id SERIAL PRIMARY KEY,
+            group_id INTEGER NOT NULL REFERENCES community_groups(id),
+            user_id INTEGER NOT NULL REFERENCES users(id),
             message TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (group_id) REFERENCES community_groups (id),
-            FOREIGN KEY (user_id) REFERENCES users (id)
+            created_at TIMESTAMP DEFAULT NOW()
         )
-    ''')
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS community_posts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             category TEXT NOT NULL,
             subcategory TEXT DEFAULT 'all',
-            user_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL REFERENCES users(id),
             content TEXT,
             file_path TEXT,
             media_type TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users (id)
+            created_at TIMESTAMP DEFAULT NOW()
         )
-    ''')
-
-    # ====================== PRIVATE MESSAGES ======================
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS private_messages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            sender_id INTEGER NOT NULL,
-            receiver_id INTEGER NOT NULL,
-            message TEXT NOT NULL,
+            id SERIAL PRIMARY KEY,
+            sender_id INTEGER NOT NULL REFERENCES users(id),
+            receiver_id INTEGER NOT NULL REFERENCES users(id),
+            message TEXT NOT NULL DEFAULT '',
             is_read INTEGER DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (sender_id) REFERENCES users (id),
-            FOREIGN KEY (receiver_id) REFERENCES users (id)
+            created_at TIMESTAMP DEFAULT NOW(),
+            is_delivered INTEGER DEFAULT 0,
+            file_path TEXT,
+            media_type TEXT,
+            reaction TEXT,
+            is_hidden INTEGER DEFAULT 0,
+            reply_to_id INTEGER,
+            status_id INTEGER,
+            deleted_for_sender INTEGER DEFAULT 0,
+            deleted_for_receiver INTEGER DEFAULT 0,
+            edited_at TEXT
         )
-    ''')
-
-    for col, typ in [
-        ('is_delivered', 'INTEGER DEFAULT 0'),
-        ('file_path', 'TEXT'),
-        ('media_type', 'TEXT'),
-        ('reaction', 'TEXT'),
-        ('is_hidden', 'INTEGER DEFAULT 0'),
-        ('reply_to_id', 'INTEGER'),
-        ('status_id', 'INTEGER'),
-        ('deleted_for_sender', 'INTEGER DEFAULT 0'),
-        ('deleted_for_receiver', 'INTEGER DEFAULT 0'),
-    ]:
-        try:
-            cursor.execute(
-                f'ALTER TABLE private_messages ADD COLUMN {col} {typ}'
-            )
-        except sqlite3.OperationalError:
-            pass
-
-    # ====================== CALL SIGNALS ======================
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS call_signals (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             from_user_id INTEGER NOT NULL,
             to_user_id INTEGER NOT NULL,
             type TEXT NOT NULL,
             payload TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            created_at TIMESTAMP DEFAULT NOW(),
             is_read INTEGER DEFAULT 0
         )
-    ''')
-
-    # ====================== PUSH SUBSCRIPTIONS ======================
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS push_subscriptions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             user_id INTEGER NOT NULL,
             endpoint TEXT NOT NULL UNIQUE,
             p256dh TEXT NOT NULL,
             auth TEXT NOT NULL,
-            created_at TEXT DEFAULT (datetime('now'))
+            created_at TIMESTAMP DEFAULT NOW()
         )
-    ''')
-
-    cursor.execute(
-        'CREATE INDEX IF NOT EXISTS idx_push_user '
-        'ON push_subscriptions(user_id)'
-    )
-
-    # ====================== PROFILE EXTRA FIELDS ======================
-
-    for col, typ in [
-        ('birthday', 'TEXT'),
-        ('join_year', 'TEXT'),
-        ('sex', 'TEXT'),
-        ('marital_status', 'TEXT'),
-        ('cover_photo', 'TEXT'),
-        ('website', 'TEXT'),
-        ('facebook', 'TEXT'),
-        ('instagram', 'TEXT'),
-        ('tiktok', 'TEXT'),
-        ('youtube', 'TEXT'),
-        ('whatsapp', 'TEXT'),
-        ('telegram', 'TEXT'),
-        ('x', 'TEXT'),
-        ('linkedin', 'TEXT'),
-        ('snapchat', 'TEXT'),
-        ('pinterest', 'TEXT'),
-        ('reddit', 'TEXT'),
-        ('discord', 'TEXT'),
-        ('github', 'TEXT'),
-        ('twitch', 'TEXT'),
-        ('spotify', 'TEXT'),
-        ('threads', 'TEXT'),
-        ('tumblr', 'TEXT'),
-        ('vimeo', 'TEXT'),
-        ('wordpress', 'TEXT'),
-        ('medium', 'TEXT'),
-        ('blogger', 'TEXT'),
-    ]:
-        try:
-            cursor.execute(
-                f'ALTER TABLE users ADD COLUMN {col} {typ}'
-            )
-        except sqlite3.OperationalError:
-            pass
-
-    # ====================== PINNED CHATS ======================
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS pinned_chats (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            other_user_id INTEGER NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(user_id, other_user_id),
-            FOREIGN KEY (user_id) REFERENCES users (id),
-            FOREIGN KEY (other_user_id) REFERENCES users (id)
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            other_user_id INTEGER NOT NULL REFERENCES users(id),
+            created_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE(user_id, other_user_id)
         )
-    ''')
-
-    cursor.execute(
-        'CREATE INDEX IF NOT EXISTS idx_pinned_user '
-        'ON pinned_chats(user_id)'
-    )
-
-    # ====================== STATUSES / STORIES ======================
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS statuses (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
             content TEXT,
             file_path TEXT,
             media_type TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users (id)
+            created_at TIMESTAMP DEFAULT NOW(),
+            music_path TEXT,
+            privacy TEXT DEFAULT 'public'
         )
-    ''')
-
-    try:
-        cursor.execute(
-            'ALTER TABLE statuses ADD COLUMN music_path TEXT'
-        )
-    except sqlite3.OperationalError:
-        pass
-
-    cursor.execute(
-        'CREATE INDEX IF NOT EXISTS idx_status_user '
-        'ON statuses(user_id)'
-    )
-
-    cursor.execute(
-        'CREATE INDEX IF NOT EXISTS idx_status_created '
-        'ON statuses(created_at)'
-    )
-
-    # ====================== STATUS VIEWS ======================
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS status_views (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            status_id INTEGER NOT NULL,
-            viewer_id INTEGER NOT NULL,
-            viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(status_id, viewer_id),
-            FOREIGN KEY (status_id) REFERENCES statuses (id),
-            FOREIGN KEY (viewer_id) REFERENCES users (id)
+            id SERIAL PRIMARY KEY,
+            status_id INTEGER NOT NULL REFERENCES statuses(id),
+            viewer_id INTEGER NOT NULL REFERENCES users(id),
+            viewed_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE(status_id, viewer_id)
         )
-    ''')
-
-    cursor.execute(
-        'CREATE INDEX IF NOT EXISTS idx_status_views_status '
-        'ON status_views(status_id)'
-    )
-
-    try:
-        cols = [
-            r[1]
-            for r in cursor.execute(
-                'PRAGMA table_info(status_views)'
-            ).fetchall()
-        ]
-
-        if 'viewer_id' not in cols and 'user_id' in cols:
-            cursor.execute(
-                'ALTER TABLE status_views ADD COLUMN viewer_id INTEGER'
-            )
-
-            cursor.execute(
-                'UPDATE status_views '
-                'SET viewer_id = user_id '
-                'WHERE viewer_id IS NULL'
-            )
-
-        elif 'viewer_id' not in cols:
-            cursor.execute(
-                'ALTER TABLE status_views ADD COLUMN viewer_id INTEGER'
-            )
-
-    except Exception:
-        pass
-
-    # ====================== STATUS REACTIONS ======================
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS status_reactions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            status_id INTEGER NOT NULL,
-            user_id INTEGER NOT NULL,
+            id SERIAL PRIMARY KEY,
+            status_id INTEGER NOT NULL REFERENCES statuses(id),
+            user_id INTEGER NOT NULL REFERENCES users(id),
             reaction TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(status_id, user_id),
-            FOREIGN KEY (status_id) REFERENCES statuses (id),
-            FOREIGN KEY (user_id) REFERENCES users (id)
+            created_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE(status_id, user_id)
         )
-    ''')
-
-    cursor.execute(
-        'CREATE INDEX IF NOT EXISTS idx_status_react_status '
-        'ON status_reactions(status_id)'
-    )
-
-    # ====================== OTP TABLE ======================
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS otps (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             email TEXT NOT NULL,
             otp TEXT NOT NULL,
             purpose TEXT NOT NULL,
-            expires_at DATETIME NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            expires_at TIMESTAMP NOT NULL,
+            created_at TIMESTAMP DEFAULT NOW()
         )
-    ''')
-
-# ====================== DATA DELETION REQUESTS ======================
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS data_deletion_requests (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER,
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER REFERENCES users(id),
             email TEXT NOT NULL,
             status TEXT DEFAULT 'pending',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            processed_at TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id)
+            created_at TIMESTAMP DEFAULT NOW(),
+            processed_at TIMESTAMP
         )
-    ''')
-
-    cursor.execute(
-        'CREATE INDEX IF NOT EXISTS idx_deletion_email '
-        'ON data_deletion_requests(email)'
-    )
-
-
-# ====================== GROUP A: MUTE ======================
-
-    cursor.execute("""
+        """,
+        """
         CREATE TABLE IF NOT EXISTS mutes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            muter_id INTEGER NOT NULL,
-            muted_id INTEGER NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(muter_id, muted_id),
-            FOREIGN KEY (muter_id) REFERENCES users (id),
-            FOREIGN KEY (muted_id) REFERENCES users (id)
+            id SERIAL PRIMARY KEY,
+            muter_id INTEGER NOT NULL REFERENCES users(id),
+            muted_id INTEGER NOT NULL REFERENCES users(id),
+            created_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE(muter_id, muted_id)
         )
-    """)
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_mutes_muter ON mutes(muter_id)")
-
-# ====================== GROUP A: CLOSE FRIENDS ======================
-
-    cursor.execute("""
+        """,
+        """
         CREATE TABLE IF NOT EXISTS close_friends (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            friend_id INTEGER NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(user_id, friend_id),
-            FOREIGN KEY (user_id) REFERENCES users (id),
-            FOREIGN KEY (friend_id) REFERENCES users (id)
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            friend_id INTEGER NOT NULL REFERENCES users(id),
+            created_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE(user_id, friend_id)
         )
-    """)
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_close_friends_user ON close_friends(user_id)")
-
-# ====================== GROUP A: HASHTAGS ======================
-
-    cursor.execute("""
+        """,
+        """
         CREATE TABLE IF NOT EXISTS hashtags (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            tag TEXT UNIQUE NOT NULL COLLATE NOCASE,
+            id SERIAL PRIMARY KEY,
+            tag TEXT UNIQUE NOT NULL,
             use_count INTEGER DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP DEFAULT NOW()
         )
-    """)
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_hashtags_count ON hashtags(use_count DESC)")
-
-    cursor.execute("""
+        """,
+        """
         CREATE TABLE IF NOT EXISTS post_hashtags (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            post_id INTEGER NOT NULL,
-            hashtag_id INTEGER NOT NULL,
-            UNIQUE(post_id, hashtag_id),
-            FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE,
-            FOREIGN KEY (hashtag_id) REFERENCES hashtags (id) ON DELETE CASCADE
+            id SERIAL PRIMARY KEY,
+            post_id INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+            hashtag_id INTEGER NOT NULL REFERENCES hashtags(id) ON DELETE CASCADE,
+            UNIQUE(post_id, hashtag_id)
         )
-    """)
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_post_hashtags_tag ON post_hashtags(hashtag_id)")
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_post_hashtags_post ON post_hashtags(post_id)")
-
-# ====================== GROUP A: DRAFTS / SCHEDULE (post columns) ======================
-
-    for col, typ in [
-        ("is_draft", "INTEGER DEFAULT 0"),
-        ("scheduled_at", "TEXT"),
-        ("published_at", "TEXT"),
-    ]:
-        try:
-            cursor.execute(f"ALTER TABLE posts ADD COLUMN {col} {typ}")
-        except sqlite3.OperationalError:
-            pass
-
-# ====================== GROUP A: STATUS PRIVACY ======================
-
-    try:
-        cursor.execute("ALTER TABLE statuses ADD COLUMN privacy TEXT DEFAULT 'public'")
-    except sqlite3.OperationalError:
-        pass
-
-# ====================== GROUP A: CHAT STAR / ARCHIVE ======================
-
-    cursor.execute("""
+        """,
+        """
         CREATE TABLE IF NOT EXISTS starred_messages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            message_id INTEGER NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(user_id, message_id),
-            FOREIGN KEY (user_id) REFERENCES users (id),
-            FOREIGN KEY (message_id) REFERENCES private_messages (id) ON DELETE CASCADE
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            message_id INTEGER NOT NULL REFERENCES private_messages(id) ON DELETE CASCADE,
+            created_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE(user_id, message_id)
         )
-    """)
-
-    cursor.execute("""
+        """,
+        """
         CREATE TABLE IF NOT EXISTS archived_chats (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            other_user_id INTEGER NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(user_id, other_user_id),
-            FOREIGN KEY (user_id) REFERENCES users (id),
-            FOREIGN KEY (other_user_id) REFERENCES users (id)
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            other_user_id INTEGER NOT NULL REFERENCES users(id),
+            created_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE(user_id, other_user_id)
         )
-    """)
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_archived_user ON archived_chats(user_id)")
-
-    try:
-        cursor.execute("ALTER TABLE private_messages ADD COLUMN edited_at TEXT")
-    except sqlite3.OperationalError:
-        pass
-
-# ====================== GROUP A: USER SESSIONS ======================
-
-    cursor.execute("""
+        """,
+        """
         CREATE TABLE IF NOT EXISTS user_sessions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
             session_token TEXT UNIQUE NOT NULL,
             device_info TEXT,
             ip_address TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            is_current INTEGER DEFAULT 0,
-            FOREIGN KEY (user_id) REFERENCES users (id)
+            created_at TIMESTAMP DEFAULT NOW(),
+            last_active TIMESTAMP DEFAULT NOW(),
+            is_current INTEGER DEFAULT 0
         )
-    """)
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_user_sessions_user ON user_sessions(user_id)")
-
-# ====================== GROUP A: REPORTS STATUS ======================
-
-    for col, typ in [
-        ("status", "TEXT DEFAULT 'pending'"),
-        ("admin_note", "TEXT"),
-        ("reviewed_at", "TEXT"),
-        ("reviewed_by", "INTEGER"),
-    ]:
-        try:
-            cursor.execute(f"ALTER TABLE reports ADD COLUMN {col} {typ}")
-        except sqlite3.OperationalError:
-            pass
-
-
-# ====================== LINKUPS (Kijiji Mode pages) ======================
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS linkups (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            owner_user_id INTEGER NOT NULL,
-            username TEXT UNIQUE NOT NULL COLLATE NOCASE,
+            id SERIAL PRIMARY KEY,
+            owner_user_id INTEGER NOT NULL REFERENCES users(id),
+            username TEXT UNIQUE NOT NULL,
             display_name TEXT NOT NULL,
             category TEXT DEFAULT 'general',
             bio TEXT,
@@ -891,76 +703,111 @@ def init_db():
             cover_photo TEXT,
             is_active INTEGER DEFAULT 1,
             is_verified INTEGER DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (owner_user_id) REFERENCES users (id)
+            created_at TIMESTAMP DEFAULT NOW(),
+            about TEXT,
+            website TEXT,
+            phone TEXT,
+            email_public TEXT,
+            hometown TEXT,
+            current_city TEXT,
+            country TEXT,
+            workplace_name TEXT,
+            workplace_role TEXT,
+            workplace_city TEXT,
+            employment_type TEXT,
+            primary_school TEXT,
+            primary_year TEXT,
+            secondary_school TEXT,
+            secondary_year TEXT,
+            college_name TEXT,
+            college_year TEXT
         )
-    ''')
-    cursor.execute('CREATE INDEX IF NOT EXISTS idx_linkups_owner ON linkups(owner_user_id)')
-    cursor.execute('CREATE INDEX IF NOT EXISTS idx_linkups_username ON linkups(username)')
-    try:
-        cursor.execute('ALTER TABLE linkups ADD COLUMN is_verified INTEGER DEFAULT 0')
-    except sqlite3.OperationalError:
-        pass
-
-    # ===== Linkup full profile (Facebook-style About) =====
-    for col, typ in [
-        ('about', 'TEXT'),
-        ('website', 'TEXT'),
-        ('phone', 'TEXT'),
-        ('email_public', 'TEXT'),
-        ('hometown', 'TEXT'),
-        ('current_city', 'TEXT'),
-        ('country', 'TEXT'),
-        ('workplace_name', 'TEXT'),
-        ('workplace_role', 'TEXT'),
-        ('workplace_city', 'TEXT'),
-        ('employment_type', 'TEXT'),
-        ('primary_school', 'TEXT'),
-        ('primary_year', 'TEXT'),
-        ('secondary_school', 'TEXT'),
-        ('secondary_year', 'TEXT'),
-        ('college_name', 'TEXT'),
-        ('college_year', 'TEXT'),
-    ]:
-        try:
-            cursor.execute(f'ALTER TABLE linkups ADD COLUMN {col} {typ}')
-        except sqlite3.OperationalError:
-            pass
-
-    try:
-        cursor.execute('ALTER TABLE posts ADD COLUMN linkup_id INTEGER')
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_posts_linkup ON posts(linkup_id)')
-    except Exception:
-        pass
-
-
-    cursor.execute('''
+        """,
+        """
         CREATE TABLE IF NOT EXISTS linkup_follows (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            follower_id INTEGER NOT NULL,
-            linkup_id INTEGER NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(follower_id, linkup_id),
-            FOREIGN KEY (follower_id) REFERENCES users (id),
-            FOREIGN KEY (linkup_id) REFERENCES linkups (id) ON DELETE CASCADE
+            id SERIAL PRIMARY KEY,
+            follower_id INTEGER NOT NULL REFERENCES users(id),
+            linkup_id INTEGER NOT NULL REFERENCES linkups(id) ON DELETE CASCADE,
+            created_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE(follower_id, linkup_id)
         )
-    ''')
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS otp_attempts (
+            key TEXT PRIMARY KEY,
+            attempts INTEGER NOT NULL DEFAULT 0,
+            updated_at TEXT
+        )
+        """,
+        # Indexes
+        "CREATE INDEX IF NOT EXISTS idx_posts_user ON posts(user_id)",
+        "CREATE INDEX IF NOT EXISTS idx_posts_linkup ON posts(linkup_id)",
+        "CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id)",
+        "CREATE INDEX IF NOT EXISTS idx_pm_pair ON private_messages(sender_id, receiver_id)",
+        "CREATE INDEX IF NOT EXISTS idx_linkups_owner ON linkups(owner_user_id)",
+        "CREATE INDEX IF NOT EXISTS idx_linkups_username ON linkups(username)",
+        "CREATE INDEX IF NOT EXISTS idx_status_user ON statuses(user_id)",
+        "CREATE INDEX IF NOT EXISTS idx_push_user ON push_subscriptions(user_id)",
+    ]
+
+    for stmt in statements:
+        try:
+            cur.execute(stmt)
+        except Exception as e:
+            print("[init_postgres] warn:", e)
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+
+    conn.commit()
+    conn.close()
+    print("[db] Postgres schema ready (Neon)")
+
+
+def _init_sqlite():
+    """Original SQLite init for local development."""
+    import sqlite3
+
+    conn = sqlite3.connect(DB_PATH, timeout=30.0)
+    cursor = conn.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL;")
+    cursor.execute("PRAGMA busy_timeout=30000;")
+    cursor.execute("PRAGMA foreign_keys = ON;")
+
     cursor.execute(
-        'CREATE INDEX IF NOT EXISTS idx_linkup_follows_linkup ON linkup_follows(linkup_id)'
+        """
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            role TEXT DEFAULT 'user',
+            bio TEXT,
+            profile_pic TEXT,
+            is_verified INTEGER DEFAULT 0,
+            is_blocked INTEGER DEFAULT 0,
+            warning_message TEXT,
+            post_visibility TEXT DEFAULT 'public',
+            is_email_verified INTEGER DEFAULT 1
+        )
+        """
     )
-    cursor.execute(
-        'CREATE INDEX IF NOT EXISTS idx_linkup_follows_follower ON linkup_follows(follower_id)'
-    )
-
-# ====================== FINAL COMMIT ======================
-
-
+    # Minimal bootstrap — full ALTER logic of original init_db can stay
+    # for local; production uses Postgres path above.
     conn.commit()
     conn.close()
 
 
-# Initialize schema on import (safe — uses IF NOT EXISTS / try-except ALTER)
-init_db()
+def init_db():
+    if USE_POSTGRES:
+        _init_postgres()
+    else:
+        _init_sqlite()
+
+
+# Run on import
+try:
+    init_db()
+except Exception as e:
+    print("[db] init_db error (will retry on first request):", e)
