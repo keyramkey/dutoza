@@ -26,8 +26,8 @@ app = None
 VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY", "HWkzToktm9g98f8srg5Lo6MPDggTrxwGFfwzLnq7XYQ")
 VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY", "BDLkkmrKM007eSEby3amhKG3or37FOULg6bpmgnKL_M2HsNLxZXhIVA9fmqva0YPYVd3wo3U4omh_CwZUMqHZAo")
 VAPID_CLAIMS = {"sub": "mailto:keyaramadhan0@gmail.com"}
-GMAIL_ADDRESS = "matondomaduhu135@gmail.com"
-GMAIL_APP_PASSWORD = "neftrxmcxidjourc"
+GMAIL_ADDRESS = os.environ.get("GMAIL_ADDRESS", "matondomaduhu135@gmail.com")
+GMAIL_APP_PASSWORD = os.environ.get("GMAIL_APP_PASSWORD", "")
 SUPPORTED_LANGUAGES = {
     'sw': {'name': 'Kiswahili', 'flag': '🇹🇿'},
     'en': {'name': 'English', 'flag': '🇬🇧'},
