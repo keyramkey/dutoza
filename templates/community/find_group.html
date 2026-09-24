@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.community-wrap{max-width:700px;margin:auto;padding:16px 14px 30px}
+.community-wrap a{color:#1EB53A;text-decoration:none;font-weight:600}
+h1{color:#1EB53A;margin:12px 0 6px;font-size:22px}
+.sub{color:#666;font-size:14px;margin-bottom:14px}
+form{display:flex;gap:8px;margin:16px 0}
+input[type=search]{flex:1;padding:12px 14px;border:1.5px solid #ddd;border-radius:12px;font-size:15px;outline:none;background:#f8f9fa}
+input:focus{border-color:#1EB53A;background:#fff}
+button{padding:12px 18px;border:0;border-radius:12px;background:#1EB53A;color:#fff;font-weight:600;cursor:pointer}
+.group-card{background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);border:1px solid #eee}
+.group-card h3{margin:0 0 6px;font-size:16px;color:#111}
+.group-card p{margin:0 0 10px;font-size:13px;color:#555;line-height:1.4}
+.meta{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:#777;margin-bottom:12px}
+.meta span{background:#f1f5f2;padding:4px 10px;border-radius:20px}
+.btn-open{display:inline-block;background:#1EB53A;color:#fff!important;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none}
+.top-actions{display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.top-actions a.btn-create{background:#fff;color:#1EB53A!important;border:1.5px solid #1EB53A;padding:10px 14px;border-radius:10px;font-weight:600;text-decoration:none;font-size:13px}
+.empty{text-align:center;padding:40px 20px;color:#777;background:#f7f7f7;border-radius:12px;margin-top:16px}
+</style>
+<div class="community-wrap">
+    <a href="/community">← Community</a>
+    <h1>🔎 Find Group</h1>
+    <p class="sub">Tafuta au fungua group, uone idadi ya members.</p>
+    <div class="top-actions">
+        <a href="/community/create-group" class="btn-create">＋ Create Group</a>
+    </div>
+    <form action="/community/find-group" method="GET">
+        <input name="q" type="search" value="{{ query or '' }}" placeholder="Tafuta jina la group...">
+        <button type="submit">Search</button>
+    </form>
+    {% if groups and groups|length > 0 %}
+        {% for g in groups %}
+        <div class="group-card">
+            <h3>{{ g.name }}</h3>
+            <p>{{ g.description or 'Hakuna maelezo' }}</p>
+            <div class="meta">
+                <span>📂 {{ g.category }}</span>
+                <span>👥 {{ g.members_count }} members</span>
+                <span>👤 @{{ g.creator_name }}</span>
+            </div>
+            <a href="/community/group/{{ g.id }}" class="btn-open">Fungua Group</a>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty">
+            {% if query %}Hakuna group ya "{{ query }}"{% else %}Hakuna groups bado. Tengeneza ya kwanza!{% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

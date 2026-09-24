@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.community-wrap{max-width:600px;margin:auto;padding:16px 14px 30px}
+.community-wrap a{color:#1EB53A;text-decoration:none;font-weight:600}
+h1{color:#1EB53A;margin:12px 0 6px;font-size:22px}
+.sub{color:#666;font-size:14px;margin-bottom:18px}
+.card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+label{display:block;font-size:13px;font-weight:600;color:#333;margin-bottom:6px}
+input,textarea,select{width:100%;padding:12px 14px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;outline:none;margin-bottom:14px;background:#f8f9fa;box-sizing:border-box;font-family:inherit}
+input:focus,textarea:focus,select:focus{border-color:#1EB53A;background:#fff}
+textarea{min-height:90px;resize:vertical}
+button{width:100%;padding:13px;border:0;border-radius:10px;background:#1EB53A;color:#fff;font-weight:700;font-size:15px;cursor:pointer}
+button:hover{background:#189c32}
+</style>
+<div class="community-wrap">
+    <a href="/community/find-group">← Find Group</a>
+    <h1>＋ Create Group</h1>
+    <p class="sub">Tengeneza group, watu wataweza ku-join.</p>
+    <div class="card">
+        <form action="/community/create-group" method="POST">
+            <label>Jina la Group *</label>
+            <input type="text" name="name" placeholder="Mf. UDSM Computer Science" required>
+
+            <label>Maelezo</label>
+            <textarea name="description" placeholder="Eleza group lako kwa ufupi..."></textarea>
+
+            <label>Category</label>
+            <select name="category">
+                <option value="university">🎓 University</option>
+                <option value="gamers">🎮 Gamers</option>
+                <option value="politics">🗳️ Siasa</option>
+                <option value="agriculture">🌱 Agriculture</option>
+                <option value="business">💼 Business</option>
+                <option value="general">✨ General</option>
+            </select>
+
+            <button type="submit">Unda Group</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

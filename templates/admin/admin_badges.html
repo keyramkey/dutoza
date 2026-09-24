@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maombi ya Badge - Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background: #f0f2f5; padding-bottom: 40px; }
+        .topbar {
+            background: #1EB53A; color: white; padding: 14px 18px;
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .topbar h1 { font-size: 17px; display: flex; align-items: center; gap: 8px; }
+        .topbar a { color: white; text-decoration: none; font-size: 13px; background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 6px; }
+        .container { max-width: 800px; margin: 16px auto; padding: 0 12px; }
+        .flash-msg { background: #e7f3ff; color: #1EB53A; padding: 10px; border-radius: 8px; margin-bottom: 14px; text-align: center; font-size: 14px; border: 1px solid #b6d4fe; }
+        .sub-tabs { display: flex; gap: 8px; margin-bottom: 14px; overflow-x: auto; }
+        .sub-tab {
+            background: #f0f2f5; border: none; padding: 8px 16px; border-radius: 20px;
+            font-size: 13px; font-weight: bold; color: #65676b; cursor: pointer; white-space: nowrap;
+        }
+        .sub-tab.active { background: #1EB53A; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .badge-detail-card {
+            background: #fff; border: 1px solid #e4e6eb; border-radius: 12px;
+            padding: 14px 16px; margin-bottom: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
+        .badge-detail-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px;
+            margin-top: 10px; font-size: 13px;
+        }
+        @media (max-width: 560px) { .badge-detail-grid { grid-template-columns: 1fr; } }
+        .bd-label { font-size: 11px; color: #65676b; font-weight: 600; text-transform: uppercase; }
+        .bd-value { color: #050505; font-weight: 600; margin-top: 2px; word-break: break-word; }
+        .badge-doc-link {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #e7f3ff; color: #00A3DD; padding: 8px 12px;
+            border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none; margin-top: 4px;
+        }
+        .action-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+        .btn-verify { background: #00A3DD; color: white; border: none; padding: 7px 12px; border-radius: 5px; font-size: 12px; cursor: pointer; font-weight: bold; }
+        .btn-reject { background: #6c757d; color: white; border: none; padding: 7px 12px; border-radius: 5px; font-size: 12px; cursor: pointer; font-weight: bold; }
+        .empty { color: #777; font-size: 14px; padding: 20px 0; text-align: center; }
+    </style>
+</head>
+<body>
+<div class="topbar">
+    <h1><i class="fa-solid fa-certificate"></i> Maombi ya Verified Badge</h1>
+    <a href="{{ url_for('admin_dashboard') }}"><i class="fa-solid fa-arrow-left"></i> Dashboard</a>
+</div>
+
+<div class="container">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="flash-msg">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="sub-tabs">
+        <button class="sub-tab active" onclick="switchTab('pending', this)">
+            <i class="fa-solid fa-hourglass-half"></i> Ambao Bado
+        </button>
+        <button class="sub-tab" onclick="switchTab('approved', this)">
+            <i class="fa-solid fa-circle-check"></i> Waliokubaliwa
+        </button>
+    </div>
+
+    <div id="tab-pending" class="tab-content active">
+        {% if pending_badge_requests %}
+            {% for req in pending_badge_requests %}
+            <div class="badge-detail-card" {% if req.request_type == 'linkup' %}style="border:2px solid #F5B800;"{% endif %}>
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+                    <div>
+                        <strong style="font-size:16px;">
+                            <a href="/profile/{{ req.username }}" target="_blank" style="color:#1EB53A;text-decoration:none;">
+                                @{{ req.username }}
+                            </a>
+                            {% if req.request_type == 'linkup' %}
+                            <span style="font-size:11px;background:linear-gradient(135deg,#F5B800,#D97706);color:#fff;padding:2px 8px;border-radius:10px;margin-left:6px;">LINKUP BADGE</span>
+                            {% else %}
+                            <span style="font-size:11px;background:#e7f3ff;color:#00A3DD;padding:2px 8px;border-radius:10px;margin-left:6px;">PROFILE BADGE</span>
+                            {% endif %}
+                        </strong>
+                        <span style="display:block;font-size:12px;color:#777;margin-top:2px;">
+                            Ombi #{{ req.id }} · {{ req.created_at }}
+                            {% if req.request_type == 'linkup' and req.linkup_id %}
+                            · Linkup ID: {{ req.linkup_id }}
+                            {% if req.alias_name %} · “{{ req.alias_name }}”{% endif %}
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="action-btns">
+                        {% if req.request_type == 'linkup' %}
+                        <form action="/admin/approve_linkup_badge/{{ req.id }}" method="POST" style="display:inline;">
+                            <button type="submit" class="btn-verify" style="background:#F5B800;"><i class="fa-solid fa-check"></i> Kubali Linkup</button>
+                        </form>
+                        <form action="/admin/reject_linkup_badge/{{ req.id }}" method="POST" style="display:inline;">
+                            <button type="submit" class="btn-reject"><i class="fa-solid fa-xmark"></i> Kataa</button>
+                        </form>
+                        {% else %}
+                        <form action="/admin/approve_badge/{{ req.user_id }}" method="POST" style="display:inline;">
+                            <button type="submit" class="btn-verify"><i class="fa-solid fa-check"></i> Kubali</button>
+                        </form>
+                        <form action="/admin/reject_badge/{{ req.id }}" method="POST" style="display:inline;">
+                            <button type="submit" class="btn-reject"><i class="fa-solid fa-xmark"></i> Kataa</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="badge-detail-grid">
+                    <div>
+                        <div class="bd-label">Aina ya Akaunti</div>
+                        <div class="bd-value">{{ req.account_type or '—' }}</div>
+                    </div>
+                    <div>
+                        <div class="bd-label">Sababu / Maelezo</div>
+                        <div class="bd-value">{{ req.reason or req.description or '—' }}</div>
+                    </div>
+                    {% if req.id_document_path %}
+                    <div>
+                        <div class="bd-label">Kitambulisho</div>
+                        <div class="bd-value">
+                            <a class="badge-doc-link" href="/admin/badge_file/{{ req.id_document_path }}" target="_blank">
+                                <i class="fa-solid fa-file"></i> Angalia Hati
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if req.full_name %}
+                    <div>
+                        <div class="bd-label">Jina Kamili</div>
+                        <div class="bd-value">{{ req.full_name }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="empty">Hakuna ombi la badge linalosubiri.</p>
+        {% endif %}
+    </div>
+
+    <div id="tab-approved" class="tab-content">
+        {% if approved_badge_requests %}
+            {% for req in approved_badge_requests %}
+            <div class="badge-detail-card">
+                <strong style="font-size:15px;">
+                    <a href="/profile/{{ req.username }}" target="_blank" style="color:#1EB53A;text-decoration:none;">@{{ req.username }}</a>
+                    <span style="font-size:11px;background:#d4edda;color:#155724;padding:2px 8px;border-radius:10px;margin-left:6px;">APPROVED</span>
+                </strong>
+                <span style="display:block;font-size:12px;color:#777;margin-top:4px;">
+                    Ombi #{{ req.id }} · {{ req.created_at }}
+                </span>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="empty">Hakuna badge zilizokubaliwa bado.</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function switchTab(name, btn) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.sub-tab').forEach(el => el.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    btn.classList.add('active');
+}
+</script>
+</body>
+</html>

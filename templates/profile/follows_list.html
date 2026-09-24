@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - @{{ profile_user.username }} - Kijiji Tanzania</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f0f2f5; color: #333; padding-bottom: 70px; }
+        header {
+            background: #ffffff;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        header a { color: #1EB53A; font-size: 20px; text-decoration: none; margin-right: 15px; }
+        header h1 { font-size: 18px; color: #1EB53A; }
+        .container { max-width: 600px; margin: 20px auto; padding: 0 15px; }
+        .user-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .user-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #e4e6eb;
+            object-fit: cover;
+        }
+        .user-info { flex: 1; }
+        .user-info strong {
+            font-size: 15px;
+            color: #050505;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .user-info span {
+            display: block;
+            font-size: 13px;
+            color: #65676b;
+        }
+        .btn-view {
+            background: #1EB53A;
+            color: white;
+            text-decoration: none;
+            padding: 7px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .btn-view:hover { background: #189c32; }
+        .empty-msg {
+            text-align: center;
+            color: #65676b;
+            padding: 50px 20px;
+            font-size: 15px;
+            background: #fff;
+            border-radius: 12px;
+        }
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #ffffff;
+            border-top: 1px solid #ddd;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            z-index: 1000;
+        }
+        .bottom-nav a {
+            color: #65676b;
+            text-align: center;
+            font-size: 20px;
+            text-decoration: none;
+        }
+        .bottom-nav a.active { color: #1EB53A; }
+        .verified-badge {
+            width: 14px;
+            height: 14px;
+            display: inline-block;
+        }
+    
+        .btn-follow-list { border: none; cursor: pointer; font-family: inherit; }
+        .btn-follow-list.following { background: #e4e6eb; color: #050505; }
+        .btn-follow-list.friends { background: linear-gradient(135deg,#1EB53A,#00A3DD); }
+        .btn-follow-list.follow-back { background: #00A3DD; }
+</style>
+</head>
+<body>
+
+    <header>
+        <a href="{{ url_for('profile', username=profile_user.username) }}"><i class="fa-solid fa-arrow-left"></i></a>
+        <h1>{{ title }} ya @{{ profile_user.username }}</h1>
+    </header>
+
+    <div class="container">
+        {% if users and users|length > 0 %}
+            {% for u in users %}
+            <div class="user-card">
+                <img src="{{ url_for('static', filename='uploads/' + u.profile_pic) if u.profile_pic else url_for('static', filename='images/default-avatar.png.jfif') }}"
+                     class="user-avatar"
+                     onerror="this.src='https://via.placeholder.com/48'">
+                <div class="user-info">
+                    <strong>
+                        @{{ u.username }}
+                        {% if u.is_verified == 1 %}
+                        <svg class="verified-badge" viewBox="0 0 24 24">
+                            <path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="#00A3DD"/>
+                            <path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#FFFFFF"/>
+                        </svg>
+                        {% endif %}
+                    </strong>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+                    {% if session.get('user_id') and session.get('user_id') != u.id %}
+                    <button type="button"
+                            class="btn-view btn-follow-list {% if u.is_friend %}friends{% elif u.is_following %}following{% elif u.follows_you %}follow-back{% endif %}"
+                            data-username="{{ u.username }}"
+                            data-following="{{ 1 if u.is_following else 0 }}"
+                            data-follows-you="{{ 1 if u.follows_you else 0 }}"
+                            data-friends="{{ 1 if u.is_friend else 0 }}"
+                            onclick="listToggleFollow(this)">
+                        {% if u.is_friend %}Friends
+                        {% elif u.is_following %}Following
+                        {% elif u.follows_you %}Follow back
+                        {% else %}Follow{% endif %}
+                    </button>
+                    {% endif %}
+                    <a href="{{ url_for('profile', username=u.username) }}" class="btn-view" style="background:#00A3DD;">Tazama</a>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-msg">
+                {% if title == "Followers" %}
+                    Hakuna wafuasi bado.
+                {% elif title == "Friends" %}
+                    Hakuna friends bado (follow back → friends).
+                {% else %}
+                    Hakuna anayefuatwa bado.
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="bottom-nav">
+        <a href="{{ url_for('home') }}"><i class="fa-solid fa-house"></i></a>
+        <a href="{{ url_for('search') }}"><i class="fa-solid fa-magnifying-glass"></i></a>
+        <a href="{{ url_for('notifications') }}"><i class="fa-solid fa-bell"></i></a>
+        <a href="{{ url_for('profile', username=session.username) }}"><i class="fa-solid fa-user"></i></a>
+    </div>
+
+
+<script>
+function listToggleFollow(btn) {
+  if (!btn || btn.disabled) return;
+  var username = btn.getAttribute('data-username');
+  if (!username) return;
+  btn.disabled = true;
+  fetch('/follow/' + encodeURIComponent(username), {
+    method: 'POST',
+    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (!data.success) return;
+    btn.setAttribute('data-following', data.following ? '1' : '0');
+    btn.setAttribute('data-friends', data.friends ? '1' : '0');
+    if (typeof data.follows_you !== 'undefined') btn.setAttribute('data-follows-you', data.follows_you ? '1' : '0');
+    btn.classList.remove('following', 'friends', 'follow-back');
+    if (data.friends) { btn.classList.add('friends'); btn.textContent = 'Friends'; }
+    else if (data.following) { btn.classList.add('following'); btn.textContent = 'Following'; }
+    else if (data.follows_you) { btn.classList.add('follow-back'); btn.textContent = 'Follow back'; }
+    else { btn.textContent = 'Follow'; }
+  })
+  .finally(function() { btn.disabled = false; });
+}
+</script>
+</body>
+</html>

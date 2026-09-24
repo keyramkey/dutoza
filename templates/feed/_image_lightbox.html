@@ -1,0 +1,91 @@
+<!-- Image Fullscreen Viewer (layout kama Reels) -->
+<div id="image-lightbox">
+    <div class="img-full-frame">
+        <button type="button" class="lb-close" onclick="closeImageLightbox()" title="Funga"><i class="fa-solid fa-xmark"></i></button>
+        <img id="lightbox-img" src="" alt="Full image">
+
+        <!-- Profile + username (kama Reels) -->
+        <div class="img-bottom-info" id="img-bottom-info">
+            <a href="#" id="img-full-profile-link" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:#fff;">
+                <img id="img-full-avatar" src="" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid #fff;background:#333;">
+                <span id="img-full-username" style="font-weight:700;font-size:15px;text-shadow:0 1px 3px rgba(0,0,0,.8);">@user</span>
+            </a>
+            <div class="img-full-caption" id="img-full-caption"></div>
+        </div>
+
+        <!-- Side actions kama Reels -->
+        <div class="img-side-actions">
+            <button type="button" class="img-side-btn" onclick="imgFullLike(); event.stopPropagation();">
+                <i class="fa-solid fa-heart" id="img-full-like-icon"></i>
+                <span id="img-full-likes">0</span>
+            </button>
+            <button type="button" class="img-side-btn" onclick="imgFullComment(); event.stopPropagation();">
+                <i class="fa-solid fa-comment"></i>
+                <span id="img-full-comments">0</span>
+            </button>
+            <button type="button" class="img-side-btn" onclick="imgFullShare(); event.stopPropagation();">
+                <i class="fa-solid fa-share"></i>
+                <span>Share</span>
+            </button>
+            <button type="button" class="img-side-btn" onclick="imgFullSave(); event.stopPropagation();">
+                <i class="fa-regular fa-bookmark" id="img-full-save-icon"></i>
+                <span id="img-full-save-text">Save</span>
+            </button>
+            <button type="button" class="img-side-btn" onclick="toggleImgFullMenu(); event.stopPropagation();" style="position:relative;">
+                <i class="fa-solid fa-ellipsis-vertical"></i>
+                <span>More</span>
+            </button>
+            <div class="img-full-dropdown" id="img-full-dropdown">
+                <button type="button" onclick="imgFullReport()"><i class="fa-solid fa-flag" style="color:#dc3545;"></i> Report</button>
+                <button type="button" onclick="imgFullNotInterested()"><i class="fa-solid fa-ban" style="color:#dc3545;"></i> Not Interested</button>
+                <button type="button" onclick="imgFullShare()"><i class="fa-solid fa-link" style="color:#1EB53A;"></i> {{ t('copy_link') }}</button>
+                <button type="button" onclick="imgFullOpenProfile()"><i class="fa-solid fa-user" style="color:#1EB53A;"></i> Profile</button>
+            </div>
+        </div>
+
+        <div class="reels-comment-panel" id="img-comment-panel">
+            <div class="reels-comment-header">
+                <span id="img-comment-title">{{ t('comments') }}</span>
+                <button type="button" class="reels-comment-close" onclick="closeImageComments()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="reels-comments-list" id="img-comments-list"></div>
+            <!-- Form inatumika kutoka feed comments section inayohamishwa; fallback form: -->
+            <form class="reels-comment-form" id="img-comment-form" onsubmit="addImageComment(event)" style="display:none;">
+                <input type="text" id="img-comment-input" placeholder="{{ t('type_comment') }}" required>
+                <button type="submit"><i class="fa-solid fa-paper-plane"></i></button>
+            </form>
+        </div>
+    </div>
+</div><!-- ===== TIKTOK / REELS VIEWER WITH SMART FRAME & NAVIGATION ===== -->
+<div id="reels-viewer">
+    <div class="reels-stage-frame">
+        <button class="reels-close" onclick="closeReels()" title="Funga Reels">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="reels-container" id="reels-container"></div>
+
+        <!-- Comment Panel ndani ya Reels -->
+        <div class="reels-comment-panel" id="reels-comment-panel">
+            <div class="reels-comment-header">
+                <span id="reels-comment-title">{{ t('comments') }}</span>
+                <button class="reels-comment-close" onclick="closeReelsComments()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="reels-comments-list" id="reels-comments-list"></div>
+            <div class="reels-replying-to" id="reels-replying-to">
+                <span id="reels-replying-text">Replying to user</span>
+                <button type="button" onclick="cancelReelReply()">{{ t('cancel') }}</button>
+            </div>
+            <form class="reels-comment-form" id="reels-comment-form" onsubmit="addReelComment(event)">
+                <input type="text" id="reels-comment-input" placeholder="{{ t('type_comment') }}" required>
+                <button type="submit"><i class="fa-solid fa-paper-plane"></i></button>
+            </form>
+        </div>
+    </div>
+</div>
+
+

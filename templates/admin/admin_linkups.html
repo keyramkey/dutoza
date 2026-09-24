@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin · Linkups - Kijiji Tanzania</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f0f2f5;color:#0f172a;padding:16px;padding-bottom:40px}
+h1{font-size:20px;margin-bottom:8px;color:#1EB53A}
+.sub{font-size:13px;color:#64748b;margin-bottom:16px}
+.card{background:#fff;border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.card h2{font-size:15px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.row{display:flex;gap:10px;align-items:center;padding:10px 0;border-top:1px solid #f1f5f9;flex-wrap:wrap}
+.row:first-of-type{border-top:0}
+.av{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#1EB53A,#00A3DD);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0;overflow:hidden}
+.av img{width:100%;height:100%;object-fit:cover}
+.meta{flex:1;min-width:140px}
+.meta strong{display:block;font-size:14px}
+.meta span{font-size:12px;color:#64748b;display:block}
+.btns{display:flex;flex-wrap:wrap;gap:6px}
+button,.btn{border:none;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:4px;font-family:inherit}
+.btn-g{background:#1EB53A;color:#fff}
+.btn-b{background:#00A3DD;color:#fff}
+.btn-r{background:#fee2e2;color:#b91c1c}
+.btn-x{background:#e2e8f0;color:#334155}
+.badge{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:700;display:inline-block}
+.badge.on{background:#ecfdf5;color:#15803d}
+.badge.off{background:#f1f5f9;color:#64748b}
+.badge.gold{background:#fef3c7;color:#b45309}
+.empty{text-align:center;color:#64748b;padding:20px;font-size:13px}
+a.back{display:inline-block;margin-bottom:12px;color:#1EB53A;text-decoration:none;font-weight:600}
+</style>
+</head>
+<body>
+<a class="back" href="/admin">← Admin</a>
+<h1><i class="fa-solid fa-link"></i> Linkups</h1>
+<p class="sub">Akaunti za Linkup + maombi ya Verified Badge</p>
+
+<div class="card">
+  <h2><i class="fa-solid fa-certificate" style="color:#F5B800"></i> Maombi ya Badge (Linkup) — {{ pending_badges|length }}</h2>
+  {% if pending_badges %}
+    {% for r in pending_badges %}
+    <div class="row">
+      <div class="av">{{ (r.linkup_name or 'L')[0]|upper }}</div>
+      <div class="meta">
+        <strong>{{ r.linkup_name or 'Linkup' }} <span class="badge gold">Badge</span></strong>
+        <span>@{{ r.linkup_username or '—' }} · ombi la @{{ r.username }} · {{ r.created_at or '' }}</span>
+        {% if r.reason %}<span style="margin-top:4px;color:#334155">{{ r.reason[:160] }}{% if r.reason|length > 160 %}…{% endif %}</span>{% endif %}
+      </div>
+      <div class="btns">
+        <form method="post" action="{{ url_for('admin_approve_linkup_badge', req_id=r.id) }}" style="display:inline">
+          <button class="btn-g" type="submit">Kubali</button>
+        </form>
+        <form method="post" action="{{ url_for('admin_reject_linkup_badge', req_id=r.id) }}" style="display:inline">
+          <button class="btn-r" type="submit">Kataa</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <p class="empty">Hakuna ombi la badge ya Linkup linalosubiri.</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2><i class="fa-solid fa-link"></i> Linkups zote — {{ linkups|length }}</h2>
+  {% if linkups %}
+    {% for l in linkups %}
+    <div class="row">
+      <div class="av">
+        {% if l.profile_pic %}
+        <img src="{{ url_for('static', filename='uploads/' + l.profile_pic) }}" alt="">
+        {% else %}
+        {{ (l.display_name or 'L')[0]|upper }}
+        {% endif %}
+      </div>
+      <div class="meta">
+        <strong>
+          <a href="{{ url_for('linkup_public', username=l.username) }}" target="_blank" style="color:#0f172a;text-decoration:none;">
+            {{ l.display_name }}
+          </a>
+          {% if l.is_verified %}<span class="badge gold">Verified</span>{% endif %}
+          {% if not l.is_active %}<span class="badge off">Blocked</span>{% else %}<span class="badge on">Active</span>{% endif %}
+        </strong>
+        <span>
+          <a href="{{ url_for('linkup_public', username=l.username) }}" target="_blank" style="color:#64748b;">@{{ l.username }}</a>
+          · {{ l.category or 'general' }} · owner @{{ l.owner_username or l.owner_user_id }}
+        </span>
+        <span>
+          {{ l.followers_count or 0 }} followers ·
+          <a href="{{ url_for('admin_linkup_posts', linkup_id=l.id) }}" style="color:#00A3DD;font-weight:700;">
+            {{ l.posts_count or 0 }} posts
+          </a>
+          · {{ l.created_at or '' }}
+        </span>
+      </div>
+      <div class="btns">
+        {# Buttons: Verify · Block · Futa tu. Jina = link public. "X posts" = link ya kuona/futa posts. #}
+        <form method="post" action="{{ url_for('admin_linkup_verify', linkup_id=l.id) }}" style="display:inline">
+          <button class="btn-g" type="submit">{% if l.is_verified %}Ondoa badge{% else %}Verify{% endif %}</button>
+        </form>
+        <form method="post" action="{{ url_for('admin_linkup_block', linkup_id=l.id) }}" style="display:inline">
+          <button class="btn-x" type="submit">{% if l.is_active %}Block{% else %}Unblock{% endif %}</button>
+        </form>
+        <form method="post" action="{{ url_for('admin_linkup_delete', linkup_id=l.id) }}" style="display:inline" onsubmit="return confirm('Futa Linkup hii kabisa?');">
+          <button class="btn-r" type="submit">Futa</button>
+        </form>
+      </div>
+
+
+    </div>
+    {% endfor %}
+  {% else %}
+    <p class="empty">Hakuna Linkup bado.</p>
+  {% endif %}
+</div>
+</body>
+</html>

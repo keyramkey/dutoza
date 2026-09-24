@@ -1,0 +1,457 @@
+<style>
+/* ===== REPOST FRAME (post asili ndani ya repost) - ukubwa mmoja kwa zote ===== */
+.repost-frame {
+    display: flex;
+    flex-direction: column;
+    height: 380px;
+    margin: 6px 0 12px;
+    padding: 14px;
+    border: 1px solid #d9e2dc;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #fbfdfb 0%, #f2f7f3 100%);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    text-decoration: none;
+    color: inherit;
+    overflow: hidden;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform .15s, box-shadow .15s;
+}
+.repost-frame:active { transform: scale(0.99); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.repost-frame .rf-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex: 0 0 auto; }
+.repost-frame .rf-avatar-link {
+    display: block; flex-shrink: 0; line-height: 0;
+    text-decoration: none; -webkit-tap-highlight-color: transparent;
+}
+.repost-frame .rf-avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    object-fit: cover; background: #e4e6eb; flex-shrink: 0;
+    border: 2px solid #1EB53A;
+}
+.repost-frame .rf-who { min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
+.repost-frame .rf-who strong {
+    font-size: 14px; color: #050505;
+    display: inline-flex; align-items: center; gap: 4px;
+}
+.repost-frame .rf-who span { font-size: 12px; color: #65676b; }
+.repost-frame .rf-text {
+    flex: 0 0 auto;
+    font-size: 14px; color: #1c1e21; line-height: 1.45;
+    white-space: pre-wrap; word-break: break-word;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+    overflow: hidden; margin-bottom: 10px;
+}
+/* Kama hakuna picha/video: maandishi yanajaza frame */
+.repost-frame.rf-text-only .rf-text {
+    flex: 1 1 auto; min-height: 0; margin-bottom: 0;
+    font-size: 17px; line-height: 1.55;
+    -webkit-line-clamp: 10;
+}
+.repost-frame .rf-media {
+    position: relative; flex: 1 1 auto; min-height: 0;
+    border-radius: 12px; overflow: hidden; background: #0d1117;
+}
+.repost-frame .rf-media img,
+.repost-frame .rf-media video {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%; object-fit: cover;
+    pointer-events: none;
+}
+.repost-frame .rf-play {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 44px; text-shadow: 0 2px 10px rgba(0,0,0,.6);
+    background: rgba(0,0,0,.2);
+}
+.repost-frame .rf-doc {
+    flex: 1 1 auto; min-height: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+    padding: 12px; text-align: center; word-break: break-word;
+    background: #fff; border: 1px solid #e4e6eb; border-radius: 12px;
+    font-size: 13px; color: #1c1e21;
+}
+.repost-frame .rf-doc i { font-size: 34px; color: #1EB53A; }
+.repost-frame.rf-missing {
+    height: auto; align-items: center; justify-content: center;
+    cursor: default; color: #65676b; font-size: 13px; text-align: center; padding: 22px 16px;
+}
+</style>
+
+    {% if posts_data %}
+        {% for post in posts_data %}
+        <div class="card" id="post-card-{{ post.id }}">
+            <div class="post-header">
+                <div class="post-header-left">
+                    <div class="profile-avatar-wrapper">
+                        <a href="{% if post.is_linkup_post %}/linkup/{{ post.linkup_username or post.username }}{% else %}/profile/{{ post.owner_username or post.username }}{% endif %}" style="display:block;">
+                        <img src="{{ post.profile_pic|avatar(post.full_name or post.username) }}"
+                             onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/default-avatar.png.jfif') }}';"
+                             alt="Avatar"
+                             class="profile-avatar">
+                        </a>
+                    </div>
+                    <div class="post-header-info">
+                        <strong>
+                            {% if post.is_linkup_post %}
+                            <a href="/linkup/{{ post.linkup_username or post.username }}" style="text-decoration: none; color: inherit;">{% if post.full_name %}{{ post.full_name }}{% else %}{{ post.username }}{% endif %}</a>
+                            {% if post.linkup_verified or (post.linkup and post.linkup.is_verified) %}
+                            <svg class="verified-badge-custom" viewBox="0 0 24 24" title="Verified Linkup" style="width:16px;height:16px;vertical-align:middle;">
+                                <path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="#F5B800"/>
+                                <path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#FFFFFF"/>
+                            </svg>
+                            {% endif %}
+                            <span style="font-size:11px;background:#f0fdf4;color:#1EB53A;padding:2px 8px;border-radius:10px;font-weight:700;margin-left:4px;vertical-align:middle;">Linkup</span>
+                            {% else %}
+                            <a href="/profile/{{ post.username }}" style="text-decoration: none; color: inherit;">{% if post.full_name %}{{ post.full_name }}{% else %}{{ post.username }}{% endif %}</a>
+                            {% if post.is_verified == 1 %}
+                            <svg class="verified-badge-custom" viewBox="0 0 24 24" title="Verified Account">
+                                <path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="#8A2BE2"/>
+                                <path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#FFFFFF"/>
+                            </svg>
+                            {% endif %}
+                            {% endif %}
+
+                            {% if post.is_linkup_post and not post.is_linkup_owner and not post.is_following_linkup %}
+                            <button class="btn-follow-inline"
+                                    data-linkup-id="{{ post.linkup_id }}"
+                                    data-following="0"
+                                    onclick="followLinkup({{ post.linkup_id }}, this)">
+                                · {{ t('follow') }}
+                            </button>
+                            {% elif not post.is_linkup_post and post.user_id != session.get('user_id') and post.username != session.get('username') and not post.is_following %}
+                            <button class="btn-follow-inline{% if post.follows_you %} follow-back{% endif %}"
+                                    data-username="{{ post.username }}"
+                                    data-following="0"
+                                    data-follows-you="{{ 1 if post.follows_you else 0 }}"
+                                    onclick="followUser('{{ post.username }}', this, {{ post.id }})">
+                                {% if post.follows_you %}· Follow back{% else %}· {{ t('follow') }}{% endif %}
+                            </button>
+                            {% elif not post.is_linkup_post and post.user_id != session.get('user_id') and post.username != session.get('username') and post.is_following and post.follows_you %}
+                            <span class="friends-inline-badge" title="Friends"><i class="fa-solid fa-user-group"></i> Friends</span>
+                            {% endif %}
+
+                            {% if my_village_mode and not post.is_linkup_post and (post.user_id == session.get('user_id') or post.username == session.get('username')) %}
+                            <a href="/insights#post-insight-{{ post.id }}" class="post-insight-link" title="Ona Insights za post hii" style="margin-left:6px;font-size:12px;color:#00A3DD;text-decoration:none;">
+                                <i class="fa-solid fa-chart-simple"></i>
+                            </a>
+                            {% endif %}
+                        </strong>
+                        <span>{% if post.is_linkup_post %}@{{ post.linkup_username or post.username }} · Linkup{% if post.linkup_category %} · {{ post.linkup_category }}{% endif %} · <span class="linkup-followers-count" data-linkup-id="{{ post.linkup_id }}" style="white-space:nowrap;">{{ post.linkup_followers_count if post.linkup_followers_count is defined else (post.followers_count or 0) }} followers</span>{% else %}@{{ post.username }}{% if post.follows_you and not post.is_following %} · <span class="follows-you-label">Follows you</span>{% endif %}{% if post.followers_count is defined %} · {{ post.followers_count }} followers{% endif %}{% endif %}</span>
+                    </div>
+                </div>
+
+                <div class="post-menu-container" style="margin-left:auto;">
+                    <button type="button" class="post-menu-btn" onclick="togglePostMenu({{ post.id }});event.stopPropagation();">
+                        <i class="fa-solid fa-ellipsis"></i>
+                    </button>
+                    <div class="post-dropdown" id="post-dropdown-{{ post.id }}">
+
+                        {% if post.user_id == session.get('user_id') or post.username == username %}
+                            <a href="/edit_post/{{ post.id }}"><i class="fa-solid fa-pen-to-square" style="color: #1EB53A;"></i> {{ t('edit_post') }}</a>
+                            <form action="/delete_post/{{ post.id }}" method="POST" onsubmit="return confirm('Una uhakika unataka kufuta post hii?');" style="margin: 0;">
+                                <button type="submit" style="color: #dc3545;"><i class="fa-solid fa-trash"></i> {{ t('delete_post') }}</button>
+                            </form>
+                        {% else %}
+                            {% if not post.is_following %}
+                                <button onclick="followUser('{{ post.username }}', this)"><i class="fa-solid fa-user-plus" style="color: #1EB53A;"></i> {% if post.follows_you %}Follow back{% else %}{{ t('follow') }}{% endif %}</button>
+                            {% endif %}
+                            <button onclick="repostPost({{ post.id }})"><i class="fa-solid fa-retweet" style="color: #28a745;"></i> Repost</button>
+                            <button onclick="openReportModal({{ post.id }})"><i class="fa-solid fa-flag" style="color: #dc3545;"></i> Report this post</button>
+                            <button onclick="setPostInterest({{ post.id }}, 'interested')"><i class="fa-solid fa-check" style="color: #28a745;"></i> Interested</button>
+                            <button onclick="setPostInterest({{ post.id }}, 'not_interested')"><i class="fa-solid fa-ban" style="color: #dc3545;"></i> Not Interested</button>
+                        {% endif %}
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="post-time-line" style="font-size:12px;color:#65676b;margin:0 0 6px;font-weight:500;">
+                <span class="rel-time" data-ts="{{ post.created_at }}">{{ post.created_at }}</span>
+            </div>
+            {% if post.content or not post.repost_of %}
+            <div class="post-content">{{ post.content }}</div>
+            {% endif %}
+            {% if post.repost_of %}
+    {% set o = post.orig %}
+    {% if o %}
+    {% set o_profile_url = '/linkup/' + (o.linkup_username or o.username) if o.is_linkup_post else '/profile/' + (o.username or '') %}
+    <div class="repost-frame {% if o.file_path %}rf-has-media{% else %}rf-text-only{% endif %}"
+         role="link" tabindex="0"
+         data-href="/post/{{ o.id }}"
+         onclick="if(!event.target.closest('a')) window.location.href=this.dataset.href;"
+         onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href=this.dataset.href;}">
+        <div class="rf-head">
+            <a href="{{ o_profile_url }}" class="rf-avatar-link" onclick="event.stopPropagation();" title="@{{ o.username }}">
+                <img class="rf-avatar"
+                     src="{{ o.profile_pic|avatar(o.full_name or o.username) }}"
+                     onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/default-avatar.png.jfif') }}';"
+                     alt="">
+            </a>
+            <div class="rf-who">
+                <strong>
+                    <a href="{{ o_profile_url }}" style="text-decoration:none;color:inherit;" onclick="event.stopPropagation();">
+                        {{ o.full_name or o.username }}
+                    </a>
+                    {% if o.is_verified == 1 or o.linkup_verified %}
+                    <svg viewBox="0 0 24 24" style="width:14px;height:14px;vertical-align:middle;" title="Verified Account">
+                        <path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="{% if o.is_linkup_post %}#F5B800{% else %}#8A2BE2{% endif %}"/>
+                        <path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#FFFFFF"/>
+                    </svg>
+                    {% endif %}
+                </strong>
+                <span>
+                    <a href="{{ o_profile_url }}" style="text-decoration:none;color:inherit;" onclick="event.stopPropagation();">@{{ o.username }}</a>
+                    · <span class="rel-time" data-ts="{{ o.created_at }}">{{ o.created_at }}</span>
+                </span>
+            </div>
+        </div>
+
+        {% if o.content %}
+        <div class="rf-text">{{ o.content }}</div>
+        {% endif %}
+
+        {% if o.file_path %}
+            {% if o.media_type == 'video' %}
+            <div class="rf-media">
+                <video src="{{ url_for('static', filename='uploads/' + o.file_path) }}" preload="metadata" muted playsinline></video>
+                <div class="rf-play"><i class="fa-solid fa-circle-play"></i></div>
+            </div>
+            {% elif o.media_type == 'document' or o.media_type == 'file' %}
+            <div class="rf-doc">
+                <i class="fa-solid fa-file"></i>
+                <span>{{ o.file_path.split('_', 1)[-1] }}</span>
+            </div>
+            {% else %}
+            <div class="rf-media">
+                <img src="{{ url_for('static', filename='uploads/' + o.file_path) }}" alt="Post media" loading="lazy">
+            </div>
+            {% endif %}
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="repost-frame rf-missing">
+        <i class="fa-solid fa-circle-exclamation"></i> Post hii ya asili imefutwa au haipatikani.
+    </div>
+    {% endif %}
+{% endif %}
+
+
+            {% if post.file_path %}
+            <div class="post-media">
+                {% if post.media_type == 'video' %}
+                    <!-- FEED VIDEO CARD — bofya fungua uwanja -->
+                    <div class="feed-video-card"
+                         id="player-{{ post.id }}"
+                         data-post-id="{{ post.id }}"
+                         data-src="{{ url_for('static', filename='uploads/' + post.file_path) }}"
+                         data-username="{{ post.username }}"
+                         data-fullname="{{ (post.full_name or post.username)|e }}"
+                         data-content="{{ post.content|e }}"
+                         data-profile="{{ post.profile_pic or '' }}"
+                         data-likes="{{ post.likes_count }}"
+                         data-comments="{{ post.comments|length if post.comments is defined else (post.comments_count or 0) }}"
+                         data-shares="{{ post.shares or 0 }}"
+                         data-saved="{{ post.saved_count or 0 }}"
+                         data-user-liked="{{ post.user_liked or 0 }}"
+                         data-user-saved="{{ post.user_saved or 0 }}"
+                         data-is-following="{{ 1 if post.is_following else 0 }}"
+                         data-verified="{{ post.is_verified or 0 }}"
+                         data-created="{{ post.created_at or '' }}"
+                         data-followers="{{ post.followers_count or 0 }}"
+                         data-views="{{ post.views_count or 0 }}"
+                         onclick="openVideoDetail({{ post.id }})"
+                         role="group"
+                         tabindex="0">
+                        <video
+                            class="feed-video-thumb"
+                            src="{{ url_for('static', filename='uploads/' + post.file_path) }}"
+                            preload="metadata"
+                            playsinline
+                            muted
+                            loop
+                        ></video>
+                        <div class="feed-video-gradient"></div>
+                        <button type="button" class="feed-video-play" onclick="event.stopPropagation(); toggleFeedVideoPlay({{ post.id }});" aria-label="Play/Pause">
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                        <div class="feed-video-badge"><i class="fa-solid fa-video"></i></div>
+                        <button type="button" class="feed-video-mute" onclick="event.stopPropagation(); toggleFeedVideoMute(this, {{ post.id }});" aria-label="Mute">
+                            <i class="fa-solid fa-volume-xmark"></i>
+                        </button>
+                        <button type="button" class="feed-video-expand" onclick="event.stopPropagation(); openVideoDetail({{ post.id }});" aria-label="Fungua uwanja mkubwa" title="Uwanja mkubwa">
+                            <i class="fa-solid fa-expand"></i>
+                        </button>
+                    </div>
+                {% elif post.media_type == 'document' or post.media_type == 'file' %}
+                    <a href="{{ url_for('static', filename='uploads/' + post.file_path) }}"
+                       target="_blank" rel="noopener"
+                       class="media-doc-preview"
+                       style="text-decoration:none; margin-bottom:8px;">
+                        <i class="fa-solid fa-file"></i>
+                        <span>{{ post.file_path.split('_', 1)[-1] if post.file_path else 'Document' }}</span>
+                        <i class="fa-solid fa-download" style="margin-left:auto; font-size:16px;"></i>
+                    </a>
+                {% else %}
+                    <div class="image-container"
+                         data-post-id="{{ post.id }}"
+                         data-username="{{ post.username }}"
+                         data-profile="{{ post.profile_pic or '' }}"
+                         data-content="{{ post.content|e }}"
+                         data-likes="{{ post.likes_count }}"
+                         data-comments="{{ post.comments_count if post.comments_count is defined else (post.comments|length if post.comments is defined else 0) }}"
+                         data-user-liked="{{ post.user_liked }}"
+                         onclick="openImageFullscreen({{ post.id }}, this.querySelector('img').src, this)">
+                        <img src="{{ url_for('static', filename='uploads/' + post.file_path) }}" alt="Post Media">
+                    </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="post-stats">
+                <span id="likes-count-{{ post.id }}">{{ post.likes_count }} {{ t('likes') }}</span>
+                <div style="display: flex; gap: 12px;">
+                    <span><strong id="saved-count-text-{{ post.id }}">{{ post.saved_count }}</strong> {{ t('saved') }}</span>
+                    <span><strong id="share-count-text-{{ post.id }}">{{ post.shares }}</strong> {{ t('shares') }}</span>
+                    <span><strong id="comments-count-text-{{ post.id }}">{{ post.comments|length }}</strong> {{ t('comments') }}</span>
+                </div>
+            </div>
+
+            <div class="post-buttons">
+                <button onclick="likePost({{ post.id }})" id="like-btn-{{ post.id }}" class="{% if post.user_liked > 0 %}liked{% endif %}">
+                    <i class="fa-regular fa-thumbs-up"></i> {{ t('like') }}
+                </button>
+                <button onclick="toggleComments({{ post.id }})">
+                    <i class="fa-regular fa-comment"></i> {{ t('comment') }}
+                </button>
+                <button onclick="savePost({{ post.id }})">
+                    <i class="fa-regular fa-bookmark"></i> {{ t('save_post') }}
+                </button>
+                <button onclick="sharePost({{ post.id }}, '{{ post.content }}')">
+                    <i class="fa-solid fa-share"></i> {{ t('share') }}
+                </button>
+            </div>
+
+            <div class="comments-section" id="comments-section-{{ post.id }}">
+                <div id="comments-list-{{ post.id }}" class="comments-box">
+                    {% for comment in post.comments if not comment.parent_id %}
+                    <div class="comment-item {% if comment.is_hidden %}hidden-comment{% endif %}" id="comment-{{ comment.id }}" style="display:flex;gap:10px;align-items:flex-start;">
+                        <a href="{{ comment.profile_url or ('/linkup/' + comment.username if comment.is_linkup_comment else '/profile/' + comment.username) }}" style="flex-shrink:0;">
+                            <img class="comment-avatar" src="{{ comment.profile_pic|avatar(comment.display_name or comment.full_name or comment.username) }}" alt=""
+                                 style="width:36px;height:36px;border-radius:50%;object-fit:cover;background:#e4e6eb;border:1px solid #eee;"
+                                 onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/default-avatar.png.jfif') }}';">
+                        </a>
+                        <div style="flex:1;min-width:0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong style="display: inline-flex; align-items: center; gap:4px; flex-wrap:wrap;">
+                                <a href="{{ comment.profile_url or ('/linkup/' + comment.username if comment.is_linkup_comment else '/profile/' + comment.username) }}" style="text-decoration: none; color: inherit;">
+                                    {% if comment.display_name %}{{ comment.display_name }}{% elif comment.full_name %}{{ comment.full_name }}{% else %}{{ comment.username }}{% endif %}
+                                </a>
+                                {% if comment.is_linkup_comment and (comment.linkup_verified or comment.is_verified == 1) %}
+                                <svg class="verified-badge-custom small" viewBox="0 0 24 24" title="Verified Linkup" style="width:14px;height:14px;">
+                                    <path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="#F5B800"/>
+                                    <path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#FFFFFF"/>
+                                </svg>
+                                <span style="font-size:10px;background:#f0fdf4;color:#1EB53A;padding:1px 6px;border-radius:8px;font-weight:700;">Linkup</span>
+                                {% elif comment.is_verified == 1 %}
+                                <svg class="verified-badge-custom small" viewBox="0 0 24 24" title="Verified Account" style="width:14px;height:14px;">
+                                    <path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="#8A2BE2"/>
+                                    <path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#FFFFFF"/>
+                                </svg>
+                                {% endif %}
+                            </strong>
+
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 11px; color: #65676b;">{{ comment.created_at }}</span>
+
+                                <button class="comment-actions-btn" onclick="toggleCommentMenu({{ comment.id }})">
+                                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                                </button>
+                                <div class="comment-actions-dropdown" id="comment-menu-{{ comment.id }}">
+                                    {% if post.user_id == session.get('user_id') %}
+                                        <button onclick="deleteComment({{ comment.id }})" style="color: #dc3545;"><i class="fa-solid fa-trash"></i> {{ t('delete_comment') }}</button>
+                                        <button onclick="hideComment({{ comment.id }})"><i class="fa-solid fa-eye-slash"></i> {{ t('hide_comment') }}</button>
+                                        <button onclick="blockUser({{ comment.user_id }})" style="color: #dc3545;"><i class="fa-solid fa-user-lock"></i> Block User</button>
+                                    {% elif comment.user_id == session.get('user_id') %}
+                                        <button onclick="editComment({{ comment.id }})"><i class="fa-solid fa-pen"></i> Edit</button>
+                                        <button onclick="deleteComment({{ comment.id }})" style="color: #dc3545;"><i class="fa-solid fa-trash"></i> {{ t('delete_comment') }}</button>
+                                    {% else %}
+                                        <button onclick="reportComment({{ comment.id }})"><i class="fa-solid fa-flag" style="color: #dc3545;"></i> {{ t('report_comment') }}</button>
+                                        <button onclick="blockUser({{ comment.user_id }})" style="color: #dc3545;"><i class="fa-solid fa-user-lock"></i> Block User</button>
+                                        <button onclick="copyCommentText({{ comment.id }})"><i class="fa-solid fa-copy" style="color: #1EB53A;"></i> Nakili</button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <p id="comment-text-{{ comment.id }}" style="margin: 6px 0; color: #050505;">{{ comment.content }}</p>
+
+                        <div style="font-size: 11px; display: flex; gap: 15px; color: #65676b; margin-top: 4px;">
+                            <button onclick="likeComment({{ comment.id }})" style="background:none; border:none; cursor:pointer; color: {% if comment.user_comment_liked > 0 %}#1EB53A{% else %}inherit{% endif %}; font-weight: 600;" id="c-like-btn-{{ comment.id }}">
+                                Like (<span id="c-likes-count-{{ comment.id }}">{{ comment.comment_likes_count }}</span>)
+                            </button>
+                            <button onclick="showReplyBox({{ comment.id }})" style="background:none; border:none; cursor:pointer; color:inherit; font-weight: 600;">Reply</button>
+                        </div>
+
+                        <div class="replies-list" style="margin-left: 12px; margin-top: 6px; border-left: 2px solid #e4e6eb; padding-left: 8px;" id="replies-list-{{ comment.id }}">
+                            {% for reply in post.comments if reply.parent_id == comment.id %}
+                            <div class="reply-item" style="font-size: 12px; background: #f0f2f5; padding: 6px 8px; border-radius: 6px; margin-bottom: 4px;display:flex;gap:8px;align-items:flex-start;" id="comment-{{ reply.id }}">
+                                <a href="{{ reply.profile_url or ('/linkup/' + reply.username if reply.is_linkup_comment else '/profile/' + reply.username) }}" style="flex-shrink:0;">
+                                    <img src="{{ reply.profile_pic|avatar(reply.display_name or reply.full_name or reply.username) }}" alt="" style="width:28px;height:28px;border-radius:50%;object-fit:cover;background:#e4e6eb;">
+                                </a>
+                                <div style="flex:1;min-width:0;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <strong style="display: inline-flex; align-items: center; gap:3px; flex-wrap:wrap;">
+                                        <a href="{{ reply.profile_url or ('/linkup/' + reply.username if reply.is_linkup_comment else '/profile/' + reply.username) }}" style="text-decoration: none; color: inherit;">{% if reply.display_name %}{{ reply.display_name }}{% elif reply.full_name %}{{ reply.full_name }}{% else %}{{ reply.username }}{% endif %}</a>
+                                        {% if reply.is_linkup_comment and (reply.linkup_verified or reply.is_verified == 1) %}
+                                        <svg class="verified-badge-custom small" viewBox="0 0 24 24" title="Verified Linkup" style="width:12px;height:12px;">
+                                            <path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="#F5B800"/>
+                                            <path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#FFFFFF"/>
+                                        </svg>
+                                        <span style="font-size:9px;background:#f0fdf4;color:#1EB53A;padding:0 5px;border-radius:6px;font-weight:700;">Linkup</span>
+                                        {% elif reply.is_verified == 1 %}
+                                        <svg class="verified-badge-custom small" viewBox="0 0 24 24" title="Verified Account" style="width:12px;height:12px;">
+                                            <path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="#8A2BE2"/>
+                                            <path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#FFFFFF"/>
+                                        </svg>
+                                        {% endif %}:
+                                    </strong>
+                                    <span style="font-size: 10px; color: #65676b;">{{ reply.created_at }}</span>
+                                </div>
+                                <p id="comment-text-{{ reply.id }}" style="margin: 3px 0; color: #050505;">{{ reply.content }}</p>
+                                <div style="font-size: 11px; margin-top: 2px; display:flex; gap:10px;">
+                                    <button onclick="replyToUser({{ comment.id }}, '{{ reply.username }}')" style="background:none; border:none; cursor:pointer; color:#1EB53A; font-weight: 600;">Reply</button>
+
+                                    {% if post.user_id == session.get('user_id') %}
+                                        <button onclick="deleteComment({{ reply.id }})" style="background:none; border:none; cursor:pointer; color:#dc3545;">Futa</button>
+                                    {% elif reply.user_id == session.get('user_id') %}
+                                        <button onclick="editComment({{ reply.id }})" style="background:none; border:none; cursor:pointer; color:#65676b;">Edit</button>
+                                        <button onclick="deleteComment({{ reply.id }})" style="background:none; border:none; cursor:pointer; color:#dc3545;">Futa</button>
+                                    {% endif %}
+                                </div>
+                                </div><!-- /reply body -->
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <form class="reply-form" id="reply-form-{{ comment.id }}" style="display: none; margin-top: 6px; margin-left: 12px;" onsubmit="addReply(event, {{ post.id }}, {{ comment.id }})">
+                            <div style="display: flex; gap: 6px;">
+                                <input type="text" name="content" placeholder="{{ t('type_reply') }}" required style="flex: 1; padding: 6px 10px; font-size: 12px; border-radius: 12px; border: 1px solid #ccd0d5; outline: none; background: #ffffff;">
+                                <button type="submit" style="padding: 6px 12px; font-size: 11px; background: #1EB53A; color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer;">Tuma</button>
+                            </div>
+                        </form>
+                        </div><!-- /comment body -->
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <form class="comment-form" onsubmit="addComment(event, {{ post.id }})">
+                    <input type="text" name="content" placeholder="{{ t('type_comment') }}" required>
+                    <button type="submit"><i class="fa-solid fa-paper-plane"></i></button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div style="text-align: center; color: #65676b; padding: 40px 20px; background: #ffffff; border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+            <p style="font-size: 15px;">Hakuna machapisho bado. Kuwa wa kwanza kuposti hapo juu!</p>
+        </div>
+    {% endif %}

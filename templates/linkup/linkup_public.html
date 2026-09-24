@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{ linkup.display_name }} · Linkup - Kijiji Tanzania</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body {
+            width: 100%;
+            overflow-x: hidden;
+            -webkit-text-size-adjust: 100%;
+        }
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #f0f2f5;
+            color: #050505;
+            padding: 0;
+            margin: 0;
+            padding-bottom: 72px;
+            min-height: 100vh;
+        }
+        header {
+            background: #1EB53A;
+            color: #fff;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            width: 100%;
+        }
+        header a { color: #fff; text-decoration: none; font-size: 18px; flex-shrink: 0; }
+        header h1 {
+            font-size: 15px;
+            font-weight: 700;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .container {
+            width: 100%;
+            max-width: 560px;
+            margin: 0 auto;
+        }
+
+        /* ===== COVER ===== */
+        .cover {
+            height: 180px;
+            background: linear-gradient(135deg, #1EB53A 0%, #00A3DD 50%, #0f172a 100%);
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+        }
+        @media (min-width: 400px) {
+            .cover { height: 200px; }
+        }
+        .cover-name {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 16px 24px;
+            text-align: center;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .cover-name span {
+            font-size: clamp(20px, 5.5vw, 30px);
+            font-weight: 800;
+            color: #fff;
+            text-shadow: 0 2px 12px rgba(0,0,0,.5), 0 1px 3px rgba(0,0,0,.35);
+            letter-spacing: -0.3px;
+            line-height: 1.2;
+            max-width: 92%;
+            word-break: break-word;
+        }
+        .cover.has-photo .cover-name span {
+            text-shadow: 0 2px 16px rgba(0,0,0,.75);
+            background: rgba(0,0,0,.3);
+            padding: 6px 14px;
+            border-radius: 10px;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        /* ===== PROFILE BLOCK – avatar overlays cover, pushed to left edge ===== */
+        .profile-block {
+            background: #fff;
+            padding: 0 14px 16px;
+            border-bottom: 1px solid #e4e6eb;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
+        }
+        .avatar-wrap {
+            /* Negative margin pulls avatar UP onto cover */
+            margin-top: -64px;
+            /* Pull to left edge – almost no left padding */
+            margin-left: -6px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: flex-start;
+            gap: 12px;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 2;
+        }
+        .avatar,
+        .avatar-letter {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            border: 4px solid #fff;
+            flex-shrink: 0;
+            box-shadow: 0 4px 16px rgba(0,0,0,.2);
+        }
+        .avatar {
+            object-fit: cover;
+            display: block;
+            background: linear-gradient(135deg, #1EB53A, #00A3DD);
+        }
+        .avatar-letter {
+            background: linear-gradient(135deg, #1EB53A, #00A3DD);
+            color: #fff;
+            font-size: 42px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        @media (min-width: 400px) {
+            .avatar, .avatar-letter {
+                width: 120px;
+                height: 120px;
+            }
+            .avatar-wrap { margin-top: -68px; }
+        }
+
+        .name-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            font-size: 20px;
+            font-weight: 800;
+            line-height: 1.25;
+            word-break: break-word;
+        }
+        @media (min-width: 400px) {
+            .name-row { font-size: 22px; }
+        }
+        .uname { color: #65676b; font-size: 13px; margin-top: 2px; }
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #f0fdf4;
+            color: #1EB53A;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            margin-top: 8px;
+        }
+        .bio {
+            margin-top: 10px;
+            font-size: 14px;
+            line-height: 1.45;
+            color: #333;
+            white-space: pre-wrap;
+        }
+        .bio.clamped {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .see-more-btn {
+            background: none;
+            border: none;
+            color: #1EB53A;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 4px 0 0;
+            margin-top: 2px;
+        }
+        .owner-line { margin-top: 8px; font-size: 13px; color: #65676b; }
+        .owner-line a { color: #1EB53A; font-weight: 600; text-decoration: none; }
+
+        /* Stats – one line */
+        .stats {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #f0f2f5;
+            flex-wrap: wrap;
+            font-size: 14px;
+            color: #050505;
+        }
+        .stats strong { font-size: 15px; font-weight: 800; }
+        .stats .stats-sep { color: #65676b; font-weight: 400; margin: 0 2px; }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .btn {
+            border: none;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            color: #fff;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn-green { background: #1EB53A; }
+        .btn-gray { background: #e4e6eb; color: #050505; }
+        .btn-gold { background: linear-gradient(135deg, #F5B800, #D97706); color: #fff; }
+
+        .cta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .cta-btn {
+            flex: 1 1 auto;
+            min-width: 90px;
+            border: none;
+            border-radius: 8px;
+            padding: 11px 10px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            text-decoration: none;
+            color: #fff;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .cta-wa { background: #25D366; }
+        .cta-call { background: #00A3DD; }
+        .cta-web { background: #0f172a; }
+        .cta-secondary { background: #e4e6eb; color: #050505; }
+
+        .active-banner {
+            background: linear-gradient(135deg, #ecfdf5, #e0f2fe);
+            border: 1px solid #86efac;
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin: 10px 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .active-banner strong { font-size: 14px; display: block; color: #166534; }
+        .active-banner span { font-size: 12px; color: #3f6212; }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #65676b;
+            padding: 8px 14px;
+            text-transform: uppercase;
+            letter-spacing: .3px;
+        }
+
+        /* ===== POSTS – circular profile ===== */
+        .post {
+            background: #fff;
+            margin: 0 0 8px;
+            padding: 12px 14px;
+            width: 100%;
+        }
+        .post-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        /* Force circular – both img and letter */
+        .post-head img,
+        .post-head .ph-letter {
+            width: 44px !important;
+            height: 44px !important;
+            min-width: 44px;
+            min-height: 44px;
+            border-radius: 50% !important;
+            object-fit: cover;
+            flex-shrink: 0;
+            border: 2px solid #e4e6eb;
+            box-shadow: 0 1px 6px rgba(0,0,0,.1);
+            overflow: hidden;
+        }
+        .post-head .ph-letter {
+            background: linear-gradient(135deg, #1EB53A, #00A3DD);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 17px;
+        }
+        .post-head .ph-name {
+            font-weight: 700;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        .post-head .ph-meta { font-size: 12px; color: #65676b; }
+        .post p {
+            font-size: 15px;
+            line-height: 1.45;
+            margin-bottom: 8px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .post p.clamped {
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .post img,
+        .post video {
+            width: 100%;
+            border-radius: 10px;
+            max-height: 360px;
+            object-fit: cover;
+            background: #000;
+            display: block;
+        }
+        .post-meta { font-size: 12px; color: #65676b; margin-top: 8px; }
+
+        .empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #65676b;
+            font-size: 14px;
+            background: #fff;
+            margin-bottom: 8px;
+        }
+
+        /* ===== POST COMPOSER – kisanduku kimoja kikubwa ===== */
+        .composer-card {
+            background: #fff;
+            margin: 0 0 8px;
+            padding: 12px;
+        }
+        .composer {
+            background: #f7f9fa;
+            border: 1.5px solid #e3e8ec;
+            border-radius: 22px;
+            padding: 12px 12px 10px;
+            transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+        }
+        .composer:focus-within {
+            background: #fff;
+            border-color: #1EB53A;
+            box-shadow: 0 0 0 4px rgba(30, 181, 58, .12);
+        }
+        .cx-top {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        /* Profile ndogo ya Linkup – duara lenye pete ya rangi, inabonyezeka */
+        .cx-avatar {
+            flex-shrink: 0;
+            display: block;
+            width: 44px;
+            height: 44px;
+            padding: 2px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1EB53A, #00A3DD);
+            text-decoration: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .cx-avatar img,
+        .cx-avatar .cx-letter {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            background: linear-gradient(135deg, #1EB53A, #00A3DD);
+        }
+        .cx-avatar img { display: block; object-fit: cover; }
+        .cx-avatar .cx-letter {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 800;
+        }
+        .composer textarea {
+            flex: 1;
+            min-width: 0;
+            min-height: 64px;
+            max-height: 200px;
+            padding: 10px 0 6px;
+            border: none;
+            outline: none;
+            background: transparent;
+            resize: none;
+            font-family: inherit;
+            font-size: 16px; /* inazuia zoom ya iOS */
+            line-height: 1.45;
+            color: #050505;
+        }
+        .composer textarea::placeholder { color: #8a8d91; }
+        /* Alama ya switch to profile – alama tu */
+        .cx-switch {
+            flex-shrink: 0;
+            width: 38px;
+            height: 38px;
+            margin-top: 3px;
+            border: 1px solid #e3e8ec;
+            border-radius: 50%;
+            background: #fff;
+            color: #65676b;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .cx-switch:active { background: #f0f2f5; }
+
+        .cx-preview {
+            position: relative;
+            margin-top: 8px;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #0f172a;
+        }
+        .cx-preview[hidden] { display: none; }
+        .cx-preview img,
+        .cx-preview video {
+            display: block;
+            width: 100%;
+            max-height: 240px;
+            object-fit: cover;
+        }
+        .cx-remove {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(15, 23, 42, .72);
+            color: #fff;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .cx-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 8px;
+            padding-top: 10px;
+            border-top: 1px solid #e6eaee;
+        }
+        .cx-add {
+            flex-shrink: 0;
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            background: #e8f8ec;
+            color: #1EB53A;
+            font-size: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .cx-add:active { background: #d3f1da; }
+        .cx-hint {
+            flex: 1;
+            min-width: 0;
+            font-size: 12.5px;
+            color: #65676b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .cx-send {
+            flex-shrink: 0;
+            border: none;
+            border-radius: 20px;
+            padding: 10px 18px;
+            background: #1EB53A;
+            color: #fff;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .cx-send:disabled {
+            background: #e4e6eb;
+            color: #9aa0a6;
+            cursor: default;
+        }
+        .composer button:focus-visible,
+        .cx-avatar:focus-visible {
+            outline: 2px solid #1EB53A;
+            outline-offset: 2px;
+        }
+
+        /* Sheet ya kuchagua media (inatumia .badge-overlay na .badge-sheet zilizopo) */
+        .media-options {
+            padding: 12px 16px 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .media-opt {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            width: 100%;
+            padding: 14px;
+            border: 1.5px solid #e6eaee;
+            border-radius: 16px;
+            background: #fff;
+            color: #050505;
+            text-align: left;
+            font-family: inherit;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .media-opt:active { background: #f7f9fa; }
+        .media-opt:focus-visible { outline: 2px solid #1EB53A; outline-offset: 2px; }
+        .mo-ico {
+            flex-shrink: 0;
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
+            font-size: 19px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .mo-cam { background: #e0f2fe; color: #0284c7; }
+        .mo-gal { background: #dcfce7; color: #15803d; }
+        .mo-text strong { display: block; font-size: 15px; font-weight: 700; }
+        .mo-text small { display: block; margin-top: 2px; font-size: 12.5px; color: #65676b; }
+        @media (prefers-reduced-motion: reduce) {
+            .composer { transition: none; }
+        }
+
+        /* ===== ABOUT ===== */
+        .about-card {
+            background: #fff;
+            margin: 0 0 8px;
+            padding: 16px 14px;
+            width: 100%;
+        }
+        .about-title {
+            font-size: 15px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #050505;
+        }
+        .about-title i {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #ecfdf5, #e0f2fe);
+            color: #1EB53A;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+        }
+        .about-text {
+            font-size: 14px;
+            line-height: 1.55;
+            color: #333;
+            margin-bottom: 12px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .about-text.clamped {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        /* About – vitable vidogo vya taarifa (kila kimoja na alama yake) */
+        .about-tiles {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .about-tile {
+            flex: 1 1 calc(50% - 4px);
+            min-width: 150px; /* skrini nyembamba sana -> safu moja */
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: #f8fafb;
+            border: 1px solid #edf0f2;
+            border-radius: 14px;
+        }
+        .about-tile.wide { flex-basis: 100%; }
+        .tile-ico {
+            flex-shrink: 0;
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--tint);
+            color: var(--hue);
+        }
+        .tile-body {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+        .tile-label { font-size: 11.5px; line-height: 1.2; color: #65676b; }
+        .tile-value {
+            font-size: 13.5px;
+            font-weight: 700;
+            line-height: 1.3;
+            color: #050505;
+            overflow-wrap: break-word;
+        }
+        .tile-sub { font-size: 12px; line-height: 1.3; color: #65676b; overflow-wrap: break-word; }
+        .tile-work   { --hue: #0284c7; --tint: #e0f2fe; }
+        .tile-edu    { --hue: #b45309; --tint: #fef3c7; }
+        .tile-lives  { --hue: #15803d; --tint: #dcfce7; }
+        .tile-from   { --hue: #0f766e; --tint: #ccfbf1; }
+        .tile-joined { --hue: #475569; --tint: #e2e8f0; }
+
+        /* ===== BOTTOM NAV – mobile ===== */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border-top: 1px solid #e4e6eb;
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px));
+            z-index: 90;
+            width: 100%;
+        }
+        .bottom-nav a {
+            color: #65676b;
+            font-size: 20px;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            min-width: 56px;
+            padding: 4px 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .bottom-nav a span { font-size: 10px; font-weight: 600; }
+        .bottom-nav a.active { color: #1EB53A; }
+
+        /* ===== BADGE FULL-SCREEN OVERLAY ===== */
+        .badge-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            background: rgba(15, 23, 42, 0.55);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            align-items: flex-end;
+            justify-content: center;
+        }
+        .badge-overlay.open { display: flex; }
+        .badge-sheet {
+            background: #fff;
+            width: 100%;
+            max-width: 560px;
+            max-height: 92vh;
+            border-radius: 20px 20px 0 0;
+            padding: 0 0 20px;
+            overflow-y: auto;
+            box-shadow: 0 -8px 40px rgba(0,0,0,.18);
+            animation: sheetUp .28s ease-out;
+            -webkit-overflow-scrolling: touch;
+        }
+        @keyframes sheetUp {
+            from { transform: translateY(100%); opacity: .6; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .badge-sheet-header {
+            position: sticky;
+            top: 0;
+            background: #fff;
+            padding: 14px 16px 10px;
+            border-bottom: 1px solid #f0f2f5;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 2;
+        }
+        .badge-sheet-header h3 {
+            flex: 1;
+            font-size: 16px;
+            font-weight: 800;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .badge-close {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 50%;
+            background: #f0f2f5;
+            color: #050505;
+            font-size: 16px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .badge-sheet-body { padding: 14px 16px 8px; }
+        .badge-sheet-body p {
+            font-size: 13.5px;
+            color: #64748b;
+            margin-bottom: 14px;
+            line-height: 1.5;
+        }
+        .badge-sheet label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #334155;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .badge-sheet textarea,
+        .badge-sheet input[type=tel],
+        .badge-sheet input[type=file] {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            margin: 0 0 12px;
+            font-size: 16px; /* prevents iOS zoom */
+            font-family: inherit;
+            background: #fafafa;
+        }
+        .badge-sheet textarea:focus,
+        .badge-sheet input[type=tel]:focus {
+            outline: none;
+            border-color: #1EB53A;
+            background: #fff;
+        }
+        .badge-sheet-actions {
+            display: flex;
+            gap: 10px;
+            padding: 8px 16px 0;
+        }
+        .badge-sheet-actions .btn {
+            flex: 1;
+            padding: 13px 14px;
+            font-size: 14px;
+            border-radius: 12px;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="{{ url_for('home') }}"><i class="fa-solid fa-arrow-left"></i></a>
+        <h1>{{ linkup.display_name }}</h1>
+        {% if is_owner %}
+        <a href="{{ url_for('linkup_edit', linkup_id=linkup.id) }}" title="Hariri"><i class="fa-solid fa-pen"></i></a>
+        {% endif %}
+    </header>
+
+    <div class="container">
+        <!-- Cover + jina la Linkup -->
+        <div class="cover{% if linkup.cover_photo %} has-photo{% endif %}"{% if linkup.cover_photo %} style="background:url('{{ url_for('static', filename='uploads/' + linkup.cover_photo) }}') center/cover no-repeat;"{% endif %}>
+            <div class="cover-name"><span>{{ linkup.display_name }}</span></div>
+        </div>
+
+        <div class="profile-block">
+            <!-- Avatar overlays cover, pushed left edge -->
+            <div class="avatar-wrap">
+                {% if linkup.profile_pic %}
+                <img class="avatar" src="{{ url_for('static', filename='uploads/' + linkup.profile_pic) }}" alt="">
+                {% else %}
+                <div class="avatar-letter">{{ (linkup.display_name or 'L')[0]|upper }}</div>
+                {% endif %}
+            </div>
+
+            <div class="name-row">
+                {{ linkup.display_name }}
+                {% if linkup_verified or linkup.is_verified %}
+                <svg viewBox="0 0 24 24" width="20" height="20" title="Verified Linkup">
+                    <path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="#F5B800"/>
+                    <path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#FFFFFF"/>
+                </svg>
+                {% endif %}
+            </div>
+            <div class="uname">@{{ linkup.username }}</div>
+            <div class="chip"><i class="fa-solid fa-link"></i> Linkup · {{ category_label }}</div>
+
+            {% if linkup.bio %}
+            <p class="bio clamped" id="bioText">{{ linkup.bio }}</p>
+            <button type="button" class="see-more-btn" id="bioSeeMore" style="display:none;" onclick="toggleClamp('bioText','bioSeeMore')">See more</button>
+            {% endif %}
+
+            {% if owner %}
+            <p class="owner-line">
+                Imeundwa na
+                <a href="{{ url_for('profile', username=owner.username) }}">{{ owner.full_name or owner.username }}</a>
+            </p>
+            {% endif %}
+
+            <!-- Stats one line -->
+            <div class="stats">
+                <strong>{{ posts_count }}</strong> Posts
+                <span class="stats-sep">·</span>
+                <strong id="followersCount">{{ followers_count if followers_count is defined else 0 }}</strong> Followers
+            </div>
+
+            <div class="actions">
+                {% if is_owner %}
+                    {% if not is_active_identity %}
+                    <button type="button" class="btn btn-green" onclick="switchToThis()">
+                        <i class="fa-solid fa-right-left"></i> Switch → Tumia Linkup hii
+                    </button>
+                    {% else %}
+                    <button type="button" class="btn btn-gray" disabled>
+                        <i class="fa-solid fa-check"></i> Unaitumia sasa
+                    </button>
+                    <button type="button" class="btn btn-gray" onclick="switchToProfile()">
+                        <i class="fa-solid fa-user"></i> Rudi Profile yako
+                    </button>
+                    {% endif %}
+                    <a class="btn btn-gray" href="{{ url_for('linkup_edit', linkup_id=linkup.id) }}">
+                        <i class="fa-solid fa-pen"></i> Hariri
+                    </a>
+                    {% if not (linkup_verified or linkup.is_verified) %}
+                        {% if pending_linkup_badge %}
+                        <button type="button" class="btn btn-gray" disabled>
+                            <i class="fa-solid fa-hourglass-half"></i> Ombi linasubiri
+                        </button>
+                        {% else %}
+                        <button type="button" class="btn btn-gold" onclick="openBadgeSheet()">
+                            <i class="fa-solid fa-certificate"></i> Omba Badge
+                        </button>
+                        {% endif %}
+                    {% endif %}
+                {% elif logged_in %}
+                <button type="button" id="followBtn" class="btn {% if is_following %}btn-gray{% else %}btn-green{% endif %}"
+                        onclick="toggleFollowLinkup({{ linkup.id }})">
+                    {% if is_following %}
+                    <i class="fa-solid fa-user-check"></i> Following
+                    {% else %}
+                    <i class="fa-solid fa-user-plus"></i> Follow
+                    {% endif %}
+                </button>
+                {% else %}
+                <a class="btn btn-green" href="{{ url_for('login') }}">
+                    <i class="fa-solid fa-right-to-bracket"></i> Ingia kufollow
+                </a>
+                {% endif %}
+            </div>
+
+            {% if linkup.phone or linkup.website or linkup.email_public %}
+            <div class="cta-row">
+                {% if linkup.phone %}
+                <a class="cta-btn cta-call" href="tel:{{ linkup.phone }}">
+                    <i class="fa-solid fa-phone"></i> Call
+                </a>
+                <a class="cta-btn cta-wa" href="https://wa.me/{{ linkup.phone|replace('+', '')|replace(' ', '')|replace('-', '') }}" target="_blank" rel="noopener">
+                    <i class="fa-brands fa-whatsapp"></i> WhatsApp
+                </a>
+                {% endif %}
+                {% if linkup.website %}
+                <a class="cta-btn cta-web" href="{{ linkup.website }}" target="_blank" rel="noopener">
+                    <i class="fa-solid fa-globe"></i> Website
+                </a>
+                {% endif %}
+                {% if linkup.email_public %}
+                <a class="cta-btn cta-secondary" href="mailto:{{ linkup.email_public }}">
+                    <i class="fa-solid fa-envelope"></i> Email
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- About -->
+        {# About text: max herufi 120. Haionyeshwi kama ni sawa na bio (bio tayari ipo juu kwenye header). #}
+        {# Call/WhatsApp/Website/Email hazipo hapa – tayari zipo kwenye vitufe vya juu (cta-row). #}
+        {% set about_full = (linkup.about or '')|trim %}
+        {% set about_shown = about_full if about_full != (linkup.bio or '')|trim else '' %}
+        {% set work_value = linkup.workplace_name or linkup.workplace_role or emp_label %}
+        {% set work_sub = [emp_label, linkup.workplace_role, linkup.workplace_city]|select|reject('equalto', work_value)|join(' · ') %}
+        {% set has_tiles = work_value or linkup.college_name or linkup.secondary_school or linkup.primary_school or linkup.current_city or linkup.country or linkup.hometown or created_label %}
+        <div class="about-card">
+            <h3 class="about-title"><i class="fa-solid fa-circle-info"></i> About</h3>
+            {% if about_shown %}
+            <p class="about-text clamped" id="aboutText">{{ about_shown[:120]|trim }}{% if about_shown|length > 120 %}…{% endif %}</p>
+            <button type="button" class="see-more-btn" id="aboutSeeMore" style="display:none;" onclick="toggleClamp('aboutText','aboutSeeMore')">See more</button>
+            {% endif %}
+
+            {% if has_tiles %}
+            <div class="about-tiles">
+                {% if work_value %}
+                <div class="about-tile tile-work wide">
+                    <span class="tile-ico"><i class="fa-solid fa-briefcase"></i></span>
+                    <div class="tile-body">
+                        <span class="tile-label">Work</span>
+                        <span class="tile-value">{{ work_value }}</span>
+                        {% if work_sub %}<span class="tile-sub">{{ work_sub }}</span>{% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if linkup.college_name %}
+                <div class="about-tile tile-edu">
+                    <span class="tile-ico"><i class="fa-solid fa-graduation-cap"></i></span>
+                    <div class="tile-body">
+                        <span class="tile-label">College</span>
+                        <span class="tile-value">{{ linkup.college_name }}</span>
+                        {% if linkup.college_year %}<span class="tile-sub">{{ linkup.college_year }}</span>{% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if linkup.secondary_school %}
+                <div class="about-tile tile-edu">
+                    <span class="tile-ico"><i class="fa-solid fa-school"></i></span>
+                    <div class="tile-body">
+                        <span class="tile-label">Secondary</span>
+                        <span class="tile-value">{{ linkup.secondary_school }}</span>
+                        {% if linkup.secondary_year %}<span class="tile-sub">{{ linkup.secondary_year }}</span>{% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if linkup.primary_school %}
+                <div class="about-tile tile-edu">
+                    <span class="tile-ico"><i class="fa-solid fa-book-open"></i></span>
+                    <div class="tile-body">
+                        <span class="tile-label">Primary</span>
+                        <span class="tile-value">{{ linkup.primary_school }}</span>
+                        {% if linkup.primary_year %}<span class="tile-sub">{{ linkup.primary_year }}</span>{% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if linkup.current_city %}
+                <div class="about-tile tile-lives">
+                    <span class="tile-ico"><i class="fa-solid fa-location-dot"></i></span>
+                    <div class="tile-body">
+                        <span class="tile-label">Lives in</span>
+                        <span class="tile-value">{{ linkup.current_city }}</span>
+                        {% if linkup.country and (linkup.country|lower) not in (linkup.current_city|lower) %}<span class="tile-sub">{{ linkup.country }}</span>{% endif %}
+                    </div>
+                </div>
+                {% elif linkup.country %}
+                <div class="about-tile tile-lives">
+                    <span class="tile-ico"><i class="fa-solid fa-flag"></i></span>
+                    <div class="tile-body">
+                        <span class="tile-label">Country</span>
+                        <span class="tile-value">{{ linkup.country }}</span>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if linkup.hometown %}
+                <div class="about-tile tile-from">
+                    <span class="tile-ico"><i class="fa-solid fa-house"></i></span>
+                    <div class="tile-body">
+                        <span class="tile-label">From</span>
+                        <span class="tile-value">{{ linkup.hometown }}</span>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if created_label %}
+                <div class="about-tile tile-joined">
+                    <span class="tile-ico"><i class="fa-regular fa-calendar"></i></span>
+                    <div class="tile-body">
+                        <span class="tile-label">Joined</span>
+                        <span class="tile-value">{{ created_label }}</span>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        {% if is_active_identity %}
+        <div class="active-banner">
+            <i class="fa-solid fa-circle-check" style="color:#1EB53A;font-size:22px;"></i>
+            <div>
+                <strong>Unatumia Linkup hii sasa</strong>
+                <span>Hii ni <b>Linkup</b>. Karibu <b>{{ linkup.display_name }}</b>. Furahia sasa</span>
+            </div>
+        </div>
+
+        <div class="composer-card">
+            <form id="linkupPostForm" class="composer" action="{{ url_for('create_post') }}" method="POST" enctype="multipart/form-data" onsubmit="return luComposerSubmit()">
+                <div class="cx-top">
+                    <a class="cx-avatar" href="{{ identity_url or '#' }}" onclick="luAvatarClick(this, event)" aria-label="Profile ya {{ linkup.display_name }}">
+                        {% if linkup.profile_pic %}
+                        <img src="{{ url_for('static', filename='uploads/' + linkup.profile_pic) }}" alt="">
+                        {% else %}
+                        <span class="cx-letter">{{ (linkup.display_name or 'L')[0]|upper }}</span>
+                        {% endif %}
+                    </a>
+                    <textarea id="luText" name="content" rows="2" placeholder="Chapisha kitu..." aria-label="Andika post yako" oninput="luComposerSync()"></textarea>
+                    <button type="button" class="cx-switch" onclick="switchToProfile()" title="Rudi Profile yako" aria-label="Rudi Profile yako">
+                        <i class="fa-solid fa-right-left"></i>
+                    </button>
+                </div>
+
+                <div class="cx-preview" id="luPreview" hidden></div>
+
+                <div class="cx-bar">
+                    <button type="button" class="cx-add" onclick="openMediaSheet()" title="Ongeza picha au video" aria-label="Ongeza picha au video">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                    <span class="cx-hint" id="luHint">Picha au video</span>
+                    <button type="submit" class="cx-send" id="luSend" disabled>
+                        <i class="fa-solid fa-paper-plane"></i> Chapisha
+                    </button>
+                </div>
+
+                <input type="file" name="file" id="luFile" accept="image/*,video/*" hidden onchange="luFileChosen()">
+            </form>
+        </div>
+
+        <!-- Sheet: chagua kupiga picha au kutoka Gallery -->
+        <div class="badge-overlay" id="luMediaSheet" onclick="if(event.target===this)closeMediaSheet()">
+            <div class="badge-sheet" role="dialog" aria-modal="true" aria-label="Ongeza media">
+                <div class="badge-sheet-header">
+                    <h3><i class="fa-solid fa-circle-plus" style="color:#1EB53A;"></i> Ongeza media</h3>
+                    <button type="button" class="badge-close" onclick="closeMediaSheet()" aria-label="Funga">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="media-options">
+                    <button type="button" class="media-opt" onclick="luPickMedia('camera')">
+                        <span class="mo-ico mo-cam"><i class="fa-solid fa-camera"></i></span>
+                        <span class="mo-text"><strong>Piga picha</strong><small>Fungua kamera sasa hivi</small></span>
+                    </button>
+                    <button type="button" class="media-opt" onclick="luPickMedia('gallery')">
+                        <span class="mo-ico mo-gal"><i class="fa-solid fa-images"></i></span>
+                        <span class="mo-text"><strong>Chagua kutoka Gallery</strong><small>Picha au video kwenye simu yako</small></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Full-screen Omba Badge -->
+        {% if is_owner and not (linkup_verified or linkup.is_verified) and not pending_linkup_badge %}
+        <div class="badge-overlay" id="linkupBadgeForm" onclick="if(event.target===this)closeBadgeSheet()">
+            <div class="badge-sheet" role="dialog" aria-modal="true">
+                <div class="badge-sheet-header">
+                    <h3><i class="fa-solid fa-certificate" style="color:#F5B800;"></i> Omba Verified Badge</h3>
+                    <button type="button" class="badge-close" onclick="closeBadgeSheet()" aria-label="Funga">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="badge-sheet-body">
+                    <p>
+                        Ombi linatumwa <strong>kwa jina la profile yako</strong>. Eleza kuwa unataka
+                        <strong>Linkup "{{ linkup.display_name }}"</strong> iwe na verified badge.
+                    </p>
+                    <form onsubmit="sendLinkupBadge(event)">
+                        <label>Sababu *</label>
+                        <textarea name="reason" required rows="4" placeholder="Kwa nini Linkup hii inastahili verified badge..."></textarea>
+                        <label>Simu (hiari)</label>
+                        <input type="tel" name="phone" placeholder="+255...">
+                        <label>Kitambulisho (hiari)</label>
+                        <input type="file" name="id_document" accept="image/*,.pdf">
+                        <div class="badge-sheet-actions">
+                            <button type="button" class="btn btn-gray" onclick="closeBadgeSheet()">Ghairi</button>
+                            <button type="submit" class="btn btn-gold">Tuma Ombi</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="section-title">Posts za {{ linkup.display_name }}</div>
+
+        {% if posts_data %}
+            {% for post in posts_data %}
+            <div class="post">
+                <div class="post-head">
+                    {% if linkup.profile_pic %}
+                    <img src="{{ url_for('static', filename='uploads/' + linkup.profile_pic) }}" alt="">
+                    {% else %}
+                    <div class="ph-letter">{{ (linkup.display_name or 'L')[0]|upper }}</div>
+                    {% endif %}
+                    <div>
+                        <div class="ph-name">
+                            {{ linkup.display_name }}
+                            {% if linkup_verified or linkup.is_verified %}
+                            <svg viewBox="0 0 24 24" width="14" height="14">
+                                <path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="#F5B800"/>
+                                <path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#FFFFFF"/>
+                            </svg>
+                            {% endif %}
+                        </div>
+                        <div class="ph-meta">@{{ linkup.username }} · Linkup{% if post.created_at %} · {{ post.created_at }}{% endif %}</div>
+                    </div>
+                </div>
+                {% if post.content %}
+                <p class="clamped" id="postContent{{ loop.index }}">{{ post.content }}</p>
+                <button type="button" class="see-more-btn post-see-more" data-target="postContent{{ loop.index }}" style="display:none;">See more</button>
+                {% endif %}
+                {% if post.file_path %}
+                    {% if post.media_type == 'video' %}
+                    <video controls playsinline src="{{ url_for('static', filename='uploads/' + post.file_path) }}"></video>
+                    {% else %}
+                    <img src="{{ url_for('static', filename='uploads/' + post.file_path) }}" alt="">
+                    {% endif %}
+                {% endif %}
+                <div class="post-meta">
+                    {{ post.likes_count or 0 }} likes · {{ post.comments_count or 0 }} comments
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty">
+                <i class="fa-regular fa-newspaper" style="font-size:32px;opacity:.4;display:block;margin-bottom:10px;"></i>
+                Hakuna posts bado kwenye Linkup hii.
+                {% if is_active_identity %}
+                <br><a href="{{ url_for('home') }}" style="color:#1EB53A;font-weight:700;">Chapisha ya kwanza →</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="bottom-nav">
+        <a href="{{ url_for('home') }}"><i class="fa-solid fa-house"></i><span>Home</span></a>
+        <a href="{{ url_for('search') }}"><i class="fa-solid fa-magnifying-glass"></i><span>Tafuta</span></a>
+        <a href="{{ url_for('notifications') }}"><i class="fa-solid fa-bell"></i><span>Notif</span></a>
+        {% if identity_is_linkup and identity_url %}
+        <a href="{{ identity_url }}" class="active"><i class="fa-solid fa-link"></i><span>Linkup</span></a>
+        {% else %}
+        <a href="{{ url_for('profile', username=session.get('username','')) }}"><i class="fa-solid fa-user"></i><span>Profile</span></a>
+        {% endif %}
+    </div>
+
+    <script>
+    function switchToThis() {
+        fetch('{{ url_for("linkup_switch") }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ linkup_id: {{ linkup.id }} })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                window.location.href = data.redirect_url || window.location.pathname;
+            } else {
+                alert(data.message || 'Imeshindikana');
+            }
+        })
+        .catch(function() { alert('Imeshindikana'); });
+    }
+
+    function switchToProfile() {
+        fetch('{{ url_for("linkup_switch") }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ linkup_id: null })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                window.location.href = data.redirect_url || '{{ url_for("home") }}';
+            } else {
+                alert(data.message || 'Imeshindikana');
+            }
+        })
+        .catch(function() { alert('Imeshindikana'); });
+    }
+
+    function toggleFollowLinkup(linkupId) {
+        var btn = document.getElementById('followBtn');
+        if (btn) btn.disabled = true;
+        fetch('/linkup/' + linkupId + '/follow', {
+            method: 'POST',
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.success) {
+                alert(data.message || 'Imeshindikana');
+                return;
+            }
+            var countEl = document.getElementById('followersCount');
+            if (countEl && typeof data.followers_count !== 'undefined') {
+                countEl.textContent = data.followers_count;
+            }
+            if (btn) {
+                if (data.following) {
+                    btn.className = 'btn btn-gray';
+                    btn.innerHTML = '<i class="fa-solid fa-user-check"></i> Following';
+                } else {
+                    btn.className = 'btn btn-green';
+                    btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Follow';
+                }
+            }
+        })
+        .catch(function() { alert('Imeshindikana'); })
+        .finally(function() { if (btn) btn.disabled = false; });
+    }
+
+    function openBadgeSheet() {
+        var el = document.getElementById('linkupBadgeForm');
+        if (el) {
+            el.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+    function closeBadgeSheet() {
+        var el = document.getElementById('linkupBadgeForm');
+        if (el) {
+            el.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+    }
+
+    function sendLinkupBadge(event) {
+        event.preventDefault();
+        var form = event.target;
+        var fd = new FormData(form);
+        fetch('/linkup/{{ linkup.id }}/request_badge', {
+            method: 'POST',
+            body: fd,
+            credentials: 'same-origin'
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            alert(data.message || 'OK');
+            if (data.success) window.location.reload();
+        })
+        .catch(function() { alert('Imeshindikana'); });
+    }
+
+    function toggleClamp(textId, btnId) {
+        var text = document.getElementById(textId);
+        var btn = document.getElementById(btnId);
+        if (!text || !btn) return;
+        if (text.classList.contains('clamped')) {
+            text.classList.remove('clamped');
+            btn.textContent = 'See less';
+        } else {
+            text.classList.add('clamped');
+            btn.textContent = 'See more';
+        }
+    }
+
+    function initSeeMore() {
+        var bio = document.getElementById('bioText');
+        var bioBtn = document.getElementById('bioSeeMore');
+        if (bio && bioBtn && bio.scrollHeight > bio.clientHeight + 4) {
+            bioBtn.style.display = 'inline';
+        }
+        var about = document.getElementById('aboutText');
+        var aboutBtn = document.getElementById('aboutSeeMore');
+        if (about && aboutBtn && about.scrollHeight > about.clientHeight + 4) {
+            aboutBtn.style.display = 'inline';
+        }
+        document.querySelectorAll('.post p.clamped').forEach(function(p) {
+            var btn = p.nextElementSibling;
+            if (btn && btn.classList.contains('post-see-more') && p.scrollHeight > p.clientHeight + 4) {
+                btn.style.display = 'inline';
+                btn.onclick = function() {
+                    if (p.classList.contains('clamped')) {
+                        p.classList.remove('clamped');
+                        btn.textContent = 'See less';
+                    } else {
+                        p.classList.add('clamped');
+                        btn.textContent = 'See more';
+                    }
+                };
+            }
+        });
+    }
+    /* ===== Post composer ===== */
+    var luPreviewUrl = null;
+
+    // Avatar: ukiwa tayari kwenye ukurasa huu, rudi juu kwenye profile ya Linkup
+    function luAvatarClick(a, e) {
+        if (a.getAttribute('href') === '#' || a.pathname === window.location.pathname) {
+            e.preventDefault();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+
+    function openMediaSheet() {
+        var el = document.getElementById('luMediaSheet');
+        if (el) {
+            el.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+    function closeMediaSheet() {
+        var el = document.getElementById('luMediaSheet');
+        if (el) {
+            el.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+    }
+
+    // Input moja tu ya "file" ili server ipokee faili moja kwa uhakika
+    function luPickMedia(mode) {
+        var inp = document.getElementById('luFile');
+        if (!inp) return;
+        if (mode === 'camera') {
+            inp.setAttribute('accept', 'image/*');
+            inp.setAttribute('capture', 'environment');
+        } else {
+            inp.setAttribute('accept', 'image/*,video/*');
+            inp.removeAttribute('capture');
+        }
+        closeMediaSheet();
+        inp.click();
+    }
+
+    function luClearPreviewUrl() {
+        if (luPreviewUrl) {
+            URL.revokeObjectURL(luPreviewUrl);
+            luPreviewUrl = null;
+        }
+    }
+
+    function luRemoveMedia() {
+        var inp = document.getElementById('luFile');
+        if (inp) inp.value = '';
+        luFileChosen();
+    }
+
+    function luFileChosen() {
+        var inp = document.getElementById('luFile');
+        var box = document.getElementById('luPreview');
+        var hint = document.getElementById('luHint');
+        if (!inp || !box) return;
+        luClearPreviewUrl();
+        box.innerHTML = '';
+        var f = inp.files && inp.files[0];
+        if (!f) {
+            box.hidden = true;
+            if (hint) hint.textContent = 'Picha au video';
+            luComposerSync();
+            return;
+        }
+        luPreviewUrl = URL.createObjectURL(f);
+        var isVideo = f.type.indexOf('video/') === 0;
+        var media = document.createElement(isVideo ? 'video' : 'img');
+        media.src = luPreviewUrl;
+        if (isVideo) {
+            media.controls = true;
+            media.muted = true;
+            media.playsInline = true;
+            media.preload = 'metadata';
+        } else {
+            media.alt = '';
+        }
+        var rm = document.createElement('button');
+        rm.type = 'button';
+        rm.className = 'cx-remove';
+        rm.setAttribute('aria-label', 'Ondoa media');
+        rm.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+        rm.onclick = luRemoveMedia;
+        box.appendChild(media);
+        box.appendChild(rm);
+        box.hidden = false;
+        if (hint) hint.textContent = f.name;
+        luComposerSync();
+    }
+
+    // Kuongeza urefu wa sehemu ya kuandika + kuwasha kitufe cha Chapisha
+    function luComposerSync() {
+        var t = document.getElementById('luText');
+        var s = document.getElementById('luSend');
+        var f = document.getElementById('luFile');
+        if (!t || !s) return;
+        t.style.height = 'auto';
+        t.style.height = Math.min(t.scrollHeight, 200) + 'px';
+        s.disabled = !(t.value.trim().length || (f && f.files && f.files.length));
+    }
+
+    function luComposerSubmit() {
+        var s = document.getElementById('luSend');
+        if (s && s.disabled) return false;
+        if (s) {
+            s.disabled = true;
+            s.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Inatuma...';
+        }
+        return true;
+    }
+
+    document.addEventListener('DOMContentLoaded', luComposerSync);
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeMediaSheet();
+    });
+    // Ukirudi nyuma kwenye ukurasa (bfcache), rudisha kitufe kwenye hali ya kawaida
+    window.addEventListener('pageshow', function(e) {
+        if (e.persisted) {
+            var s = document.getElementById('luSend');
+            if (s) s.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Chapisha';
+            luComposerSync();
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', initSeeMore);
+    </script>
+</body>
+</html>

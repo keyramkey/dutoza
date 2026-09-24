@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="{{ current_language or 'sw' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{ t('history') }} - Kijiji Tanzania</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+        body {
+            background: #f0f2f5;
+            color: #1c1e21;
+            padding-bottom: 40px;
+            min-height: 100vh;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* ===== HEADER ===== */
+        header {
+            background: #fff;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border-bottom: 1px solid #e4e6eb;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        header a.back {
+            color: #1EB53A;
+            font-size: 20px;
+            text-decoration: none;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        header a.back:active { background: #e8f5e9; }
+        header h1 {
+            font-size: 18px;
+            color: #1EB53A;
+            font-weight: 700;
+            flex: 1;
+        }
+
+        /* ===== CONTAINER ===== */
+        .container {
+            max-width: 600px;
+            margin: 12px auto 0;
+            padding: 0 10px;
+        }
+
+        /* ===== SECTION CARD ===== */
+        .section-card {
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+        .section-header {
+            padding: 14px 16px 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-header i {
+            color: #1EB53A;
+            font-size: 18px;
+        }
+        .section-header h2 {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1c1e21;
+        }
+        .hint {
+            margin: 0 16px 14px;
+            font-size: 12.5px;
+            color: #65676b;
+            background: #e7f3ff;
+            padding: 8px 12px;
+            border-radius: 8px;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            line-height: 1.4;
+        }
+        .hint i {
+            color: #00A3DD;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        /* ===== HISTORY ITEM ===== */
+        .history-item {
+            position: relative;
+            overflow: hidden;
+            border-bottom: 1px solid #f0f2f5;
+        }
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Swipe delete background */
+        .swipe-bg {
+            position: absolute;
+            inset: 0;
+            background: #e41e3f;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 20px;
+            z-index: 1;
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+        .swipe-bg i {
+            color: #fff;
+            font-size: 20px;
+        }
+        .history-item.swiping .swipe-bg {
+            opacity: 1;
+        }
+
+        /* Main content row */
+        .history-row {
+            position: relative;
+            z-index: 2;
+            background: #fff;
+            padding: 14px 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            transition: transform 0.2s ease;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: pan-y;
+        }
+        .history-row:active {
+            background: #f8f9fa;
+        }
+
+        .action-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+            color: #fff;
+        }
+        .icon-like     { background: #e41e3f; }
+        .icon-comment  { background: #1EB53A; }
+        .icon-post     { background: #00A3DD; }
+        .icon-share    { background: #f7b125; }
+        .icon-save     { background: #8A2BE2; }
+        .icon-default  { background: #65676b; }
+
+        .history-body {
+            flex: 1;
+            min-width: 0;
+        }
+        .history-body .action-text {
+            font-size: 14.5px;
+            color: #1c1e21;
+            line-height: 1.45;
+            font-weight: 500;
+        }
+        .history-body a.post-link {
+            color: #1EB53A;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 4px;
+        }
+        .history-body a.post-link:active {
+            opacity: 0.7;
+        }
+        .history-time {
+            font-size: 12px;
+            color: #65676b;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Delete button (long-press) */
+        .delete-btn {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            background: #e41e3f;
+            color: #fff;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            flex-shrink: 0;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        .delete-btn:active {
+            background: #c41a35;
+        }
+        .delete-btn.show {
+            display: inline-flex;
+        }
+
+        /* Empty state */
+        .empty-msg {
+            text-align: center;
+            color: #65676b;
+            padding: 50px 20px;
+            font-size: 15px;
+        }
+        .empty-msg i {
+            font-size: 48px;
+            color: #ccd0d5;
+            display: block;
+            margin-bottom: 14px;
+        }
+        .empty-msg p {
+            line-height: 1.5;
+        }
+
+        /* ===== CONFIRM DIALOG ===== */
+        .confirm-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 4000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .confirm-overlay.show {
+            display: flex;
+        }
+        .confirm-box {
+            background: #fff;
+            border-radius: 16px;
+            padding: 22px 20px 16px;
+            max-width: 320px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+        }
+        .confirm-box p {
+            font-size: 16px;
+            color: #1c1e21;
+            margin-bottom: 18px;
+            line-height: 1.4;
+        }
+        .confirm-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .confirm-actions button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-cancel {
+            background: #e4e6eb;
+            color: #1c1e21;
+        }
+        .btn-delete {
+            background: #e41e3f;
+            color: #fff;
+        }
+        .btn-cancel:active { background: #d8dadf; }
+        .btn-delete:active { background: #c41a35; }
+
+        /* Deleting animation */
+        .history-item.deleting {
+            opacity: 0;
+            transform: translateX(-40px);
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <a href="{{ url_for('profile', username=session.username) }}" class="back">
+        <i class="fa-solid fa-arrow-left"></i>
+    </a>
+    <h1>{{ t('my_history') }}</h1>
+</header>
+
+<div class="container">
+    <div class="section-card">
+        <div class="section-header">
+            <i class="fa-solid fa-user-clock"></i>
+            <h2>{{ t('your_actions') }}</h2>
+        </div>
+
+        <p class="hint">
+            <i class="fa-solid fa-info-circle"></i>
+            <span>{{ t('history_hint') }}</span>
+        </p>
+
+        <div id="historyList">
+            {% if history %}
+                {% for item in history %}
+                <div class="history-item" id="item-{{ item.id }}" data-id="{{ item.id }}" data-delete-url="{{ url_for('delete_history', history_id=item.id) }}">
+                    <div class="swipe-bg">
+                        <i class="fa-solid fa-trash"></i>
+                    </div>
+
+                    <div class="history-row"
+                         data-id="{{ item.id }}"
+                         ontouchstart="onTouchStart(event, {{ item.id }})"
+                         ontouchmove="onTouchMove(event, {{ item.id }})"
+                         ontouchend="onTouchEnd(event, {{ item.id }})">
+
+                        <div class="action-icon icon-default" id="icon-{{ item.id }}">
+                            <i class="fa-solid fa-bolt"></i>
+                        </div>
+
+                        <div class="history-body">
+                            <div class="action-text" id="text-{{ item.id }}">
+                                {{ item.action_description if item.action_description else item.action }}
+                            </div>
+
+                            {% if item.post_id %}
+                            <a href="{{ url_for('post_detail', post_id=item.post_id) }}" class="post-link" onclick="event.stopPropagation();">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i> {{ t('view_post') }}
+                            </a>
+                            {% endif %}
+
+                            <div class="history-time">
+                                <i class="fa-regular fa-clock"></i>
+                                {{ item.created_at }}
+                            </div>
+                        </div>
+
+                        <button type="button" class="delete-btn" id="delBtn-{{ item.id }}"
+                                onclick="event.stopPropagation(); openConfirm({{ item.id }})">
+                            <i class="fa-solid fa-trash"></i> {{ t('delete') }}
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-msg" id="emptyMsg">
+                    <i class="fa-regular fa-clock"></i>
+                    <p>{{ t('history_empty') }}</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- CONFIRM DIALOG -->
+<div class="confirm-overlay" id="confirmOverlay">
+    <div class="confirm-box">
+        <p>{{ t('confirm_delete_history') }}</p>
+        <div class="confirm-actions">
+            <button type="button" class="btn-cancel" onclick="closeConfirm()">{{ t('cancel') }}</button>
+            <button type="button" class="btn-delete" onclick="doDelete()">{{ t('delete') }}</button>
+        </div>
+    </div>
+</div>
+
+<script>
+var I18N = {
+    liked_post: {{ t('history_liked_post')|tojson }},
+    commented_post: {{ t('history_commented_post')|tojson }},
+    created_post: {{ t('history_created_post')|tojson }},
+    shared_post: {{ t('history_shared_post')|tojson }},
+    saved_post: {{ t('history_saved_post')|tojson }}
+};
+
+/* ========== STATE ========== */
+let pendingDeleteId = null;
+let pendingDeleteUrl = null;
+
+/* Swipe state */
+let startX = 0;
+let currentX = 0;
+let swipingId = null;
+let isSwiping = false;
+const SWIPE_THRESHOLD = 80;
+
+/* Long press */
+let longPressTimer = null;
+const LONG_PRESS_MS = 550;
+
+/* ========== MAKE TEXT PERSONAL (first person) + ICONS ========== */
+function personalizeHistory() {
+    document.querySelectorAll('.history-item').forEach(item => {
+        const id = item.dataset.id;
+        const textEl = document.getElementById('text-' + id);
+        const iconEl = document.getElementById('icon-' + id);
+        if (!textEl || !iconEl) return;
+
+        let text = (textEl.textContent || '').trim();
+        const lower = text.toLowerCase();
+
+        // Convert third-person Swahili → first-person
+        text = text
+            .replace(/^Amependa\s*\(like\)\s*/i, 'Umependa ')
+            .replace(/^Amependa\s+/i, 'Umependa ')
+            .replace(/^Ameweka maoni\s*\(comment\)\s*/i, 'Umeweka maoni ')
+            .replace(/^Ameweka maoni\s+/i, 'Umeweka maoni ')
+            .replace(/^Ameunda chapisho jipya/i, 'Umeunda chapisho jipya')
+            .replace(/^Ameunda\s+/i, 'Umeunda ')
+            .replace(/^Ameshiriki\s+/i, 'Umeshiriki ')
+            .replace(/^Amesave\s+/i, 'Umesave ')
+            .replace(/^Amehifadhi\s+/i, 'Umehifadhi ')
+            .replace(/^Ameshare\s+/i, 'Umeshare ')
+            .replace(/^Ame\s+/i, 'Ume ');   // general fallback
+
+        // Clean leftover markers
+        text = text
+            .replace(/\s*\(like\)\s*/gi, ' ')
+            .replace(/\s*\(comment\)\s*/gi, ' ')
+            .replace(/\s*\(share\)\s*/gi, ' ')
+            .replace(/\s*\(save\)\s*/gi, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+        // Translate known actions (DB may store Swahili/English)
+        const l2 = text.toLowerCase();
+        if (l2.includes('penda') || l2.includes('like')) {
+            text = I18N.liked_post || text;
+        } else if (l2.includes('maoni') || l2.includes('comment')) {
+            text = I18N.commented_post || text;
+        } else if (l2.includes('unda') || l2.includes('chapisho jipya') || (l2.includes('post') && l2.includes('unda'))) {
+            text = I18N.created_post || text;
+        } else if (l2.includes('shiriki') || l2.includes('share')) {
+            text = I18N.shared_post || text;
+        } else if (l2.includes('save') || l2.includes('hifadhi')) {
+            text = I18N.saved_post || text;
+        }
+
+        textEl.textContent = text;
+
+        // Choose icon + color based on action
+        const icon = iconEl.querySelector('i');
+        iconEl.className = 'action-icon';
+
+        if (lower.includes('penda') || lower.includes('like')) {
+            iconEl.classList.add('icon-like');
+            icon.className = 'fa-solid fa-heart';
+        } else if (lower.includes('maoni') || lower.includes('comment')) {
+            iconEl.classList.add('icon-comment');
+            icon.className = 'fa-solid fa-comment';
+        } else if (lower.includes('unda') || lower.includes('chapisho jipya') || lower.includes('post')) {
+            iconEl.classList.add('icon-post');
+            icon.className = 'fa-solid fa-pen-to-square';
+        } else if (lower.includes('shiriki') || lower.includes('share')) {
+            iconEl.classList.add('icon-share');
+            icon.className = 'fa-solid fa-share';
+        } else if (lower.includes('save') || lower.includes('hifadhi')) {
+            iconEl.classList.add('icon-save');
+            icon.className = 'fa-solid fa-bookmark';
+        } else {
+            iconEl.classList.add('icon-default');
+            icon.className = 'fa-solid fa-bolt';
+        }
+    });
+}
+
+/* ========== SWIPE + LONG PRESS ========== */
+function onTouchStart(e, id) {
+    if (e.touches.length !== 1) return;
+    startX = e.touches[0].clientX;
+    currentX = startX;
+    swipingId = id;
+    isSwiping = false;
+
+    longPressTimer = setTimeout(() => {
+        if (!isSwiping) {
+            const btn = document.getElementById('delBtn-' + id);
+            if (!btn) return;
+            document.querySelectorAll('.delete-btn.show').forEach(b => {
+                if (b !== btn) b.classList.remove('show');
+            });
+            btn.classList.toggle('show');
+        }
+    }, LONG_PRESS_MS);
+}
+
+function onTouchMove(e, id) {
+    if (swipingId !== id || e.touches.length !== 1) return;
+    currentX = e.touches[0].clientX;
+    const diff = currentX - startX;
+
+    if (Math.abs(diff) > 10) clearTimeout(longPressTimer);
+
+    if (diff < -10) {
+        isSwiping = true;
+        const item = document.getElementById('item-' + id);
+        const row = item ? item.querySelector('.history-row') : null;
+        if (item && row) {
+            item.classList.add('swiping');
+            const translate = Math.max(diff, -120);
+            row.style.transform = `translateX(${translate}px)`;
+        }
+        document.querySelectorAll('.delete-btn.show').forEach(b => b.classList.remove('show'));
+    }
+}
+
+function onTouchEnd(e, id) {
+    clearTimeout(longPressTimer);
+    if (swipingId !== id) return;
+
+    const item = document.getElementById('item-' + id);
+    const row = item ? item.querySelector('.history-row') : null;
+    const diff = currentX - startX;
+
+    if (isSwiping && diff < -SWIPE_THRESHOLD) {
+        if (row) row.style.transform = 'translateX(-80px)';
+        pendingDeleteId = id;
+        const el = document.getElementById('item-' + id);
+        pendingDeleteUrl = el ? el.dataset.deleteUrl : null;
+        openConfirm(id);
+    } else {
+        if (row) {
+            row.style.transition = 'transform 0.2s ease';
+            row.style.transform = 'translateX(0)';
+            setTimeout(() => { if (row) row.style.transition = ''; }, 200);
+        }
+        if (item) item.classList.remove('swiping');
+    }
+
+    swipingId = null;
+    isSwiping = false;
+    startX = 0;
+    currentX = 0;
+}
+
+/* ========== CONFIRM + DELETE ========== */
+function openConfirm(id) {
+    pendingDeleteId = id;
+    const el = document.getElementById('item-' + id);
+    pendingDeleteUrl = el ? el.dataset.deleteUrl : null;
+    document.getElementById('confirmOverlay').classList.add('show');
+}
+
+function closeConfirm() {
+    document.getElementById('confirmOverlay').classList.remove('show');
+    if (pendingDeleteId) {
+        const item = document.getElementById('item-' + pendingDeleteId);
+        const row = item ? item.querySelector('.history-row') : null;
+        if (row) {
+            row.style.transition = 'transform 0.2s ease';
+            row.style.transform = 'translateX(0)';
+            setTimeout(() => { if (row) row.style.transition = ''; }, 200);
+        }
+        if (item) item.classList.remove('swiping');
+        const btn = document.getElementById('delBtn-' + pendingDeleteId);
+        if (btn) btn.classList.remove('show');
+    }
+    pendingDeleteId = null;
+    pendingDeleteUrl = null;
+}
+
+function doDelete() {
+    document.getElementById('confirmOverlay').classList.remove('show');
+    const id = pendingDeleteId;
+    const url = pendingDeleteUrl;
+    if (!id || !url) {
+        pendingDeleteId = null;
+        pendingDeleteUrl = null;
+        return;
+    }
+
+    const item = document.getElementById('item-' + id);
+    if (!item) {
+        pendingDeleteId = null;
+        pendingDeleteUrl = null;
+        return;
+    }
+
+    item.classList.add('deleting');
+    setTimeout(() => {
+        window.location.href = url;
+    }, 220);
+
+    pendingDeleteId = null;
+    pendingDeleteUrl = null;
+}
+
+/* Close open delete buttons when tapping elsewhere */
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.delete-btn') && !e.target.closest('.history-row')) {
+        document.querySelectorAll('.delete-btn.show').forEach(b => b.classList.remove('show'));
+    }
+});
+
+// Prevent context menu on long press
+document.addEventListener('contextmenu', e => {
+    if (e.target.closest('.history-row')) e.preventDefault();
+});
+
+/* ========== INIT ========== */
+document.addEventListener('DOMContentLoaded', () => {
+    personalizeHistory();
+});
+</script>
+
+</body>
+</html>

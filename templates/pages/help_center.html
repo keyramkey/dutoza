@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="{{ current_language or 'sw' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ t('help_center') }} - Kijiji Tanzania</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; }
+        .container { max-width: 500px; margin: 40px auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h2 { color: #1EB53A; text-align: center; margin-bottom: 25px; }
+        .option-btn {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: #ffffff;
+            border: 1px solid #ddd;
+            padding: 18px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-decoration: none;
+            color: #333;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+        .option-btn:hover { background: #f0f7ff; border-color: #1EB53A; }
+        .whatsapp { color: #25D366; font-size: 24px; }
+        .email { color: #EA4335; font-size: 24px; }
+        .direct { color: #1EB53A; font-size: 24px; }
+        .back-link { display: block; text-align: center; margin-top: 20px; color: #65676b; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>{{ t('help_center') }}</h2>
+        
+        <!-- 1. WhatsApp Direct -->
+        <a href="https://wa.me/255626331885?text=Habari%20Admin,%20nahitaji%20msaada%20kwenye%20World%20Link%20Plus" target="_blank" class="option-btn">
+            <i class="fa-brands fa-whatsapp whatsapp"></i>
+            <span>{{ t('help_whatsapp') }}</span>
+        </a>
+
+        <!-- 2. Email Direct -->
+        <a href="mailto:matondomaduhu@yahoo.com?subject=Msaada%20World%20Link%20Plus" class="option-btn">
+            <i class="fa-solid fa-envelope email"></i>
+            <span>{{ t('help_email') }}</span>
+        </a>
+
+        <!-- 3. Direct Message -->
+        <a href="{{ url_for('contact_admin') }}" class="option-btn">
+            <i class="fa-solid fa-headset direct"></i>
+            <span>{{ t('help_direct') }}</span>
+        </a>
+
+        <a href="javascript:history.back()" class="back-link">&larr; {{ t('back') }}</a>
+    </div>
+</body>
+</html>

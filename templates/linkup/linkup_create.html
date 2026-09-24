@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{% if editing %}Hariri Linkup{% else %}Tengeneza Linkup{% endif %} - Kijiji Tanzania</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", system-ui, sans-serif; }
+        body { background: #f0f2f5; color: #0f172a; padding-bottom: 48px; }
+        header {
+            background: #fff; padding: 14px 16px; display: flex; align-items: center; gap: 12px;
+            border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 10;
+        }
+        header a {
+            color: #1EB53A; font-size: 16px; text-decoration: none; width: 34px; height: 34px;
+            display: flex; align-items: center; justify-content: center; border-radius: 50%;
+            background: #ecfdf5; flex-shrink: 0;
+        }
+        header a:active { background: #d1fae5; }
+        header h1 { font-size: 17px; font-weight: 700; }
+        header .sub { font-size: 11.5px; color: #64748b; font-weight: 500; margin-top: 1px; }
+
+        .hero {
+            background: linear-gradient(135deg, #1EB53A, #15803d);
+            padding: 22px 16px 46px; color: #fff; text-align: center;
+        }
+        .hero i { font-size: 22px; opacity: .9; margin-bottom: 6px; display: block; }
+        .hero h2 { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+        .hero p { font-size: 13px; opacity: .92; max-width: 320px; margin: 0 auto; line-height: 1.5; }
+
+        .container { max-width: 520px; margin: -30px auto 16px; padding: 0 12px; }
+        .card {
+            background: #fff; border-radius: 16px; padding: 18px 16px; margin-bottom: 14px;
+            box-shadow: 0 2px 14px rgba(0,0,0,.06); border: 1px solid #f1f5f9;
+        }
+        .section-title {
+            font-size: 13px; font-weight: 800; color: #1EB53A; text-transform: uppercase;
+            letter-spacing: .04em; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;
+        }
+        .section-title .n {
+            width: 20px; height: 20px; border-radius: 50%; background: #ecfdf5; color: #15803d;
+            font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: 800;
+        }
+        .hint { font-size: 13px; color: #64748b; margin-bottom: 14px; line-height: 1.5; }
+        label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px; }
+        input[type=text], input[type=url], input[type=tel], input[type=email], textarea, select {
+            width: 100%; padding: 12px 14px; border: 1.5px solid #e2e8f0; border-radius: 12px;
+            font-size: 15px; margin-bottom: 12px; background: #f8fafc; outline: none;
+            transition: border-color .15s, background .15s;
+        }
+        input:focus, textarea:focus, select:focus { border-color: #1EB53A; background: #fff; }
+        textarea { min-height: 90px; resize: vertical; }
+        .char-count { text-align: right; font-size: 12px; color: #64748b; margin: -6px 2px 12px; }
+        .char-count.near { color: #b45309; }
+        .char-count.over { color: #b91c1c; font-weight: 600; }
+        .row2 { display: grid; grid-template-columns: 1fr 100px; gap: 10px; }
+        .prefix { display: flex; align-items: center; margin-bottom: 12px; }
+        .prefix span {
+            background: #e2e8f0; padding: 12px 10px; border-radius: 12px 0 0 12px;
+            font-size: 14px; color: #64748b; border: 1.5px solid #e2e8f0; border-right: 0;
+        }
+        .prefix input { border-radius: 0 12px 12px 0; margin-bottom: 0; }
+        .btn {
+            width: 100%; padding: 15px; border: none; border-radius: 12px; font-weight: 700;
+            font-size: 15px; cursor: pointer; color: #fff; letter-spacing: .01em;
+            background: linear-gradient(135deg, #1EB53A, #15803d);
+            box-shadow: 0 6px 16px rgba(21,128,61,.28);
+        }
+        .btn:active { transform: translateY(1px); box-shadow: 0 3px 10px rgba(21,128,61,.25); }
+        .btn i { margin-right: 6px; }
+        .error {
+            background: #fef2f2; color: #b91c1c; padding: 12px 14px; border-radius: 10px;
+            font-size: 13px; margin-bottom: 14px; border: 1px solid #fecaca;
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        .avatar-picker { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
+        .avatar-preview {
+            width: 64px; height: 64px; border-radius: 50%; flex-shrink: 0; overflow: hidden;
+            background: linear-gradient(135deg, #ecfdf5, #d1fae5); display: flex; align-items: center;
+            justify-content: center; border: 2px dashed #a7f3d0; color: #15803d; font-size: 20px;
+        }
+        .avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
+        .file-label {
+            flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 13px; border: 1.5px dashed #cbd5e1; border-radius: 12px;
+            text-align: center; color: #475569; font-size: 13px; font-weight: 600; cursor: pointer;
+            background: #f8fafc;
+        }
+        .file-label:active { background: #f1f5f9; }
+        .file-label input { display: none; }
+        .file-hint { font-size: 11.5px; color: #94a3b8; margin: 8px 2px 14px; }
+
+        .place-wrap { position: relative; margin-bottom: 12px; }
+        .place-wrap input { margin-bottom: 0; }
+        .place-wrap i.pin {
+            position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+            color: #94a3b8; font-size: 13px; pointer-events: none;
+        }
+        .place-suggest {
+            display: none; position: absolute; left: 0; right: 0; top: calc(100% + 4px);
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+            box-shadow: 0 10px 28px rgba(0,0,0,.14); z-index: 50; max-height: 220px; overflow-y: auto;
+        }
+        .place-suggest.show { display: block; }
+        .place-suggest button {
+            display: block; width: 100%; text-align: left; border: none; background: none;
+            padding: 10px 12px; font-size: 13px; cursor: pointer; color: #0f172a;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .place-suggest button:last-child { border-bottom: none; }
+        .place-suggest button:hover { background: #ecfdf5; }
+        .place-suggest small { display: block; color: #64748b; font-size: 11px; margin-top: 2px; }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="{{ url_for('settings_kijiji_mode') }}"><i class="fa-solid fa-arrow-left"></i></a>
+        <div>
+            <h1>{% if editing %}Hariri Linkup{% else %}Tengeneza Linkup{% endif %}</h1>
+            <div class="sub">Kijiji Tanzania</div>
+        </div>
+    </header>
+
+    <div class="hero">
+        <i class="fa-solid fa-link"></i>
+        <h2>{% if editing %}Boresha Linkup Yako{% else %}Fungua Linkup Mpya{% endif %}</h2>
+        <p>Jaza taarifa zako kwa umakini ili Linkup yako ionekane ya kitaalamu na iwavutie watu wengine wakuunganishe.</p>
+    </div>
+
+    <div class="container">
+        {% if error %}<div class="error"><i class="fa-solid fa-circle-exclamation"></i> {{ error }}</div>{% endif %}
+        <form method="post" enctype="multipart/form-data">
+
+            <div class="card">
+                <div class="section-title"><span class="n">1</span> Maelezo ya Msingi</div>
+                <p class="hint">Tengeneza na ufurahie uzuri wa kuwa na Linkup yako.</p>
+
+                <label>Jina la Linkup *</label>
+                <input type="text" name="display_name" required maxlength="60"
+                       placeholder="mf. Maduhu Range"
+                       value="{{ form.get('display_name', '') if form else '' }}">
+
+                <label>Username *</label>
+                <div class="prefix">
+                    <span>@</span>
+                    <input type="text" name="username" required maxlength="30"
+                           pattern="[A-Za-z0-9_]+" title="Herufi, namba, underscore tu"
+                           placeholder="maduhu_range"
+                           value="{{ form.get('username', '') if form else '' }}"
+                           {% if editing %}readonly style="opacity:.75"{% endif %}>
+                </div>
+
+                <label>Category *</label>
+                <select name="category" required>
+                    <option value="" disabled {% if not form or not form.get('category') %}selected{% endif %}>— Chagua aina ya Linkup —</option>
+                    {% for key, label in categories %}
+                    <option value="{{ key }}" {% if form and form.get('category') == key %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+
+                <label>Linkup inahusu nini? *</label>
+                <textarea name="about" id="aboutInput" maxlength="120" required
+                          aria-describedby="aboutCount"
+                          placeholder="Eleza kwa ufupi na kwa ubunifu — mf. Ninashirikisha vidokezo vya biashara ndogo na fursa za ajira kwa vijana wa Tanzania.">{{ form.get('about', form.get('bio', '')) if form else '' }}</textarea>
+                <div class="char-count" id="aboutCount" aria-live="polite">0/120</div>
+
+                <label>Picha ya Linkup</label>
+                <div class="avatar-picker">
+                    <div class="avatar-preview" id="avatarPreview"><i class="fa-solid fa-user"></i></div>
+                    <label class="file-label">
+                        <i class="fa-solid fa-camera"></i> Pakia picha nzuri
+                        <input type="file" name="profile_pic" id="profilePicInput" accept="image/*">
+                    </label>
+                </div>
+                <div class="file-hint">Picha ya wazi ya uso wako au nembo (JPG au PNG) inaongeza uaminifu wa Linkup.</div>
+            </div>
+
+            <div class="card">
+                <div class="section-title"><span class="n">2</span> Mahali</div>
+                <p class="hint">Andika na uchague kutoka kwenye matokeo yanayopatikana duniani kote.</p>
+
+                <label>Ulipo sasa (Current city)</label>
+                <div class="place-wrap">
+                    <input type="text" name="current_city" id="current_city" autocomplete="off"
+                           placeholder="mf. Dar es Salaam, Tanzania"
+                           value="{{ form.get('current_city', '') if form else '' }}"
+                           oninput="searchPlace(this, 'current_city_suggest')">
+                    <div class="place-suggest" id="current_city_suggest"></div>
+                </div>
+
+                <label>Hometown</label>
+                <div class="place-wrap">
+                    <input type="text" name="hometown" id="hometown" autocomplete="off"
+                           placeholder="mf. Shinyanga — mahali ulipozaliwa au ukulia"
+                           value="{{ form.get('hometown', '') if form else '' }}"
+                           oninput="searchPlace(this, 'hometown_suggest')">
+                    <div class="place-suggest" id="hometown_suggest"></div>
+                </div>
+
+                <label>Nchi (Country)</label>
+                <div class="place-wrap">
+                    <input type="text" name="country" id="country" autocomplete="off"
+                           placeholder="mf. Tanzania"
+                           value="{{ form.get('country', '') if form else '' }}"
+                           oninput="searchPlace(this, 'country_suggest')">
+                    <div class="place-suggest" id="country_suggest"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="section-title"><span class="n">3</span> Kazi / Work</div>
+
+                <label>Aina ya kazi</label>
+                <select name="employment_type">
+                    <option value="">— Chagua aina ya ajira —</option>
+                    {% for key, label in employment_types %}
+                    <option value="{{ key }}" {% if form and form.get('employment_type') == key %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+
+                <label>Kampuni / Workplace</label>
+                <input type="text" name="workplace_name" maxlength="150"
+                       placeholder="mf. Kijiji Tanzania Ltd"
+                       value="{{ form.get('workplace_name', '') if form else '' }}">
+
+                <label>Cheo / Role</label>
+                <input type="text" name="workplace_role" maxlength="120"
+                       placeholder="mf. Mwanzilishi, Mwalimu, Mhandisi wa Programu"
+                       value="{{ form.get('workplace_role', '') if form else '' }}">
+
+                <label>Mji wa kazi (Workplace city)</label>
+                <div class="place-wrap">
+                    <input type="text" name="workplace_city" id="workplace_city" autocomplete="off"
+                           placeholder="mf. Arusha, Tanzania"
+                           value="{{ form.get('workplace_city', '') if form else '' }}"
+                           oninput="searchPlace(this, 'work_city_suggest')">
+                    <div class="place-suggest" id="work_city_suggest"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="section-title"><span class="n">4</span> Elimu</div>
+                <p class="hint">Andika jina la shule mwenyewe pamoja na mwaka uliojiunga.</p>
+
+                <label>Shule ya msingi</label>
+                <div class="row2">
+                    <input type="text" name="primary_school" placeholder="mf. Shule ya Msingi Azimio"
+                           value="{{ form.get('primary_school', '') if form else '' }}">
+                    <input type="text" name="primary_year" placeholder="Mwaka" maxlength="10"
+                           value="{{ form.get('primary_year', '') if form else '' }}">
+                </div>
+
+                <label>Shule ya sekondari</label>
+                <div class="row2">
+                    <input type="text" name="secondary_school" placeholder="mf. Shule ya Sekondari Mzumbe"
+                           value="{{ form.get('secondary_school', '') if form else '' }}">
+                    <input type="text" name="secondary_year" placeholder="Mwaka" maxlength="10"
+                           value="{{ form.get('secondary_year', '') if form else '' }}">
+                </div>
+
+                <label>Chuo / Chuo Kikuu (College / University)</label>
+                <div class="row2">
+                    <input type="text" name="college_name" placeholder="mf. Chuo Kikuu cha Dar es Salaam"
+                           value="{{ form.get('college_name', '') if form else '' }}">
+                    <input type="text" name="college_year" placeholder="Mwaka" maxlength="10"
+                           value="{{ form.get('college_year', '') if form else '' }}">
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="section-title"><span class="n">5</span> Mawasiliano</div>
+
+                <label>Website</label>
+                <input type="url" name="website" placeholder="https://tovuti-yako.co.tz"
+                       value="{{ form.get('website', '') if form else '' }}">
+
+                <label>Simu (ya umma)</label>
+                <input type="tel" name="phone" placeholder="+255 6XX XXX XXX"
+                       value="{{ form.get('phone', '') if form else '' }}">
+
+                <label>Barua pepe (ya umma)</label>
+                <input type="email" name="email_public" placeholder="jina.lako@barua.com"
+                       value="{{ form.get('email_public', '') if form else '' }}">
+            </div>
+
+            <button type="submit" class="btn">
+                <i class="fa-solid {% if editing %}fa-floppy-disk{% else %}fa-circle-plus{% endif %}"></i>
+                {% if editing %}Hifadhi Mabadiliko{% else %}Tengeneza Linkup{% endif %}
+            </button>
+        </form>
+    </div>
+
+<script>
+(function() {
+    var input = document.getElementById('aboutInput');
+    var counter = document.getElementById('aboutCount');
+    if (!input || !counter) return;
+    var MAX = 120;
+    function update() {
+        var n = input.value.length;
+        counter.textContent = n + '/' + MAX;
+        counter.className = 'char-count' + (n > MAX ? ' over' : (n >= MAX - 20 ? ' near' : ''));
+        if (n > MAX) counter.textContent += ' — itakatwa hadi herufi ' + MAX + ' ukihifadhi';
+    }
+    input.addEventListener('input', update);
+    update();
+})();
+
+(function() {
+    var fileInput = document.getElementById('profilePicInput');
+    var preview = document.getElementById('avatarPreview');
+    if (!fileInput || !preview) return;
+    fileInput.addEventListener('change', function() {
+        var file = fileInput.files && fileInput.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            preview.innerHTML = '<img src="' + e.target.result + '" alt="Picha ya Linkup">';
+        };
+        reader.readAsDataURL(file);
+    });
+})();
+
+var placeTimers = {};
+function searchPlace(input, suggestId) {
+    var q = (input.value || '').trim();
+    var box = document.getElementById(suggestId);
+    if (!box) return;
+    clearTimeout(placeTimers[suggestId]);
+    if (q.length < 2) { box.classList.remove('show'); box.innerHTML = ''; return; }
+    placeTimers[suggestId] = setTimeout(function() {
+        fetch('/api/places/search?q=' + encodeURIComponent(q), {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var places = (data && data.places) || [];
+            if (!places.length) { box.classList.remove('show'); box.innerHTML = ''; return; }
+            box.innerHTML = places.map(function(p) {
+                var label = (p.label || '').replace(/"/g, '&quot;');
+                return '<button type="button" data-label="' + label + '" data-city="' + (p.city || '').replace(/"/g, '&quot;') +
+                    '" data-country="' + (p.country || '').replace(/"/g, '&quot;') + '">' +
+                    label + (p.country ? '<small>' + (p.city ? p.city + ' · ' : '') + p.country + '</small>' : '') +
+                    '</button>';
+            }).join('');
+            box.classList.add('show');
+            box.querySelectorAll('button').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    input.value = btn.getAttribute('data-label') || '';
+                    var countryInput = document.getElementById('country');
+                    if (countryInput && btn.getAttribute('data-country') && input.id !== 'country') {
+                        if (!countryInput.value) countryInput.value = btn.getAttribute('data-country');
+                    }
+                    box.classList.remove('show');
+                    box.innerHTML = '';
+                });
+            });
+        })
+        .catch(function() { box.classList.remove('show'); });
+    }, 350);
+}
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.place-wrap')) {
+        document.querySelectorAll('.place-suggest').forEach(function(b) {
+            b.classList.remove('show');
+        });
+    }
+});
+</script>
+</body>
+</html>

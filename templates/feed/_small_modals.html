@@ -1,0 +1,88 @@
+<!-- Report Modal -->
+<div class="custom-modal" id="reportModal">
+    <div class="custom-modal-content">
+        <h3>Why do you want to report this post?</h3>
+        <input type="hidden" id="reportPostId">
+        <button class="report-option" onclick="submitReport('Harmful')">1. Harmful</button>
+        <button class="report-option" onclick="submitReport('Adult content')">2. Adult Content</button>
+        <button class="report-option" onclick="submitReport('Sensitive')">3. Sensitive</button>
+        <button class="report-option" onclick="submitReport('Not match my interest')">4. Not match my interest</button>
+        <button class="report-option" onclick="submitReport('Awful')">5. Awful</button>
+        <button onclick="closeReportModal()" style="margin-top: 10px; width: 100%; padding: 8px; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer;">{{ t('cancel') }}</button>
+    </div>
+</div>
+
+<!-- Repost Modal (caption + preview) -->
+<div class="confirm-modal" id="repostConfirmModal">
+    <div class="confirm-modal-content repost-modal">
+        <h3>Repost</h3>
+        <textarea id="repostCaption" class="repost-caption" rows="3" maxlength="1000"
+                  placeholder="Andika caption yako hapa (si lazima)..."></textarea>
+        <div class="repost-preview" id="repostPreview"></div>
+        <div class="confirm-buttons">
+            <button class="btn-confirm-no" onclick="closeRepostConfirm()">{{ t('cancel') }}</button>
+            <button class="btn-confirm-yes" id="confirmRepostBtn">Repost</button>
+        </div>
+    </div>
+</div>
+
+
+
+<style>
+.repost-modal { text-align: left; }
+.repost-modal h3 { text-align: center; margin-bottom: 12px; }
+.repost-caption {
+    width: 100%; resize: none; padding: 10px 12px; font-size: 15px;
+    border: 1px solid #ccd0d5; border-radius: 10px; outline: none;
+    font-family: inherit; margin-bottom: 10px; background: #fff; color: #050505;
+}
+.repost-caption:focus { border-color: #1EB53A; }
+.repost-preview {
+    display: none; margin-bottom: 14px; padding: 8px 10px; font-size: 13px; color: #65676b;
+    background: #f0f2f5; border-left: 3px solid #1EB53A; border-radius: 6px;
+    max-height: 64px; overflow: hidden; word-break: break-word;
+}
+
+/* ===== OFFLINE VIDEOS ===== */
+#vda-offline-list-btn { opacity: 0.95; }
+#offlineVideosModal {
+  display: none; position: fixed; inset: 0; z-index: 60000;
+  background: rgba(0,0,0,0.72); align-items: flex-end; justify-content: center;
+}
+#offlineVideosModal.show { display: flex; }
+.ov-sheet {
+  background: #121212; color: #fff; width: 100%; max-width: 520px;
+  max-height: 82vh; border-radius: 16px 16px 0 0; padding: 14px 14px 24px;
+  overflow: auto;
+}
+.ov-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.ov-head h3 { margin: 0; font-size: 17px; }
+.ov-head button { background: transparent; border: none; color: #fff; font-size: 22px; cursor: pointer; }
+.ov-item {
+  display: flex; gap: 12px; align-items: center; padding: 10px 8px;
+  border-radius: 10px; background: #1c1c1e; margin-bottom: 8px;
+}
+.ov-item video, .ov-item .ov-thumb {
+  width: 88px; height: 56px; object-fit: cover; border-radius: 8px; background: #333; flex-shrink: 0;
+}
+.ov-meta { flex: 1; min-width: 0; }
+.ov-meta strong { display: block; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ov-meta small { color: #aaa; font-size: 11px; }
+.ov-actions { display: flex; flex-direction: column; gap: 6px; }
+.ov-actions button {
+  border: none; border-radius: 8px; padding: 6px 10px; font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.ov-play { background: #1EB53A; color: #fff; }
+.ov-del { background: #333; color: #f66; }
+.ov-empty { text-align: center; color: #888; padding: 28px 12px; font-size: 14px; }
+.ov-progress-wrap {
+  display: none; position: fixed; left: 12px; right: 12px; bottom: 80px; z-index: 60001;
+  background: #1c1c1e; color: #fff; border-radius: 12px; padding: 12px 14px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.35); max-width: 420px; margin: 0 auto;
+}
+.ov-progress-wrap.show { display: block; }
+.ov-bar { height: 8px; background: #333; border-radius: 6px; overflow: hidden; margin-top: 8px; }
+.ov-bar > div { height: 100%; width: 0%; background: linear-gradient(90deg,#1EB53A,#00A3DD); }
+
+</style>
+

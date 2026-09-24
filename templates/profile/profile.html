@@ -1,0 +1,2784 @@
+<!DOCTYPE html>
+<html lang="{{ current_language or 'sw' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{% if profile_user.full_name %}{{ profile_user.full_name }} (@{{ profile_user.username }}){% else %}{{ profile_user.username }}{% endif %} - Kijiji Tanzania</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background: #f0f2f5;
+            color: #1e293b;
+            padding-bottom: 72px;
+            line-height: 1.45;
+        }
+
+        /* =========================
+           HEADER
+        ========================= */
+        header {
+            background: #ffffff;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #e5e7eb;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+        }
+
+        header .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        header h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        header a, header .header-icon {
+            color: #1EB53A;
+            font-size: 20px;
+            text-decoration: none;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            transition: background 0.2s;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        header a:hover, header .header-icon:hover {
+            background: #ecfdf5;
+        }
+
+        /* =========================
+           CONTAINER
+        ========================= */
+        .container {
+            max-width: 620px;
+            margin: 16px auto;
+            padding: 0 12px;
+        }
+
+        /* =========================
+           PROFILE CARD
+        ========================= */
+        .profile-card {
+            background: #ffffff;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            margin-bottom: 18px;
+            position: relative;
+        }
+
+        .profile-cover {
+            width: 100%;
+            height: 160px;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #1EB53A 0%, #00A3DD 55%, #FCD116 100%);
+            cursor: pointer;
+        }
+
+        .profile-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .profile-cover::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.05), rgba(0,0,0,0.25));
+            pointer-events: none;
+        }
+
+        /* ===== COVER NAME FALLBACK (jina kama background) ===== */
+        .cover-name-fallback {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            padding: 20px;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .cover-name-fallback span {
+            font-size: clamp(28px, 8vw, 42px);
+            font-weight: 800;
+            color: #ffffff;
+            text-shadow: 0 2px 12px rgba(0,0,0,0.35);
+            letter-spacing: 0.5px;
+            line-height: 1.15;
+            max-width: 90%;
+            word-break: break-word;
+            font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            opacity: 0.95;
+        }
+
+        .cover-actions {
+            position: absolute;
+            top: 10px;
+            right: 12px;
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .cover-actions a,
+        .cover-actions button {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.45);
+            color: #ffffff;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            text-decoration: none;
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+            transition: background 0.2s;
+        }
+
+        .cover-actions a:hover,
+        .cover-actions button:hover {
+            background: rgba(0,0,0,0.65);
+        }
+
+        .profile-main {
+            padding: 0 18px 20px;
+            position: relative;
+        }
+
+        .profile-avatar-wrapper {
+            position: relative;
+            width: 108px;
+            height: 108px;
+            margin-top: -54px;
+            margin-bottom: 12px;
+            z-index: 5;
+        }
+
+        .profile-avatar-button {
+            border: none;
+            background: none;
+            padding: 0;
+            margin: 0;
+            cursor: pointer;
+            display: block;
+            width: 108px;
+            height: 108px;
+            border-radius: 50%;
+        }
+
+        .profile-avatar {
+            width: 108px;
+            height: 108px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #ffffff;
+            background: #e2e8f0;
+            display: block;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+            transition: transform 0.2s;
+        }
+
+        .profile-avatar-button:hover .profile-avatar {
+            transform: scale(1.03);
+        }
+
+        .profile-photo-icon {
+            position: absolute;
+            right: 2px;
+            bottom: 4px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #ffffff;
+            color: #1EB53A;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+            pointer-events: none;
+        }
+
+        /* (cover-actions already defined above) */
+
+        .profile-name {
+            font-size: 20px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 3px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .profile-username {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 8px;
+            font-weight: 500;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 6px;
+            width: 100%;
+        }
+
+        .profile-username .uname {
+            color: #64748b;
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        .inline-stats {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            flex-wrap: wrap;
+            gap: 4px 6px;
+            width: 100%;
+            max-width: 100%;
+            overflow: visible;
+        }
+
+        .inline-stat {
+            font-size: 11px;
+            color: #64748b;
+            text-decoration: none;
+            white-space: nowrap;
+            font-weight: 500;
+            background: #f8fafc;
+            border: 1px solid #eef0f2;
+            border-radius: 999px;
+            padding: 3px 8px;
+            line-height: 1.3;
+            flex: 0 0 auto;
+        }
+
+        .inline-stat strong {
+            color: #0f172a;
+            font-weight: 700;
+            font-size: 11px;
+        }
+
+        .inline-stat:hover {
+            color: #1EB53A;
+            background: #ecfdf5;
+            border-color: #bbf7d0;
+        }
+
+        .inline-stat:hover strong {
+            color: #1EB53A;
+        }
+
+        .inline-stat.friends-stat {
+            background: linear-gradient(135deg, #ecfdf5, #e0f2fe);
+            border-color: #bbf7d0;
+            color: #15803d;
+        }
+
+        .inline-stat.friends-stat strong {
+            color: #15803d;
+        }
+
+        .profile-category-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin: 4px 0 10px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #f3e8ff, #e0f2fe);
+            color: #6b21a8;
+            font-size: 12.5px;
+            font-weight: 700;
+            border: 1px solid #e9d5ff;
+            max-width: 100%;
+            word-break: break-word;
+        }
+        .profile-category-badge i {
+            color: #8A2BE2;
+            font-size: 12px;
+        }
+
+        .profile-bio {
+            color: #475569;
+            font-size: 14px;
+            margin-bottom: 14px;
+            line-height: 1.45;
+        }
+
+        .profile-details {
+            width: 100%;
+            text-align: left;
+            margin-top: 12px;
+            padding: 14px;
+            background: #f8fafc;
+            border-radius: 14px;
+            font-size: 13.5px;
+            color: #334155;
+            border: 1px solid #f1f5f9;
+        }
+
+        .profile-details-row {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 6px;
+            width: 100%;
+            padding-top: 8px;
+            border-top: 1px solid #e2e8f0;
+            margin-top: 4px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .profile-details-row::-webkit-scrollbar {
+            height: 0;
+        }
+
+        .detail-chip {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+            background: #ffffff;
+            padding: 4px 8px;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            font-size: 11px;
+            white-space: nowrap;
+        }
+
+        .detail-chip i {
+            color: #1EB53A;
+            font-size: 11px;
+        }
+
+        .profile-links {
+            margin-top: 16px;
+            text-align: left;
+        }
+
+        .profile-links-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .profile-links-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .profile-link-item {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #f1f5f9;
+            color: #1EB53A;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-size: 18px;
+            transition: all 0.2s;
+            border: 1px solid #e2e8f0;
+        }
+
+        .profile-link-item:hover {
+            background: #1EB53A;
+            color: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(30,181,58,0.25);
+        }
+
+        .profile-link-item.extra-link {
+            display: none;
+        }
+
+        .links-more-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #1EB53A;
+            color: #ffffff;
+            border: none;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(30,181,58,0.25);
+            transition: transform 0.15s;
+        }
+
+        .links-more-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .links-more-btn.visible {
+            display: flex;
+        }
+
+        /* Full-screen Links sheet */
+        #linksSheet {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: #f0f2f5;
+            z-index: 3200;
+            overflow-y: auto;
+        }
+
+        #linksSheet.open {
+            display: block;
+        }
+
+        .links-sheet-header {
+            position: sticky;
+            top: 0;
+            background: #ffffff;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #e5e7eb;
+            z-index: 10;
+            box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+        }
+
+        .links-sheet-header h2 {
+            font-size: 17px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .links-sheet-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: #f1f5f9;
+            color: #64748b;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .links-sheet-body {
+            max-width: 620px;
+            margin: 16px auto;
+            padding: 0 12px 24px;
+        }
+
+        .links-cat {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+            margin-bottom: 14px;
+            overflow: hidden;
+            border: 1px solid #f1f5f9;
+        }
+
+        .links-cat-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 12px 16px 8px;
+            background: #f8fafc;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .links-cat-list a {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 16px;
+            text-decoration: none;
+            color: #334155;
+            font-size: 15px;
+            font-weight: 500;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .links-cat-list a:last-child {
+            border-bottom: none;
+        }
+
+        .links-cat-list a:hover {
+            background: #ecfdf5;
+            color: #1EB53A;
+        }
+
+        .links-cat-list a i {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #f1f5f9;
+            color: #1EB53A;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .profile-stats {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            margin: 16px 0 14px;
+            width: 100%;
+            border-top: 1px solid #f1f5f9;
+            border-bottom: 1px solid #f1f5f9;
+            padding: 12px 0;
+        }
+
+        .stat-item {
+            text-align: center;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .stat-item a,
+        .stat-item button {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            cursor: pointer;
+            padding: 6px 4px;
+            border-radius: 10px;
+            transition: background 0.2s;
+            background: none;
+            border: none;
+            width: 100%;
+            font-family: inherit;
+        }
+
+        .stat-item a:hover,
+        .stat-item button:hover {
+            background: #f8fafc;
+        }
+
+        .stat-item a:hover .count,
+        .stat-item a:hover .label,
+        .stat-item button:hover .count,
+        .stat-item button:hover .label {
+            color: #1EB53A;
+        }
+
+        .stat-item.active .count,
+        .stat-item.active .label {
+            color: #1EB53A;
+        }
+
+        .stat-item .count {
+            font-weight: 800;
+            font-size: 15px;
+            color: #0f172a;
+            display: block;
+        }
+
+        .stat-item .label {
+            font-size: 11px;
+            color: #64748b;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            margin-bottom: 6px;
+        }
+
+        .primary-btn {
+            background: linear-gradient(135deg, #1EB53A, #15803d);
+            color: white;
+            border: none;
+            padding: 11px 14px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(30,181,58,0.2);
+        }
+
+        .primary-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(30,181,58,0.28);
+        }
+
+        .chat-btn {
+            background: linear-gradient(135deg, #00A3DD, #0284c7);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 11px 14px;
+            box-shadow: 0 4px 12px rgba(0,163,221,0.2);
+            transition: all 0.2s;
+        }
+
+        .chat-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(0,163,221,0.28);
+        }
+
+        /* =========================
+           TABS
+        ========================= */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            background: #ffffff;
+            padding: 6px;
+            border-radius: 14px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+        }
+
+        .tabs span {
+            cursor: pointer;
+            padding: 10px 16px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #64748b;
+            border-radius: 10px;
+            transition: all 0.2s;
+            flex: 1;
+            text-align: center;
+        }
+
+        .tabs span.active {
+            color: #ffffff;
+            background: linear-gradient(135deg, #1EB53A, #15803d);
+            box-shadow: 0 3px 10px rgba(30,181,58,0.25);
+        }
+
+        /* =========================
+           DASHBOARD SECTIONS
+        ========================= */
+        /* Full-screen Dashboard */
+        #section-dashboard {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: #f0f2f5;
+            z-index: 3000;
+            overflow-y: auto;
+            padding: 0 0 24px;
+        }
+
+        #section-dashboard.open {
+            display: block;
+        }
+
+        .dashboard-header {
+            position: sticky;
+            top: 0;
+            background: #ffffff;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #e5e7eb;
+            z-index: 10;
+            box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+        }
+
+        .dashboard-header h2 {
+            font-size: 17px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .dashboard-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: #f1f5f9;
+            color: #64748b;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dashboard-close:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        .dashboard-body {
+            max-width: 620px;
+            margin: 16px auto;
+            padding: 0 12px;
+        }
+
+        .dashboard-section {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+            margin-bottom: 14px;
+            overflow: hidden;
+            border: 1px solid #f1f5f9;
+        }
+
+        .dashboard-section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 12px 16px 8px;
+            background: #f8fafc;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .dashboard-list {
+            list-style: none;
+        }
+
+        .dashboard-list a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            text-decoration: none;
+            color: #334155;
+            font-size: 15px;
+            font-weight: 500;
+            border-bottom: 1px solid #f1f5f9;
+            transition: background 0.2s;
+        }
+
+        .dashboard-list a:last-child {
+            border-bottom: none;
+        }
+
+        .dashboard-list a:hover {
+            background: #ecfdf5;
+            color: #1EB53A;
+        }
+
+        .dashboard-list a i {
+            width: 22px;
+            text-align: center;
+            font-size: 16px;
+            color: #64748b;
+        }
+
+        .dashboard-list a:hover i {
+            color: #1EB53A;
+        }
+
+        .dashboard-list a.danger {
+            color: #dc2626;
+        }
+
+        .dashboard-list a.danger i {
+            color: #dc2626;
+        }
+
+        .dashboard-list a.danger:hover {
+            background: #fef2f2;
+            color: #b91c1c;
+        }
+
+        /* =========================
+           POST CARDS
+        ========================= */
+        .card {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+            margin-bottom: 14px;
+            padding: 16px;
+            border: 1px solid #f1f5f9;
+        }
+
+        .post-content-text {
+            font-size: 15px;
+            line-height: 1.45;
+            word-break: break-word;
+            color: #0f172a;
+        }
+
+        /* ===== POST HEAD (avatar + jina + muda juu ya kila post) ===== */
+        .post-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .post-head .ph-avatar-link { display: block; flex-shrink: 0; line-height: 0; text-decoration: none; }
+        .post-head .ph-avatar {
+            width: 42px; height: 42px; border-radius: 50%; object-fit: cover;
+            background: #e4e6eb; border: 2px solid #ecfdf5;
+        }
+        .post-head .ph-who { min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
+        .post-head .ph-who strong {
+            font-size: 14.5px; color: #0f172a; display: inline-flex; align-items: center;
+            gap: 5px; flex-wrap: wrap;
+        }
+        .post-head .ph-who strong a { text-decoration: none; color: inherit; }
+        .post-head .ph-who strong a:hover { text-decoration: underline; }
+        .post-head .ph-meta { font-size: 12px; color: #64748b; }
+        .post-head .ph-meta a { text-decoration: none; color: inherit; }
+        .post-head .ph-meta a:hover { text-decoration: underline; }
+        .post-head .ph-repost-tag {
+            font-size: 11px; font-weight: 700; color: #15803d; background: #ecfdf5;
+            padding: 2px 9px; border-radius: 10px; display: inline-flex; align-items: center; gap: 4px;
+        }
+
+        /* ===== REPOST FRAME (kama feed) ===== */
+        .repost-frame {
+            display: flex; flex-direction: column; height: 380px;
+            margin: 10px 0 12px; padding: 14px;
+            border: 1px solid #d9e2dc; border-radius: 16px;
+            background: linear-gradient(180deg, #fbfdfb 0%, #f2f7f3 100%);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            text-decoration: none; color: inherit; overflow: hidden;
+            cursor: pointer; -webkit-tap-highlight-color: transparent;
+        }
+        .repost-frame:active { transform: scale(0.99); }
+        .repost-frame .rf-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .repost-frame .rf-avatar-link { display: block; flex-shrink: 0; line-height: 0; text-decoration: none; }
+        .repost-frame .rf-avatar {
+            width: 40px; height: 40px; border-radius: 50%; object-fit: cover;
+            background: #e4e6eb; border: 2px solid #1EB53A;
+        }
+        .repost-frame .rf-who { min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
+        .repost-frame .rf-who strong { font-size: 14px; color: #050505; display: inline-flex; align-items: center; gap: 4px; }
+        .repost-frame .rf-who span { font-size: 12px; color: #65676b; }
+        .repost-frame .rf-text {
+            font-size: 14px; color: #1c1e21; line-height: 1.45; white-space: pre-wrap; word-break: break-word;
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 10px;
+        }
+        .repost-frame.rf-text-only .rf-text { flex: 1 1 auto; font-size: 17px; -webkit-line-clamp: 10; margin-bottom: 0; }
+        .repost-frame .rf-media {
+            position: relative; flex: 1 1 auto; min-height: 0; border-radius: 12px; overflow: hidden; background: #0d1117;
+        }
+        .repost-frame .rf-media img, .repost-frame .rf-media video {
+            position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none;
+        }
+        .repost-frame .rf-play {
+            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 44px; text-shadow: 0 2px 10px rgba(0,0,0,.6); background: rgba(0,0,0,.2);
+        }
+        .repost-frame.rf-missing {
+            height: auto; align-items: center; justify-content: center; cursor: default;
+            color: #65676b; font-size: 13px; text-align: center; padding: 22px 16px;
+        }
+
+
+        .post-media img,
+        .post-media video {
+            width: 100%;
+            max-height: 360px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-top: 12px;
+        }
+
+        .post-stats {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 12px;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 8px;
+        }
+
+        .post-actions {
+            display: flex;
+            justify-content: space-around;
+            border-top: 1px solid #f1f5f9;
+            border-bottom: 1px solid #f1f5f9;
+            margin-top: 4px;
+            padding: 4px 0;
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .post-actions button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            flex: 1;
+            padding: 10px 0;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .post-actions button:hover {
+            background: #f8fafc;
+            color: #1EB53A;
+        }
+
+        .post-actions button.liked {
+            color: #1EB53A;
+        }
+
+        .comments-section {
+            margin-top: 12px;
+            display: none;
+        }
+
+        .comments-section.active {
+            display: block;
+        }
+
+        .comments-box {
+            max-height: 280px;
+            overflow-y: auto;
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+        }
+
+        .comment-item {
+            font-size: 13px;
+            background: #ffffff;
+            padding: 11px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            position: relative;
+            border: 1px solid #f1f5f9;
+        }
+
+        .comment-item.menu-open { z-index: 50; }
+        .comment-item.hidden-comment {
+            opacity: 0.55;
+            background: #f1f5f9;
+        }
+
+        .comment-actions-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #64748b;
+            font-size: 14px;
+            padding: 6px 8px;
+            border-radius: 50%;
+        }
+
+        .comment-actions-btn:hover { background: #f1f5f9; }
+
+        .comment-actions-dropdown {
+            display: none;
+            position: absolute;
+            right: 8px;
+            top: 34px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            z-index: 9999;
+            min-width: 150px;
+            overflow: hidden;
+        }
+
+        .comment-actions-dropdown button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 11px 14px;
+            text-align: left;
+            background: none;
+            border: none;
+            font-size: 13px;
+            cursor: pointer;
+            color: #0f172a;
+        }
+
+        .comment-actions-dropdown button:hover { background: #f8fafc; }
+
+        .comment-form {
+            display: flex;
+            gap: 8px;
+        }
+
+        .comment-form input {
+            flex: 1;
+            padding: 10px 16px;
+            border-radius: 22px;
+            border: 1.5px solid #e2e8f0;
+            outline: none;
+            font-size: 13.5px;
+            background: #f8fafc;
+            transition: all 0.2s;
+        }
+
+        .comment-form input:focus {
+            background: #ffffff;
+            border-color: #1EB53A;
+            box-shadow: 0 0 0 3px rgba(30,181,58,0.1);
+        }
+
+        .comment-form button {
+            background: linear-gradient(135deg, #1EB53A, #15803d);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 3px 10px rgba(30,181,58,0.25);
+            transition: transform 0.15s;
+        }
+
+        .comment-form button:hover { transform: scale(1.05); }
+
+        /* =========================
+           PHOTO VIEWER
+        ========================= */
+        .photo-viewer {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.93);
+            z-index: 5000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .photo-viewer.active { display: flex; }
+
+        .photo-viewer img {
+            max-width: 95%;
+            max-height: 90vh;
+            object-fit: contain;
+            border-radius: 10px;
+        }
+
+        .photo-viewer-close {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.15);
+            color: #ffffff;
+            font-size: 22px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .photo-viewer-close:hover { background: rgba(255,255,255,0.25); }
+
+        /* =========================
+           TOAST
+        ========================= */
+        .toast {
+            position: fixed;
+            bottom: 84px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 12px 22px;
+            border-radius: 12px;
+            font-size: 14px;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s, bottom 0.3s;
+            pointer-events: none;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .toast.show { opacity: 1; bottom: 94px; }
+        .toast.success { background: #15803d; }
+        .toast.error { background: #dc2626; }
+
+        /* =========================
+           BOTTOM NAV
+        ========================= */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #ffffff;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0 12px;
+            z-index: 1000;
+            box-shadow: 0 -2px 12px rgba(0,0,0,0.04);
+        }
+
+        .bottom-nav a {
+            color: #94a3b8;
+            text-align: center;
+            font-size: 21px;
+            text-decoration: none;
+            width: 48px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            transition: all 0.2s;
+        }
+
+        .bottom-nav a.active {
+            color: #1EB53A;
+            background: #ecfdf5;
+        }
+
+        .verified-badge-custom {
+            width: 16px;
+            height: 16px;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 4px;
+            flex-shrink: 0;
+        }
+
+        .verified-badge-custom.small {
+            width: 14px;
+            height: 14px;
+            margin-left: 3px;
+        }
+
+        /* See more / See less */
+        .wlp-expandable {
+            position: relative !important;
+            overflow: hidden !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+        }
+        .wlp-expandable.wlp-stage-0 {
+            display: -webkit-box !important;
+            -webkit-box-orient: vertical !important;
+            -webkit-line-clamp: 2 !important;
+            line-clamp: 2 !important;
+        }
+        .wlp-expandable.wlp-stage-1 {
+            display: -webkit-box !important;
+            -webkit-box-orient: vertical !important;
+            -webkit-line-clamp: 4 !important;
+            line-clamp: 4 !important;
+        }
+        .wlp-expandable.wlp-stage-2 {
+            display: block !important;
+            -webkit-line-clamp: unset !important;
+            line-clamp: unset !important;
+            max-height: none !important;
+            overflow: visible !important;
+        }
+        .wlp-more-wrap {
+            display: block !important;
+            line-height: 1.4 !important;
+            margin-top: 2px;
+        }
+        .wlp-more-btn {
+            appearance: none !important;
+            -webkit-appearance: none !important;
+            touch-action: manipulation !important;
+            user-select: none !important;
+            min-height: 28px !important;
+            padding: 2px 4px !important;
+            margin: 0 !important;
+            background: transparent !important;
+            color: #1EB53A !important;
+            border: 0 !important;
+            border-radius: 4px !important;
+            font-weight: 700 !important;
+            font-size: 13px !important;
+            cursor: pointer !important;
+            position: relative !important;
+            z-index: 5 !important;
+        }
+
+        .section-title {
+            margin-bottom: 12px;
+            font-size: 15px;
+            color: #64748b;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <header style="min-height:6px;padding:4px 16px;border-bottom:none;box-shadow:none;background:transparent;">
+        {% if not is_own_profile %}
+        <a href="{{ url_for('home') }}" title="Home" class="header-icon" style="margin-left:auto;">
+            <i class="fa-solid fa-house"></i>
+        </a>
+        {% endif %}
+    </header>
+
+    <div class="container">
+        <!-- Profile Info Card -->
+        <div class="profile-card">
+            <div class="profile-cover" id="profileCover" onclick="openCoverPhoto(event)">
+                {% if profile_user.cover_photo %}
+                    <img id="coverImage" src="{{ url_for('static', filename='uploads/' + profile_user.cover_photo) }}" alt="Cover Photo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="cover-name-fallback" style="display:none;">
+                        <span>{% if profile_user.full_name %}{{ profile_user.full_name }}{% else %}{{ profile_user.username }}{% endif %}</span>
+                    </div>
+                {% else %}
+                    <div class="cover-name-fallback">
+                        <span>{% if profile_user.full_name %}{{ profile_user.full_name }}{% else %}{{ profile_user.username }}{% endif %}</span>
+                    </div>
+                {% endif %}
+                {% if is_own_profile %}
+                <div class="cover-actions" onclick="event.stopPropagation();">
+                    <a href="{{ url_for('edit_profile') }}" title="{{ t('edit_profile') }}">
+                        <i class="fa-solid fa-pen"></i>
+                    </a>
+                    <a href="{{ url_for('settings') }}" title="{{ t('settings') }}">
+                        <i class="fa-solid fa-gear"></i>
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="profile-main">
+                <div class="profile-avatar-wrapper">
+                    <button type="button" class="profile-avatar-button" onclick="openProfilePhoto()" aria-label="Fungua profile picture">
+                        <img src="{{ profile_user.profile_pic|avatar(profile_user.full_name or profile_user.username) }}"
+                             onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ (profile_user.full_name or profile_user.username)|urlencode }}&amp;background=random&amp;color=fff&amp;size=128&amp;bold=true';"
+                             alt="Avatar" class="profile-avatar" id="profileImage">
+                    </button>
+                    <div class="profile-photo-icon"><i class="fa-solid fa-expand"></i></div>
+                </div>
+
+                <div class="profile-name">
+                    <span>{% if profile_user.full_name %}{{ profile_user.full_name }}{% else %}{{ profile_user.username }}{% endif %}</span>
+                    {% if profile_user.is_verified == 1 %}
+                    <svg class="verified-badge-custom" viewBox="0 0 24 24" title="Verified Account">
+                        <path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="#8A2BE2"/>
+                        <path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#FFFFFF"/>
+                    </svg>
+                    {% endif %}
+                </div>
+
+
+<div class="profile-username">
+    <span class="uname">@{{ profile_user.username }}</span>
+
+    <span class="inline-stats">
+
+        <!-- POSTS: Inaonekana kwenye modes zote -->
+        <a href="#" class="inline-stat" onclick="switchTab('posts'); return false;">
+            <strong>{{ posts_count if posts_count is defined else (posts|length if posts is defined else 0) }}</strong>
+            {{ t('posts') }}
+        </a>
+
+        <!-- VILLAGE MODE: FOLLOWERS & FOLLOWING -->
+        {% if profile_user.village_mode %}
+
+            <a href="{{ url_for('followers_list', username=profile_user.username) }}" class="inline-stat">
+                <strong>{{ profile_user.followers_count if profile_user.followers_count is defined else 0 }}</strong>
+                {{ t('followers') }}
+            </a>
+
+            <a href="{{ url_for('following_list', username=profile_user.username) }}" class="inline-stat">
+                <strong>{{ profile_user.following_count if profile_user.following_count is defined else 0 }}</strong>
+                {{ t('following') }}
+            </a>
+
+        <!-- NORMAL MODE: FRIENDS -->
+        {% else %}
+
+            <a href="{{ url_for('friends_list', username=profile_user.username) }}" class="inline-stat friends-stat">
+                <strong>{{ profile_user.friends_count if profile_user.friends_count is defined else 0 }}</strong>
+                Friends
+            </a>
+
+        {% endif %}
+
+    </span>
+</div>
+
+{% if profile_user.profile_category %}
+<div class="profile-category-badge">
+    <i class="fa-solid fa-tags"></i>
+    {{ profile_user.profile_category }}
+</div>
+{% endif %}
+
+<div class="profile-bio">
+    {{ profile_user.bio if profile_user.bio else t('no_bio') }}
+</div>
+
+                <div class="profile-details">
+                    <div class="profile-details-row">
+                        {% if profile_user.birthday %}
+                        <div class="detail-chip">
+                            <i class="fa-solid fa-cake-candles"></i>
+                            <span>{{ profile_user.birthday }}</span>
+                        </div>
+                        {% endif %}
+                        {% if profile_user.join_year %}
+                        <div class="detail-chip">
+                            <i class="fa-solid fa-calendar"></i>
+                            <span>{{ profile_user.join_year }}</span>
+                        </div>
+                        {% endif %}
+                        {% if profile_user.sex %}
+                        <div class="detail-chip">
+                            <i class="fa-solid fa-venus-mars"></i>
+                            <span>{{ profile_user.sex }}</span>
+                        </div>
+                        {% endif %}
+                        {% if profile_user.marital_status %}
+                        <div class="detail-chip">
+                            <i class="fa-solid fa-heart"></i>
+                            <span>{{ profile_user.marital_status }}</span>
+                        </div>
+                        {% endif %}
+                        {% if profile_user.profile_category %}
+                        <div class="detail-chip">
+                            <i class="fa-solid fa-tags"></i>
+                            <span>{{ profile_user.profile_category }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {# Collect all social links #}
+                    {% set ns = namespace(links=[]) %}
+                    {% if profile_user.website %}{% set ns.links = ns.links + [{'url': profile_user.website, 'icon': 'fa-solid fa-globe', 'title': 'Website'}] %}{% endif %}
+                    {% if profile_user.facebook %}{% set ns.links = ns.links + [{'url': profile_user.facebook, 'icon': 'fa-brands fa-facebook-f', 'title': 'Facebook'}] %}{% endif %}
+                    {% if profile_user.instagram %}{% set ns.links = ns.links + [{'url': profile_user.instagram, 'icon': 'fa-brands fa-instagram', 'title': 'Instagram'}] %}{% endif %}
+                    {% if profile_user.tiktok %}{% set ns.links = ns.links + [{'url': profile_user.tiktok, 'icon': 'fa-brands fa-tiktok', 'title': 'TikTok'}] %}{% endif %}
+                    {% if profile_user.youtube %}{% set ns.links = ns.links + [{'url': profile_user.youtube, 'icon': 'fa-brands fa-youtube', 'title': 'YouTube'}] %}{% endif %}
+                    {% if profile_user.whatsapp %}{% set ns.links = ns.links + [{'url': profile_user.whatsapp, 'icon': 'fa-brands fa-whatsapp', 'title': 'WhatsApp'}] %}{% endif %}
+                    {% if profile_user.telegram %}{% set ns.links = ns.links + [{'url': profile_user.telegram, 'icon': 'fa-brands fa-telegram', 'title': 'Telegram'}] %}{% endif %}
+                    {% if profile_user.x %}{% set ns.links = ns.links + [{'url': profile_user.x, 'icon': 'fa-brands fa-x-twitter', 'title': 'X'}] %}{% endif %}
+                    {% if profile_user.linkedin %}{% set ns.links = ns.links + [{'url': profile_user.linkedin, 'icon': 'fa-brands fa-linkedin-in', 'title': 'LinkedIn'}] %}{% endif %}
+                    {% if profile_user.snapchat %}{% set ns.links = ns.links + [{'url': profile_user.snapchat, 'icon': 'fa-brands fa-snapchat', 'title': 'Snapchat'}] %}{% endif %}
+                    {% if profile_user.pinterest %}{% set ns.links = ns.links + [{'url': profile_user.pinterest, 'icon': 'fa-brands fa-pinterest', 'title': 'Pinterest'}] %}{% endif %}
+                    {% if profile_user.reddit %}{% set ns.links = ns.links + [{'url': profile_user.reddit, 'icon': 'fa-brands fa-reddit', 'title': 'Reddit'}] %}{% endif %}
+                    {% if profile_user.discord %}{% set ns.links = ns.links + [{'url': profile_user.discord, 'icon': 'fa-brands fa-discord', 'title': 'Discord'}] %}{% endif %}
+                    {% if profile_user.github %}{% set ns.links = ns.links + [{'url': profile_user.github, 'icon': 'fa-brands fa-github', 'title': 'GitHub'}] %}{% endif %}
+                    {% if profile_user.twitch %}{% set ns.links = ns.links + [{'url': profile_user.twitch, 'icon': 'fa-brands fa-twitch', 'title': 'Twitch'}] %}{% endif %}
+                    {% if profile_user.spotify %}{% set ns.links = ns.links + [{'url': profile_user.spotify, 'icon': 'fa-brands fa-spotify', 'title': 'Spotify'}] %}{% endif %}
+                    {% if profile_user.threads %}{% set ns.links = ns.links + [{'url': profile_user.threads, 'icon': 'fa-brands fa-threads', 'title': 'Threads'}] %}{% endif %}
+                    {% if profile_user.tumblr %}{% set ns.links = ns.links + [{'url': profile_user.tumblr, 'icon': 'fa-brands fa-tumblr', 'title': 'Tumblr'}] %}{% endif %}
+                    {% if profile_user.vimeo %}{% set ns.links = ns.links + [{'url': profile_user.vimeo, 'icon': 'fa-brands fa-vimeo-v', 'title': 'Vimeo'}] %}{% endif %}
+                    {% if profile_user.wordpress %}{% set ns.links = ns.links + [{'url': profile_user.wordpress, 'icon': 'fa-brands fa-wordpress', 'title': 'WordPress'}] %}{% endif %}
+                    {% if profile_user.medium %}{% set ns.links = ns.links + [{'url': profile_user.medium, 'icon': 'fa-brands fa-medium', 'title': 'Medium'}] %}{% endif %}
+                    {% if profile_user.blogger %}{% set ns.links = ns.links + [{'url': profile_user.blogger, 'icon': 'fa-brands fa-blogger', 'title': 'Blogger'}] %}{% endif %}
+
+                    {% if ns.links %}
+                    <div class="profile-links">
+                        <div class="profile-links-title"><i class="fa-solid fa-link" style="color:#1EB53A;"></i> Links</div>
+                        <div class="profile-links-grid" id="profileLinksGrid">
+                            {% for link in ns.links %}
+                            {% if loop.index <= 2 %}
+                            <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer"
+                               class="profile-link-item"
+                               title="{{ link.title }}">
+                                <i class="{{ link.icon }}"></i>
+                            </a>
+                            {% endif %}
+                            {% endfor %}
+                            {% if ns.links|length > 2 %}
+                            <button type="button" class="links-more-btn visible" id="linksMoreBtn" onclick="openLinksSheet()" title="Onyesha links zote">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if not is_own_profile %}
+                <div class="action-buttons">
+                    <button type="button" id="profileFollowBtn" class="primary-btn"
+                            data-user-id="{{ profile_user.id }}"
+                            data-username="{{ profile_user.username }}"
+                            data-following="{{ 1 if is_following else 0 }}"
+                            data-follows-you="{{ 1 if follows_you else 0 }}"
+                            data-friends="{{ 1 if is_friend else 0 }}"
+                            onclick="profileToggleFollow(this)"
+                            style="{% if is_friend %}background:linear-gradient(135deg,#1EB53A,#00A3DD);color:#fff;{% elif is_following %}background:#e2e8f0;color:#0f172a;box-shadow:none;{% elif follows_you %}background:linear-gradient(135deg,#00A3DD,#0284c7);color:#fff;{% endif %}">
+                        {% if is_friend %}
+                            <i class="fa-solid fa-user-group"></i> Friends
+                        {% elif is_following %}
+                            {{ t('unfollow') }}
+                        {% elif follows_you %}
+                            Follow back
+                        {% else %}
+                            {{ t('follow') }}
+                        {% endif %}
+                    </button>
+                    <a href="{{ url_for('chat', username=profile_user.username) }}" class="chat-btn" style="flex:1;">
+                        <i class="fa-solid fa-comment-dots"></i> {{ t('chat') }}
+                    </a>
+                </div>
+                <div class="action-buttons" style="margin-top:8px;">
+                    <button type="button" class="primary-btn" style="background:#e2e8f0;color:#0f172a;box-shadow:none;flex:1;" onclick="muteUser({{ profile_user.id }}, this)">
+                        <i class="fa-solid fa-volume-xmark"></i> Mute
+                    </button>
+                    <button type="button" class="primary-btn" style="background:#fee2e2;color:#b91c1c;box-shadow:none;flex:1;" onclick="blockUser({{ profile_user.id }})">
+                        <i class="fa-solid fa-user-lock"></i> Block
+                    </button>
+                </div>
+                <div class="action-buttons" style="margin-top:8px;">
+                    <a href="{{ url_for('profile_share_page', username=profile_user.username) }}"
+                       class="primary-btn" style="background:#f1f5f9;color:#0f172a;box-shadow:none;text-decoration:none;flex:1;display:flex;align-items:center;justify-content:center;gap:6px;">
+                        <i class="fa-solid fa-qrcode"></i> Share Profile
+                    </a>
+                </div>
+                {% else %}
+                <!-- Own profile: QR & Share -->
+                <div class="action-buttons" style="margin-top:10px;">
+                    <a href="{{ url_for('profile_share_page', username=profile_user.username) }}"
+                       class="primary-btn" style="text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px;flex:1;">
+                        <i class="fa-solid fa-qrcode"></i> QR &amp; Share
+                    </a>
+                    <button type="button" class="primary-btn" style="background:#e2e8f0;color:#0f172a;box-shadow:none;flex:1;"
+                            onclick="copyProfileLink()">
+                        <i class="fa-solid fa-link"></i> Nakili Link
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {# ===== LINKUPS + SWITCH (smart) ===== #}
+        {% if user_linkups %}
+        <div class="profile-linkups-section" style="background:#fff;border-radius:16px;padding:14px 16px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.05);border:1px solid #f1f5f9;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;flex-wrap:wrap;">
+                <h3 style="font-size:14px;color:#64748b;margin:0;display:flex;align-items:center;gap:8px;font-weight:700;">
+                    <i class="fa-solid fa-link" style="color:#1EB53A;"></i> Linkups
+                    <span style="background:#ecfdf5;color:#15803d;font-size:11px;padding:2px 8px;border-radius:999px;font-weight:700;">{{ user_linkups|length }}</span>
+                </h3>
+                {% if is_own_profile %}
+                <a href="{{ url_for('linkup_create') }}" style="font-size:12px;color:#1EB53A;text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:4px;">
+                    <i class="fa-solid fa-plus"></i> Linkup mpya
+                </a>
+                {% endif %}
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+                {% for lu in user_linkups %}
+                <div style="display:flex;align-items:center;gap:12px;padding:10px;background:#f8fafc;border-radius:14px;border:1px solid #eef0f2;">
+                    <a href="{{ url_for('linkup_public', username=lu.username) }}"
+                       style="display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;flex:1;min-width:0;">
+                        <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#1EB53A,#00A3DD);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;overflow:hidden;flex-shrink:0;">
+                            {% if lu.profile_pic %}
+                            <img src="{{ url_for('static', filename='uploads/' + lu.profile_pic) }}"
+                                 style="width:100%;height:100%;object-fit:cover;" alt="">
+                            {% else %}
+                            {{ (lu.display_name or 'L')[0]|upper }}
+                            {% endif %}
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                            <strong style="font-size:15px;display:flex;align-items:center;gap:4px;color:#0f172a;">
+                                {{ lu.display_name }}
+                                {% if lu.is_verified %}
+                                <i class="fa-solid fa-circle-check" style="color:#F5B800;font-size:13px;"></i>
+                                {% endif %}
+                            </strong>
+                            <span style="font-size:12px;color:#64748b;display:block;margin-top:2px;">
+                                @{{ lu.username }} · {{ lu.posts_count or 0 }} posts · {{ lu.followers_count or 0 }} followers
+                            </span>
+                        </div>
+                    </a>
+                    {% if is_own_profile %}
+                    <button type="button"
+                            onclick="profileSwitchLinkup({{ lu.id }}, this)"
+                            style="background:linear-gradient(135deg,#1EB53A,#00A3DD);color:#fff;border:none;padding:8px 12px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 3px 10px rgba(30,181,58,0.2);display:inline-flex;align-items:center;gap:5px;flex-shrink:0;">
+                        <i class="fa-solid fa-right-left"></i> Switch
+                    </button>
+                    {% else %}
+                    <a href="{{ url_for('linkup_public', username=lu.username) }}"
+                       style="flex-shrink:0;background:#f1f5f9;color:#0f172a;padding:8px 12px;border-radius:10px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;">
+                        Fungua
+                    </a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% if is_own_profile %}
+            <p style="font-size:11px;color:#94a3b8;margin:10px 0 0;line-height:1.4;">
+                <i class="fa-solid fa-circle-info"></i>
+                Switch → chapisha na ongea kama Linkup. Feed itabadilika kuonyesha maudhui ya Linkup.
+            </p>
+            {% endif %}
+        </div>
+        {% elif is_own_profile %}
+        {# Hakuna Linkup bado — onyesha CTA ya kisomi #}
+        <div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.05);border:1px dashed #bbf7d0;text-align:center;">
+            <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#ecfdf5,#e0f2fe);color:#1EB53A;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-size:20px;">
+                <i class="fa-solid fa-link"></i>
+            </div>
+            <strong style="display:block;font-size:15px;color:#0f172a;margin-bottom:4px;">Anzisha Linkup yako</strong>
+            <p style="font-size:13px;color:#64748b;margin-bottom:12px;line-height:1.4;">
+                Linkup ni kama page — biashara, group, au brand. Watu wanaweza kufollow.
+            </p>
+            <a href="{{ url_for('linkup_create') }}"
+               style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#1EB53A,#15803d);color:#fff;padding:10px 18px;border-radius:12px;font-weight:700;font-size:14px;text-decoration:none;box-shadow:0 4px 12px rgba(30,181,58,0.2);">
+                <i class="fa-solid fa-plus"></i> Tengeneza Linkup
+            </a>
+        </div>
+        {% endif %}
+
+
+        {% if is_own_profile %}
+        <div class="tabs">
+            <span id="tab-posts" class="active" onclick="switchTab('posts')">{{ t('my_posts', 'Madapisho yangu') }}</span>
+            <span id="tab-saved" onclick="switchTab('saved')">{{ t('saved_posts', 'Zilizohifadhiwa') }}</span>
+            <span id="tab-dashboard" onclick="switchTab('dashboard')">Dashboard</span>
+        </div>
+        {% endif %}
+
+        <!-- ============ DASHBOARD FULL SCREEN ============ -->
+        {% if is_own_profile %}
+        <div id="section-dashboard">
+            <div class="dashboard-header">
+                <h2>Dashboard</h2>
+                <button type="button" class="dashboard-close" onclick="closeDashboard()" aria-label="Funga">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="dashboard-body">
+                <div class="dashboard-section">
+                    <div class="dashboard-section-title">Akaunti</div>
+                    <ul class="dashboard-list">
+                        <li>
+                            <a href="{{ url_for('edit_profile') }}">
+                                <i class="fa-solid fa-user-pen"></i> {{ t('edit_profile') }}
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('settings') }}">
+                                <i class="fa-solid fa-gear"></i> {{ t('settings') }}
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/settings/sessions">
+                                <i class="fa-solid fa-mobile-screen"></i> Sessions
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('delete_account') }}" class="danger">
+                                <i class="fa-solid fa-trash"></i> {{ t('delete_account', 'Futa akaunti kabisa') }}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="dashboard-section">
+                    <div class="dashboard-section-title">Maudhui</div>
+                    <ul class="dashboard-list">
+                        <li>
+                            <a href="/insights">
+                                <i class="fa-solid fa-chart-simple"></i> Insights
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/drafts">
+                                <i class="fa-solid fa-file-lines"></i> Drafts
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="dashboard-section">
+                    <div class="dashboard-section-title">Kijamii</div>
+                    <ul class="dashboard-list">
+                        <li>
+                            <a href="/close-friends">
+                                <i class="fa-solid fa-user-group"></i> Close Friends
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/muted">
+                                <i class="fa-solid fa-volume-xmark"></i> Walio mute
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/explore">
+                                <i class="fa-solid fa-compass"></i> Explore
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="dashboard-section">
+                    <div class="dashboard-section-title">Mengine</div>
+                    <ul class="dashboard-list">
+                        <li>
+                            <a href="{{ url_for('about') }}">
+                                <i class="fa-solid fa-info-circle"></i> {{ t('about') }}
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('activity_history') }}">
+                                <i class="fa-solid fa-clock-rotate-left"></i> {{ t('history', 'History') }}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ============ POSTS SECTION ============ -->
+        <div id="section-posts">
+            <h3 class="section-title">{{ t('posts') }}</h3>
+            {% set profile_posts = posts_data if posts_data is defined and posts_data else (posts if posts is defined else []) %}
+            {% if profile_posts %}
+                {% for post in profile_posts %}
+                <div class="card" id="post-card-{{ post.id }}">
+                    <div class="post-head">
+                        <a href="{{ url_for('profile', username=profile_user.username) }}" class="ph-avatar-link">
+                            <img class="ph-avatar"
+                                 src="{{ profile_user.profile_pic|avatar(profile_user.full_name or profile_user.username) }}"
+                                 onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ (profile_user.full_name or profile_user.username)|urlencode }}&amp;background=random&amp;color=fff&amp;size=96&amp;bold=true';"
+                                 alt="">
+                        </a>
+                        <div class="ph-who">
+                            <strong>
+                                <a href="{{ url_for('profile', username=profile_user.username) }}">{{ profile_user.full_name or profile_user.username }}</a>
+                                {% if profile_user.is_verified == 1 %}
+                                <svg viewBox="0 0 24 24" style="width:14px;height:14px;vertical-align:middle;">
+                                    <path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="#8A2BE2"/>
+                                    <path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#FFFFFF"/>
+                                </svg>
+                                {% endif %}
+                                {% if post.repost_of %}<span class="ph-repost-tag"><i class="fa-solid fa-retweet"></i> {{ t('reposted', 'Amerepost') }}</span>{% endif %}
+                            </strong>
+                            <span class="ph-meta">
+                                <a href="{{ url_for('profile', username=profile_user.username) }}">@{{ profile_user.username }}</a>{% if post.created_at is defined and post.created_at %} · {{ post.created_at }}{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    {% if post.content or not post.repost_of %}
+                    <p class="post-content-text">{{ post.content }}</p>
+                    {% endif %}
+                    {% if post.repost_of %}
+                    {% set o = post.orig %}
+                    {% if o %}
+                    {% set o_profile_url = '/profile/' + (o.username or '') %}
+                    <div class="repost-frame {% if o.file_path %}rf-has-media{% else %}rf-text-only{% endif %}"
+                         role="link" tabindex="0"
+                         data-href="/post/{{ o.id }}"
+                         onclick="if(!event.target.closest('a')) window.location.href=this.dataset.href;">
+                        <div class="rf-head">
+                            <a href="{{ o_profile_url }}" class="rf-avatar-link" onclick="event.stopPropagation();">
+                                <img class="rf-avatar"
+                                     src="{{ o.profile_pic|avatar(o.full_name or o.username) if o.profile_pic is defined else url_for('static', filename='images/default-avatar.png.jfif') }}"
+                                     onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/default-avatar.png.jfif') }}';"
+                                     alt="">
+                            </a>
+                            <div class="rf-who">
+                                <strong>
+                                    <a href="{{ o_profile_url }}" style="text-decoration:none;color:inherit;" onclick="event.stopPropagation();">
+                                        {{ o.full_name or o.username }}
+                                    </a>
+                                    {% if o.is_verified == 1 %}
+                                    <svg viewBox="0 0 24 24" style="width:14px;height:14px;vertical-align:middle;">
+                                        <path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="#8A2BE2"/>
+                                        <path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#FFFFFF"/>
+                                    </svg>
+                                    {% endif %}
+                                </strong>
+                                <span>
+                                    <a href="{{ o_profile_url }}" style="text-decoration:none;color:inherit;" onclick="event.stopPropagation();">@{{ o.username }}</a>
+                                    · {{ o.created_at }}
+                                </span>
+                            </div>
+                        </div>
+                        {% if o.content %}<div class="rf-text">{{ o.content }}</div>{% endif %}
+                        {% if o.file_path %}
+                            {% if o.media_type == 'video' %}
+                            <div class="rf-media">
+                                <video src="{{ url_for('static', filename='uploads/' + o.file_path) }}" preload="metadata" muted playsinline></video>
+                                <div class="rf-play"><i class="fa-solid fa-circle-play"></i></div>
+                            </div>
+                            {% else %}
+                            <div class="rf-media">
+                                <img src="{{ url_for('static', filename='uploads/' + o.file_path) }}" alt="" loading="lazy">
+                            </div>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div class="repost-frame rf-missing">
+                        <i class="fa-solid fa-circle-exclamation"></i> Post hii ya asili imefutwa au haipatikani.
+                    </div>
+                    {% endif %}
+                    {% endif %}
+                    {% if post.file_path and not post.repost_of %}
+                    <div class="post-media">
+                        {% if post.media_type == 'video' %}
+                            <video controls playsinline style="width:100%; border-radius:12px; margin-top:12px; max-height:360px; background:#000;">
+                                <source src="{{ url_for('static', filename='uploads/' + post.file_path) }}" type="video/mp4">
+                            </video>
+                        {% else %}
+                            <img src="{{ url_for('static', filename='uploads/' + post.file_path) }}" alt="Post Media">
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <div class="post-stats">
+                        <span id="likes-count-{{ post.id }}">{{ post.likes_count if post.likes_count is defined else 0 }} {{ t('likes') }}</span>
+                        <div style="display:flex; gap:12px;">
+                            <span><strong id="saved-count-text-{{ post.id }}">{{ post.saved_count if post.saved_count is defined else 0 }}</strong> {{ t('saved') }}</span>
+                            <span><strong id="share-count-text-{{ post.id }}">{{ post.shares if post.shares is defined else 0 }}</strong> {{ t('shares') }}</span>
+                            <span><strong id="comments-count-text-{{ post.id }}">{% if post.comments is defined %}{{ post.comments|length }}{% elif post.comments_count is defined %}{{ post.comments_count }}{% else %}0{% endif %}</strong> {{ t('comments') }}</span>
+                        </div>
+                    </div>
+
+                    <div class="post-actions">
+                        <button type="button" onclick="likePost({{ post.id }})" id="like-btn-{{ post.id }}" class="{% if post.user_liked is defined and post.user_liked > 0 %}liked{% endif %}">
+                            <i class="fa-regular fa-thumbs-up"></i> {{ t('like') }}
+                        </button>
+                        <button type="button" onclick="toggleComments({{ post.id }})">
+                            <i class="fa-regular fa-comment"></i> {{ t('comment') }}
+                        </button>
+                        <button type="button" onclick="savePost({{ post.id }})">
+                            <i class="fa-regular fa-bookmark"></i> {{ t('save_post') }}
+                        </button>
+                        <button type="button" onclick="sharePost({{ post.id }}, {{ post.content|tojson }})">
+                            <i class="fa-solid fa-share"></i> {{ t('share') }}
+                        </button>
+                    </div>
+                    <div class="comments-section" id="comments-section-{{ post.id }}">
+                        <div id="comments-list-{{ post.id }}" class="comments-box">
+                            {% if post.comments is defined %}
+                            {% for comment in post.comments if not comment.parent_id %}
+                            <div class="comment-item {% if comment.is_hidden %}hidden-comment{% endif %}" id="comment-{{ comment.id }}">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <strong style="display: inline-flex; align-items: center;">
+                                        <a href="/profile/{{ comment.username }}" style="text-decoration: none; color: inherit;">{{ comment.username }}</a>
+                                        {% if comment.is_verified == 1 %}
+                                        <svg class="verified-badge-custom small" viewBox="0 0 24 24" title="Verified Account">
+                                            <path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="#8A2BE2"/>
+                                            <path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#FFFFFF"/>
+                                        </svg>
+                                        {% endif %}
+                                    </strong>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span style="font-size: 11px; color: #64748b;">{{ comment.created_at }}</span>
+                                        <button type="button" class="comment-actions-btn" onclick="toggleCommentMenu({{ comment.id }})">
+                                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                                        </button>
+                                        <div class="comment-actions-dropdown" id="comment-menu-{{ comment.id }}">
+                                            {% if comment.user_id is defined and comment.user_id == session.get('user_id') %}
+                                                <button type="button" onclick="editComment({{ comment.id }})"><i class="fa-solid fa-pen"></i> Edit</button>
+                                                <button type="button" onclick="deleteComment({{ comment.id }})" style="color: #dc2626;"><i class="fa-solid fa-trash"></i> {{ t('delete_comment') }}</button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <p id="comment-text-{{ comment.id }}" style="margin: 6px 0; color: #0f172a;">{{ comment.content }}</p>
+                                <div style="font-size: 11px; display: flex; gap: 15px; color: #64748b; margin-top: 4px;">
+                                    <button type="button" onclick="likeComment({{ comment.id }})" style="background:none; border:none; cursor:pointer; color: {% if comment.user_comment_liked is defined and comment.user_comment_liked > 0 %}#1EB53A{% else %}inherit{% endif %}; font-weight: 600;" id="c-like-btn-{{ comment.id }}">
+                                        {{ t('like') }} (<span id="c-likes-count-{{ comment.id }}">{{ comment.comment_likes_count if comment.comment_likes_count is defined else 0 }}</span>)
+                                    </button>
+                                    <button type="button" onclick="showReplyBox({{ comment.id }})" style="background:none; border:none; cursor:pointer; color:inherit; font-weight: 600;">{{ t('reply') }}</button>
+                                </div>
+                                <div class="replies-list" style="margin-left: 12px; margin-top: 6px; border-left: 2px solid #e2e8f0; padding-left: 8px;" id="replies-list-{{ comment.id }}">
+                                    {% for reply in post.comments if reply.parent_id == comment.id %}
+                                    <div class="reply-item" style="font-size: 12px; background: #f1f5f9; padding: 7px 9px; border-radius: 8px; margin-bottom: 5px;" id="comment-{{ reply.id }}">
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <strong style="display: inline-flex; align-items: center;">
+                                                <a href="/profile/{{ reply.username }}" style="text-decoration: none; color: inherit;">{{ reply.username }}</a>
+                                                {% if reply.is_verified == 1 %}
+                                                <svg class="verified-badge-custom small" viewBox="0 0 24 24" title="Verified Account">
+                                                    <path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="#8A2BE2"/>
+                                                    <path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#FFFFFF"/>
+                                                </svg>
+                                                {% endif %}:
+                                            </strong>
+                                            <span style="font-size: 10px; color: #64748b;">{{ reply.created_at }}</span>
+                                        </div>
+                                        <p id="comment-text-{{ reply.id }}" style="margin: 3px 0; color: #0f172a;">{{ reply.content }}</p>
+                                        <div style="font-size: 11px; margin-top: 2px; display:flex; gap:10px;">
+                                            <button type="button" onclick="replyToUser({{ comment.id }}, '{{ reply.username }}')" style="background:none; border:none; cursor:pointer; color:#1EB53A; font-weight: 600;">{{ t('reply') }}</button>
+                                            {% if reply.user_id is defined and reply.user_id == session.get('user_id') %}
+                                                <button type="button" onclick="editComment({{ reply.id }})" style="background:none; border:none; cursor:pointer; color:#64748b;">{{ t('edit') }}</button>
+                                                <button type="button" onclick="deleteComment({{ reply.id }})" style="background:none; border:none; cursor:pointer; color:#dc2626;">{{ t('delete') }}</button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <form class="reply-form" id="reply-form-{{ comment.id }}" style="display: none; margin-top: 6px; margin-left: 12px;" onsubmit="addReply(event, {{ post.id }}, {{ comment.id }})">
+                                    <div style="display: flex; gap: 6px;">
+                                        <input type="text" name="content" placeholder="{{ t('type_reply') }}" required style="flex: 1; padding: 7px 12px; font-size: 12px; border-radius: 14px; border: 1px solid #e2e8f0; outline: none; background: #ffffff;">
+                                        <button type="submit" style="padding: 7px 14px; font-size: 11px; background: #1EB53A; color: white; border: none; border-radius: 14px; font-weight: 600; cursor: pointer;">{{ t('send') }}</button>
+                                    </div>
+                                </form>
+                            </div>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                        <form class="comment-form" onsubmit="addComment(event, {{ post.id }})">
+                            <input type="text" name="content" placeholder="{{ t('type_comment') }}" required>
+                            <button type="submit"><i class="fa-solid fa-paper-plane"></i></button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="text-align: center; color: #64748b; padding: 28px 16px; background:#fff; border-radius:14px;">{{ t('no_posts', 'Hakuna madapisho bado') }}</p>
+            {% endif %}
+        </div>
+
+        <!-- ============ SAVED SECTION ============ -->
+        {% if is_own_profile %}
+        <div id="section-saved" style="display:none;">
+            <h3 class="section-title">{{ t('saved_posts', 'Zilizohifadhiwa') }}</h3>
+            {% set saved_posts = saved_posts_data if saved_posts_data is defined else (saved_posts if saved_posts is defined else []) %}
+            {% if saved_posts %}
+                {% for post in saved_posts %}
+                <div class="card" id="post-card-{{ post.id }}">
+                    <div class="post-head">
+                        <a href="{{ url_for('profile', username=post.username) if post.username is defined else url_for('profile', username=profile_user.username) }}" class="ph-avatar-link">
+                            <img class="ph-avatar"
+                                 src="{{ post.profile_pic|avatar(post.full_name or post.username) if post.username is defined else profile_user.profile_pic|avatar(profile_user.full_name or profile_user.username) }}"
+                                 onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ ((post.full_name or post.username) if post.username is defined else (profile_user.full_name or profile_user.username))|urlencode }}&amp;background=random&amp;color=fff&amp;size=96&amp;bold=true';"
+                                 alt="">
+                        </a>
+                        <div class="ph-who">
+                            <strong>
+                                <a href="{{ url_for('profile', username=post.username) if post.username is defined else url_for('profile', username=profile_user.username) }}">{{ (post.full_name or post.username) if post.username is defined else (profile_user.full_name or profile_user.username) }}</a>
+                                {% if (post.is_verified if post.is_verified is defined else profile_user.is_verified) == 1 %}
+                                <svg viewBox="0 0 24 24" style="width:14px;height:14px;vertical-align:middle;">
+                                    <path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="#8A2BE2"/>
+                                    <path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#FFFFFF"/>
+                                </svg>
+                                {% endif %}
+                            </strong>
+                            <span class="ph-meta">
+                                <a href="{{ url_for('profile', username=post.username) if post.username is defined else url_for('profile', username=profile_user.username) }}">@{{ post.username if post.username is defined else profile_user.username }}</a>{% if post.created_at is defined and post.created_at %} · {{ post.created_at }}{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    <p class="post-content-text">{{ post.content }}</p>
+                    {% if post.file_path %}
+                    <div class="post-media">
+                        {% if post.media_type == 'video' %}
+                            <video controls playsinline style="width:100%; border-radius:12px; margin-top:12px; max-height:360px; background:#000;">
+                                <source src="{{ url_for('static', filename='uploads/' + post.file_path) }}" type="video/mp4">
+                            </video>
+                        {% else %}
+                            <img src="{{ url_for('static', filename='uploads/' + post.file_path) }}" alt="Post Media">
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    <div class="post-stats">
+                        <span id="likes-count-{{ post.id }}">{{ post.likes_count if post.likes_count is defined else 0 }} {{ t('likes') }}</span>
+                        <div style="display:flex; gap:12px;">
+                            <span><strong id="saved-count-text-{{ post.id }}">{{ post.saved_count if post.saved_count is defined else 0 }}</strong> {{ t('saved') }}</span>
+                            <span><strong id="share-count-text-{{ post.id }}">{{ post.shares if post.shares is defined else 0 }}</strong> {{ t('shares') }}</span>
+                            <span><strong id="comments-count-text-{{ post.id }}">{{ post.comments|length if post.comments is defined else (post.comments_count if post.comments_count is defined else 0) }}</strong> {{ t('comments') }}</span>
+                        </div>
+                    </div>
+                    <div class="post-actions">
+                        <button type="button" onclick="likePost({{ post.id }})" id="like-btn-{{ post.id }}" class="{% if post.user_liked is defined and post.user_liked > 0 %}liked{% endif %}">
+                            <i class="fa-regular fa-thumbs-up"></i> {{ t('like') }}
+                        </button>
+                        <button type="button" onclick="toggleComments({{ post.id }})">
+                            <i class="fa-regular fa-comment"></i> {{ t('comment') }}
+                        </button>
+                        <button type="button" onclick="savePost({{ post.id }})">
+                            <i class="fa-regular fa-bookmark"></i> {{ t('save_post') }}
+                        </button>
+                        <button type="button" onclick="sharePost({{ post.id }}, {{ post.content|tojson }})">
+                            <i class="fa-solid fa-share"></i> {{ t('share') }}
+                        </button>
+                    </div>
+                    <div class="comments-section" id="comments-section-{{ post.id }}">
+                        <div id="comments-list-{{ post.id }}" class="comments-box">
+                            {% if post.comments is defined %}
+                            {% for comment in post.comments if not comment.parent_id %}
+                            <div class="comment-item {% if comment.is_hidden %}hidden-comment{% endif %}" id="comment-{{ comment.id }}">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <strong style="display: inline-flex; align-items: center;">
+                                        <a href="/profile/{{ comment.username }}" style="text-decoration: none; color: inherit;">{{ comment.username }}</a>
+                                        {% if comment.is_verified == 1 %}
+                                        <svg class="verified-badge-custom small" viewBox="0 0 24 24" title="Verified Account">
+                                            <path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="#8A2BE2"/>
+                                            <path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#FFFFFF"/>
+                                        </svg>
+                                        {% endif %}
+                                    </strong>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span style="font-size: 11px; color: #64748b;">{{ comment.created_at }}</span>
+                                        <button type="button" class="comment-actions-btn" onclick="toggleCommentMenu({{ comment.id }})">
+                                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                                        </button>
+                                        <div class="comment-actions-dropdown" id="comment-menu-{{ comment.id }}">
+                                            {% if comment.user_id is defined and comment.user_id == session.get('user_id') %}
+                                                <button type="button" onclick="editComment({{ comment.id }})"><i class="fa-solid fa-pen"></i> Edit</button>
+                                                <button type="button" onclick="deleteComment({{ comment.id }})" style="color: #dc2626;"><i class="fa-solid fa-trash"></i> {{ t('delete_comment') }}</button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <p id="comment-text-{{ comment.id }}" style="margin: 6px 0; color: #0f172a;">{{ comment.content }}</p>
+                                <div style="font-size: 11px; display: flex; gap: 15px; color: #64748b; margin-top: 4px;">
+                                    <button type="button" onclick="likeComment({{ comment.id }})" style="background:none; border:none; cursor:pointer; color: {% if comment.user_comment_liked is defined and comment.user_comment_liked > 0 %}#1EB53A{% else %}inherit{% endif %}; font-weight: 600;" id="c-like-btn-{{ comment.id }}">
+                                        {{ t('like') }} (<span id="c-likes-count-{{ comment.id }}">{{ comment.comment_likes_count if comment.comment_likes_count is defined else 0 }}</span>)
+                                    </button>
+                                    <button type="button" onclick="showReplyBox({{ comment.id }})" style="background:none; border:none; cursor:pointer; color:inherit; font-weight: 600;">{{ t('reply') }}</button>
+                                </div>
+                                <div class="replies-list" style="margin-left: 12px; margin-top: 6px; border-left: 2px solid #e2e8f0; padding-left: 8px;" id="replies-list-{{ comment.id }}">
+                                    {% for reply in post.comments if reply.parent_id == comment.id %}
+                                    <div class="reply-item" style="font-size: 12px; background: #f1f5f9; padding: 7px 9px; border-radius: 8px; margin-bottom: 5px;" id="comment-{{ reply.id }}">
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <strong style="display: inline-flex; align-items: center;">
+                                                <a href="/profile/{{ reply.username }}" style="text-decoration: none; color: inherit;">{{ reply.username }}</a>
+                                                {% if reply.is_verified == 1 %}
+                                                <svg class="verified-badge-custom small" viewBox="0 0 24 24" title="Verified Account">
+                                                    <path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="#8A2BE2"/>
+                                                    <path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#FFFFFF"/>
+                                                </svg>
+                                                {% endif %}:
+                                            </strong>
+                                            <span style="font-size: 10px; color: #64748b;">{{ reply.created_at }}</span>
+                                        </div>
+                                        <p id="comment-text-{{ reply.id }}" style="margin: 3px 0; color: #0f172a;">{{ reply.content }}</p>
+                                        <div style="font-size: 11px; margin-top: 2px; display:flex; gap:10px;">
+                                            <button type="button" onclick="replyToUser({{ comment.id }}, '{{ reply.username }}')" style="background:none; border:none; cursor:pointer; color:#1EB53A; font-weight: 600;">{{ t('reply') }}</button>
+                                            {% if reply.user_id is defined and reply.user_id == session.get('user_id') %}
+                                                <button type="button" onclick="editComment({{ reply.id }})" style="background:none; border:none; cursor:pointer; color:#64748b;">{{ t('edit') }}</button>
+                                                <button type="button" onclick="deleteComment({{ reply.id }})" style="background:none; border:none; cursor:pointer; color:#dc2626;">{{ t('delete') }}</button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <form class="reply-form" id="reply-form-{{ comment.id }}" style="display: none; margin-top: 6px; margin-left: 12px;" onsubmit="addReply(event, {{ post.id }}, {{ comment.id }})">
+                                    <div style="display: flex; gap: 6px;">
+                                        <input type="text" name="content" placeholder="{{ t('type_reply') }}" required style="flex: 1; padding: 7px 12px; font-size: 12px; border-radius: 14px; border: 1px solid #e2e8f0; outline: none; background: #ffffff;">
+                                        <button type="submit" style="padding: 7px 14px; font-size: 11px; background: #1EB53A; color: white; border: none; border-radius: 14px; font-weight: 600; cursor: pointer;">{{ t('send') }}</button>
+                                    </div>
+                                </form>
+                            </div>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                        <form class="comment-form" onsubmit="addComment(event, {{ post.id }})">
+                            <input type="text" name="content" placeholder="{{ t('type_comment') }}" required>
+                            <button type="submit"><i class="fa-solid fa-paper-plane"></i></button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="text-align: center; color: #64748b; padding: 28px 16px; background:#fff; border-radius:14px;">{{ t('no_saved_posts') }}</p>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Full-screen Links Sheet -->
+    <div id="linksSheet">
+        <div class="links-sheet-header">
+            <h2>Links</h2>
+            <button type="button" class="links-sheet-close" onclick="closeLinksSheet()" aria-label="Funga">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="links-sheet-body">
+            {% if profile_user.website %}
+            <div class="links-cat">
+                <div class="links-cat-title">Tovuti / Website</div>
+                <div class="links-cat-list">
+                    <a href="{{ profile_user.website }}" target="_blank" rel="noopener noreferrer">
+                        <i class="fa-solid fa-globe"></i> Website
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if profile_user.facebook or profile_user.instagram or profile_user.tiktok or profile_user.youtube or profile_user.whatsapp or profile_user.telegram or profile_user.x or profile_user.linkedin or profile_user.snapchat or profile_user.pinterest or profile_user.reddit or profile_user.discord or profile_user.threads or profile_user.tumblr %}
+            <div class="links-cat">
+                <div class="links-cat-title">Mitandao ya Kijamii</div>
+                <div class="links-cat-list">
+                    {% if profile_user.facebook %}<a href="{{ profile_user.facebook }}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-facebook-f"></i> Facebook</a>{% endif %}
+                    {% if profile_user.instagram %}<a href="{{ profile_user.instagram }}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-instagram"></i> Instagram</a>{% endif %}
+                    {% if profile_user.tiktok %}<a href="{{ profile_user.tiktok }}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-tiktok"></i> TikTok</a>{% endif %}
+                    {% if profile_user.youtube %}<a href="{{ profile_user.youtube }}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-youtube"></i> YouTube</a>{% endif %}
+                    {% if profile_user.whatsapp %}<a href="{{ profile_user.whatsapp }}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>{% endif %}
+                    {% if profile_user.telegram %}<a href="{{ profile_user.telegram }}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-telegram"></i> Telegram</a>{% endif %}
+                    {% if profile_user.x %}<a href="{{ profile_user.x }}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-x-twitter"></i> X</a>{% endif %}
+                    {% if profile_user.linkedin %}<a href="{{ profile_user.linkedin }}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-linkedin-in"></i> LinkedIn</a>{% endif %}
+                    {% if profile_user.snapchat %}<a href="{{ profile_user.snapchat }}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-snapchat"></i> Snapchat</a>{% endif %}
+                    {% if profile_user.pinterest %}<a href="{{ profile_user.pinterest }}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-pinterest"></i> Pinterest</a>{% endif %}
+                    {% if profile_user.reddit %}<a href="{{ profile_user.reddit }}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-reddit"></i> Reddit</a>{% endif %}
+                    {% if profile_user.discord %}<a href="{{ profile_user.discord }}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-discord"></i> Discord</a>{% endif %}
+                    {% if profile_user.threads %}<a href="{{ profile_user.threads }}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-threads"></i> Threads</a>{% endif %}
+                    {% if profile_user.tumblr %}<a href="{{ profile_user.tumblr }}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-tumblr"></i> Tumblr</a>{% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if profile_user.twitch or profile_user.spotify or profile_user.vimeo %}
+            <div class="links-cat">
+                <div class="links-cat-title">Media & Burudani</div>
+                <div class="links-cat-list">
+                    {% if profile_user.twitch %}<a href="{{ profile_user.twitch }}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-twitch"></i> Twitch</a>{% endif %}
+                    {% if profile_user.spotify %}<a href="{{ profile_user.spotify }}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-spotify"></i> Spotify</a>{% endif %}
+                    {% if profile_user.vimeo %}<a href="{{ profile_user.vimeo }}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-vimeo-v"></i> Vimeo</a>{% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if profile_user.github or profile_user.wordpress or profile_user.medium or profile_user.blogger %}
+            <div class="links-cat">
+                <div class="links-cat-title">Kitaaluma</div>
+                <div class="links-cat-list">
+                    {% if profile_user.github %}<a href="{{ profile_user.github }}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-github"></i> GitHub</a>{% endif %}
+                    {% if profile_user.wordpress %}<a href="{{ profile_user.wordpress }}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-wordpress"></i> WordPress</a>{% endif %}
+                    {% if profile_user.medium %}<a href="{{ profile_user.medium }}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-medium"></i> Medium</a>{% endif %}
+                    {% if profile_user.blogger %}<a href="{{ profile_user.blogger }}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-blogger"></i> Blogger</a>{% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div id="photoViewer" class="photo-viewer" onclick="closeProfilePhoto()">
+        <button type="button" class="photo-viewer-close" onclick="closeProfilePhoto(event)" aria-label="Funga picha">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <img id="fullProfileImage" src="" alt="Profile Picture">
+    </div>
+
+    <div class="bottom-nav">
+        <a href="{{ url_for('home') }}"><i class="fa-solid fa-house"></i></a>
+        <a href="{{ url_for('search') }}"><i class="fa-solid fa-magnifying-glass"></i></a>
+        <a href="{{ url_for('notifications') }}"><i class="fa-solid fa-bell"></i></a>
+        <a href="{{ url_for('profile', username=profile_user.username) }}" class="active"><i class="fa-solid fa-user"></i></a>
+    </div>
+
+    <script>
+        function switchTab(tab) {
+            const postsSec = document.getElementById('section-posts');
+            const savedSec = document.getElementById('section-saved');
+            const dashSec = document.getElementById('section-dashboard');
+            const tabPosts = document.getElementById('tab-posts');
+            const tabSaved = document.getElementById('tab-saved');
+            const tabDash = document.getElementById('tab-dashboard');
+
+            if (tab === 'dashboard') {
+                if (dashSec) {
+                    dashSec.classList.add('open');
+                    document.body.style.overflow = 'hidden';
+                }
+                if (tabDash) tabDash.classList.add('active');
+                if (tabPosts) tabPosts.classList.remove('active');
+                if (tabSaved) tabSaved.classList.remove('active');
+                return;
+            }
+
+            // Closing dashboard if open
+            if (dashSec) dashSec.classList.remove('open');
+            document.body.style.overflow = '';
+
+            if (postsSec) postsSec.style.display = 'none';
+            if (savedSec) savedSec.style.display = 'none';
+            if (tabPosts) tabPosts.classList.remove('active');
+            if (tabSaved) tabSaved.classList.remove('active');
+            if (tabDash) tabDash.classList.remove('active');
+
+            if (tab === 'posts') {
+                if (postsSec) postsSec.style.display = 'block';
+                if (tabPosts) tabPosts.classList.add('active');
+            } else if (tab === 'saved') {
+                if (savedSec) savedSec.style.display = 'block';
+                if (tabSaved) tabSaved.classList.add('active');
+            }
+        }
+
+        function closeDashboard() {
+            const dashSec = document.getElementById('section-dashboard');
+            const tabDash = document.getElementById('tab-dashboard');
+            if (dashSec) dashSec.classList.remove('open');
+            document.body.style.overflow = '';
+            if (tabDash) tabDash.classList.remove('active');
+            // return to posts tab
+            switchTab('posts');
+        }
+
+        function openCoverPhoto(event) {
+            if (event && event.target.closest('.cover-actions')) return;
+            const coverImg = document.getElementById('coverImage');
+            const viewer = document.getElementById('photoViewer');
+            const fullImage = document.getElementById('fullProfileImage');
+            if (coverImg && coverImg.src && coverImg.style.display !== 'none' && viewer && fullImage) {
+                fullImage.src = coverImg.src;
+                viewer.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function openLinksSheet() {
+            const sheet = document.getElementById('linksSheet');
+            if (sheet) {
+                sheet.classList.add('open');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeLinksSheet() {
+            const sheet = document.getElementById('linksSheet');
+            if (sheet) sheet.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        function openProfilePhoto() {
+            const image = document.getElementById('profileImage');
+            const viewer = document.getElementById('photoViewer');
+            const fullImage = document.getElementById('fullProfileImage');
+            if (image && viewer && fullImage) {
+                fullImage.src = image.src;
+                viewer.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeProfilePhoto(event) {
+            if (event) event.stopPropagation();
+            const viewer = document.getElementById('photoViewer');
+            if (viewer) viewer.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeProfilePhoto();
+                closeDashboard();
+                closeLinksSheet();
+            }
+        });
+
+        var I18N = {
+            likes: {{ t('likes')|tojson }},
+            like: {{ t('like')|tojson }},
+            reply: {{ t('reply')|tojson }},
+            edit: {{ t('edit')|tojson }},
+            delete: {{ t('delete')|tojson }},
+            send: {{ t('send')|tojson }},
+            type_reply: {{ t('type_reply')|tojson }},
+            just_now: {{ t('just_now')|tojson }},
+            see_more: {{ t('see_more')|tojson }},
+            see_less: {{ t('see_less')|tojson }},
+            error: {{ t('error_occurred')|tojson }},
+            confirm_block: {{ t('confirm_block')|tojson }},
+            user_blocked: {{ t('user_blocked')|tojson }},
+            post_saved: {{ t('post_saved')|tojson }},
+            post_unsaved: {{ t('post_unsaved')|tojson }},
+            shared: {{ t('shared')|tojson }},
+            link_copied: {{ t('link_copied')|tojson }},
+            confirm_delete_comment: {{ t('confirm_delete_comment')|tojson }},
+            comment_deleted: {{ t('comment_deleted')|tojson }},
+            comment_updated: {{ t('comment_updated')|tojson }},
+            comment_added: {{ t('comment_added')|tojson }},
+            reply_added: {{ t('reply_added')|tojson }},
+            failed: {{ t('failed')|tojson }}
+        };
+
+        function showToast(message, type) {
+            type = type || 'success';
+            var existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+            var toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(function() { toast.classList.add('show'); }, 10);
+            setTimeout(function() {
+                toast.classList.remove('show');
+                setTimeout(function() { toast.remove(); }, 300);
+            }, 3000);
+        }
+
+        function isSectionVisible(el) {
+            if (!el) return false;
+            var wrap = el.closest('#section-posts, #section-saved');
+            if (!wrap) return true;
+            return window.getComputedStyle(wrap).display !== 'none';
+        }
+
+        function getVisibleById(id) {
+            var nodes = document.querySelectorAll('#' + id);
+            for (var i = 0; i < nodes.length; i++) {
+                if (isSectionVisible(nodes[i])) return nodes[i];
+            }
+            return nodes[0] || null;
+        }
+
+        function toggleComments(postId) {
+            document.querySelectorAll('#comments-section-' + postId).forEach(function(section) {
+                if (!isSectionVisible(section)) return;
+                section.classList.toggle('active');
+                if (section.classList.contains('active') && typeof scanExpandable === 'function') {
+                    setTimeout(scanExpandable, 40);
+                }
+            });
+        }
+
+        function likePost(postId) {
+            fetch('/like/' + postId, { method: 'POST' })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (!data.success) return;
+                document.querySelectorAll('#like-btn-' + postId).forEach(function(btn) {
+                    if (data.liked) btn.classList.add('liked');
+                    else btn.classList.remove('liked');
+                });
+                document.querySelectorAll('#likes-count-' + postId).forEach(function(countSpan) {
+                    countSpan.textContent = data.likes_count + ' ' + I18N.likes;
+                });
+            })
+            .catch(function() { showToast(I18N.error, 'error'); });
+        }
+
+        function muteUser(userId, btn) {
+            if (!confirm('Mute mtumiaji huyu? Hutaona post zake kwenye feed.')) return;
+            fetch('/mute/' + userId, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    if (btn) btn.innerHTML = data.muted ? '<i class="fa-solid fa-volume-high"></i> Unmute' : '<i class="fa-solid fa-volume-xmark"></i> Mute';
+                    showToast(data.message || (data.muted ? 'Ame-mute' : 'Mute imeondolewa'), 'success');
+                } else {
+                    showToast(data.message || 'Imeshindikana', 'error');
+                }
+            })
+            .catch(function() { showToast(I18N.error, 'error'); });
+        }
+
+        function blockUser(userId) {
+            if (!confirm(I18N.confirm_block)) return;
+            fetch('/block_user/' + userId, { method: 'POST' })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.success) showToast(I18N.user_blocked, 'success');
+                else showToast(data.message || 'Imeshindikana', 'error');
+            })
+            .catch(function() { showToast(I18N.error, 'error'); });
+        }
+
+        function savePost(postId) {
+            fetch('/save_post/' + postId, { method: 'POST' })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    document.querySelectorAll('#saved-count-text-' + postId).forEach(function(el) {
+                        el.textContent = data.saved_count;
+                    });
+                    showToast(data.saved ? I18N.post_saved : I18N.post_unsaved, 'success');
+                }
+            })
+            .catch(function() { showToast(I18N.error, 'error'); });
+        }
+
+        function sharePost(postId, text) {
+            var shareUrl = window.location.origin + '/post/' + postId;
+            fetch('/share_post/' + postId, { method: 'POST' })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    document.querySelectorAll('#share-count-text-' + postId).forEach(function(el) {
+                        el.textContent = data.shares_count;
+                    });
+                }
+            })
+            .catch(function() {});
+
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Kijiji Tanzania',
+                    text: text || 'Angalia chapisho hili',
+                    url: shareUrl
+                }).then(function() {
+                    showToast(I18N.shared, 'success');
+                }).catch(function() {
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(shareUrl).then(function() {
+                            showToast(I18N.link_copied, 'success');
+                        });
+                    }
+                });
+            } else if (navigator.clipboard) {
+                navigator.clipboard.writeText(shareUrl).then(function() {
+                    showToast(I18N.link_copied, 'success');
+                }).catch(function() {
+                    showToast('Imeshindikana kushare', 'error');
+                });
+            } else {
+                showToast('Link: ' + shareUrl, 'success');
+            }
+        }
+
+        function likeComment(commentId) {
+            fetch('/like_comment/' + commentId, { method: 'POST' })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (!data.success) return;
+                document.querySelectorAll('#c-like-btn-' + commentId).forEach(function(btn) {
+                    btn.style.color = data.liked ? '#1EB53A' : 'inherit';
+                });
+                document.querySelectorAll('#c-likes-count-' + commentId).forEach(function(el) {
+                    el.textContent = data.likes_count;
+                });
+            });
+        }
+
+        function toggleCommentMenu(commentId) {
+            document.querySelectorAll('.comment-actions-dropdown').forEach(function(d) {
+                if (d.id !== 'comment-menu-' + commentId) d.style.display = 'none';
+            });
+            document.querySelectorAll('.comment-item.menu-open').forEach(function(el) {
+                if (!el.querySelector('#comment-menu-' + commentId)) el.classList.remove('menu-open');
+            });
+            document.querySelectorAll('#comment-menu-' + commentId).forEach(function(dropdown) {
+                var open = dropdown.style.display === 'block';
+                dropdown.style.display = open ? 'none' : 'block';
+                var item = dropdown.closest('.comment-item');
+                if (item) {
+                    if (open) item.classList.remove('menu-open');
+                    else item.classList.add('menu-open');
+                }
+            });
+        }
+
+        window.addEventListener('click', function(e) {
+            if (!e.target.closest('.comment-item')) {
+                document.querySelectorAll('.comment-actions-dropdown').forEach(function(d) {
+                    d.style.display = 'none';
+                });
+                document.querySelectorAll('.comment-item.menu-open').forEach(function(el) {
+                    el.classList.remove('menu-open');
+                });
+            }
+        });
+
+        function deleteComment(commentId) {
+            if (!confirm(I18N.confirm_delete_comment)) return;
+            fetch('/delete_comment/' + commentId, { method: 'POST' })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    document.querySelectorAll('#comment-' + commentId).forEach(function(el) { el.remove(); });
+                    showToast(I18N.comment_deleted, 'success');
+                } else {
+                    showToast(data.message || 'Imeshindikana', 'error');
+                }
+            })
+            .catch(function() { showToast(I18N.error, 'error'); });
+        }
+
+        function hideComment(commentId) {
+            fetch('/hide_comment/' + commentId, { method: 'POST' })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    document.querySelectorAll('#comment-' + commentId).forEach(function(el) {
+                        el.classList.toggle('hidden-comment');
+                    });
+                    showToast(data.message || 'Imefanikiwa', 'success');
+                } else {
+                    showToast(data.message || 'Imeshindikana', 'error');
+                }
+            })
+            .catch(function() { showToast(I18N.error, 'error'); });
+        }
+
+        function editComment(commentId) {
+            var p = document.querySelector('#comment-text-' + commentId);
+            var newText = prompt('Badilisha comment yako:', p ? p.textContent : '');
+            if (newText !== null && newText.trim() !== '') {
+                fetch('/edit_comment/' + commentId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: newText })
+                })
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data.success) {
+                        document.querySelectorAll('#comment-text-' + commentId).forEach(function(el) {
+                            el.textContent = newText;
+                        });
+                        showToast(I18N.comment_updated, 'success');
+                    } else {
+                        showToast(data.message || 'Imeshindikana', 'error');
+                    }
+                })
+                .catch(function() { showToast(I18N.error, 'error'); });
+            }
+        }
+
+        function showReplyBox(commentId) {
+            document.querySelectorAll('#reply-form-' + commentId).forEach(function(form) {
+                form.style.display = (form.style.display === 'none' || form.style.display === '') ? 'block' : 'none';
+            });
+        }
+
+        function replyToUser(mainCommentId, targetUsername) {
+            document.querySelectorAll('#reply-form-' + mainCommentId).forEach(function(form) {
+                form.style.display = 'block';
+                var input = form.querySelector('input[name="content"]');
+                if (input) {
+                    input.value = '@' + targetUsername + ' ';
+                    input.focus();
+                }
+            });
+        }
+
+        function addComment(event, postId) {
+            event.preventDefault();
+            var form = event.target;
+            fetch('/comment/' + postId, { method: 'POST', body: new FormData(form) })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (!data.success) {
+                    showToast(data.message || 'Imeshindikana', 'error');
+                    return;
+                }
+                var list = getVisibleById('comments-list-' + postId);
+                document.querySelectorAll('#comments-count-text-' + postId).forEach(function(countSpan) {
+                    if (isSectionVisible(countSpan)) {
+                        countSpan.textContent = parseInt(countSpan.textContent || '0', 10) + 1;
+                    }
+                });
+                if (list) {
+                    var cid = data.comment.id;
+                    var uname = data.comment.username;
+                    var ctext = data.comment.content;
+                    var newDiv = document.createElement('div');
+                    newDiv.className = 'comment-item';
+                    newDiv.id = 'comment-' + cid;
+                    newDiv.innerHTML =
+                        '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+                        '<strong><a href="/profile/' + uname + '" style="text-decoration:none; color:inherit;">' + uname + '</a></strong>' +
+                        '<div style="display:flex; align-items:center; gap:8px;">' +
+                        '<span style="font-size:11px; color:#64748b;">' + I18N.just_now + '</span>' +
+                        '<button type="button" class="comment-actions-btn" onclick="toggleCommentMenu(' + cid + ')"><i class="fa-solid fa-ellipsis-vertical"></i></button>' +
+                        '<div class="comment-actions-dropdown" id="comment-menu-' + cid + '">' +
+                        '<button type="button" onclick="editComment(' + cid + ')"><i class="fa-solid fa-pen"></i> Edit</button>' +
+                        '<button type="button" onclick="deleteComment(' + cid + ')" style="color:#dc2626;"><i class="fa-solid fa-trash"></i> Futa</button>' +
+                        '</div></div></div>' +
+                        '<p id="comment-text-' + cid + '" style="margin:6px 0; color:#0f172a;">' + ctext + '</p>' +
+                        '<div style="font-size:11px; display:flex; gap:15px; color:#64748b; margin-top:4px;">' +
+                        '<button type="button" onclick="likeComment(' + cid + ')" style="background:none; border:none; cursor:pointer; font-weight:600;" id="c-like-btn-' + cid + '">Like (<span id="c-likes-count-' + cid + '">0</span>)</button>' +
+                        '<button type="button" onclick="showReplyBox(' + cid + ')" style="background:none; border:none; cursor:pointer; color:inherit; font-weight:600;">{{ t('reply') }}</button>' +
+                        '</div>' +
+                        '<div class="replies-list" style="margin-left:12px; margin-top:6px; border-left:2px solid #e2e8f0; padding-left:8px;" id="replies-list-' + cid + '"></div>' +
+                        '<form class="reply-form" id="reply-form-' + cid + '" style="display:none; margin-top:6px; margin-left:12px;" onsubmit="addReply(event, ' + postId + ', ' + cid + ')">' +
+                        '<div style="display:flex; gap:6px;">' +
+                        '<input type="text" name="content" placeholder="{{ t('type_reply') }}" required style="flex:1; padding:7px 12px; font-size:12px; border-radius:14px; border:1px solid #e2e8f0; outline:none; background:#fff;">' +
+                        '<button type="submit" style="padding:7px 14px; font-size:11px; background:#1EB53A; color:#fff; border:none; border-radius:14px; font-weight:600; cursor:pointer;">{{ t('send') }}</button>' +
+                        '</div></form>';
+                    list.appendChild(newDiv);
+                    list.scrollTop = list.scrollHeight;
+                    var pEl = document.getElementById('comment-text-' + cid);
+                    if (pEl && (pEl.textContent || '').length > 100 && typeof makeExpandable === 'function') makeExpandable(pEl);
+                }
+                form.reset();
+                showToast(I18N.comment_added, 'success');
+            })
+            .catch(function() { showToast(I18N.error, 'error'); });
+        }
+
+        function addReply(event, postId, parentId) {
+            event.preventDefault();
+            var form = event.target;
+            var formData = new FormData(form);
+            formData.append('parent_id', parentId);
+            fetch('/comment/' + postId, { method: 'POST', body: formData })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (!data.success) {
+                    showToast(data.message || 'Imeshindikana', 'error');
+                    return;
+                }
+                var repliesList = getVisibleById('replies-list-' + parentId);
+                if (repliesList) {
+                    var newDiv = document.createElement('div');
+                    newDiv.className = 'reply-item';
+                    newDiv.id = 'comment-' + data.comment.id;
+                    newDiv.style.cssText = 'font-size:12px; background:#f1f5f9; padding:7px 9px; border-radius:8px; margin-bottom:5px;';
+                    newDiv.innerHTML =
+                        '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+                        '<strong><a href="/profile/' + data.comment.username + '" style="text-decoration:none; color:inherit;">' + data.comment.username + '</a>:</strong>' +
+                        '<span style="font-size:10px; color:#64748b;">' + I18N.just_now + '</span></div>' +
+                        '<p id="comment-text-' + data.comment.id + '" style="margin:3px 0; color:#0f172a;">' + data.comment.content + '</p>' +
+                        '<div style="font-size:11px; margin-top:2px; display:flex; gap:10px;">' +
+                        '<button type="button" onclick="replyToUser(' + parentId + ', \'' + data.comment.username + '\')" style="background:none; border:none; cursor:pointer; color:#1EB53A; font-weight:600;">{{ t('reply') }}</button>' +
+                        '<button type="button" onclick="editComment(' + data.comment.id + ')" style="background:none; border:none; cursor:pointer; color:#64748b;">{{ t('edit') }}</button>' +
+                        '<button type="button" onclick="deleteComment(' + data.comment.id + ')" style="background:none; border:none; cursor:pointer; color:#dc2626;">{{ t('delete') }}</button>' +
+                        '</div>';
+                    repliesList.appendChild(newDiv);
+                }
+                var countSpan = document.getElementById('comments-count-text-' + postId);
+                if (countSpan) countSpan.textContent = parseInt(countSpan.textContent || '0', 10) + 1;
+                form.reset();
+                form.style.display = 'none';
+                showToast(I18N.reply_added, 'success');
+            })
+            .catch(function() { showToast(I18N.error, 'error'); });
+        }
+
+        function makeExpandable(el) {
+            if (!el || el.dataset.wlpReady === '1') return;
+            var raw = (el.textContent || '').replace(/\s+/g, ' ').trim();
+            if (!raw) return;
+
+            var computed = getComputedStyle(el);
+            var lineHeight = parseFloat(computed.lineHeight) || 21;
+            var fullHeight = el.scrollHeight;
+            if (fullHeight <= lineHeight * 2.4 && raw.length < 140) return;
+
+            el.dataset.wlpReady = '1';
+            el.dataset.wlpStage = '0';
+            el.classList.add('wlp-expandable', 'wlp-stage-0');
+
+            var wrap = document.createElement('div');
+            wrap.className = 'wlp-more-wrap';
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'wlp-more-btn';
+            btn.textContent = I18N.see_more;
+            btn.setAttribute('aria-expanded', 'false');
+
+            var advance = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var stage = Number(el.dataset.wlpStage || 0);
+                if (stage === 0) {
+                    el.classList.remove('wlp-stage-0');
+                    el.classList.add('wlp-stage-1');
+                    el.dataset.wlpStage = '1';
+                    btn.textContent = I18N.see_more;
+                    btn.setAttribute('aria-expanded', 'false');
+                } else if (stage === 1) {
+                    el.classList.remove('wlp-stage-1');
+                    el.classList.add('wlp-stage-2');
+                    el.dataset.wlpStage = '2';
+                    btn.textContent = I18N.see_less;
+                    btn.setAttribute('aria-expanded', 'true');
+                } else {
+                    el.classList.remove('wlp-stage-2');
+                    el.classList.add('wlp-stage-0');
+                    el.dataset.wlpStage = '0';
+                    btn.textContent = I18N.see_more;
+                    btn.setAttribute('aria-expanded', 'false');
+                }
+            };
+            btn.addEventListener('click', advance, { passive: false });
+            btn.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                advance(e);
+            }, { passive: false });
+
+            wrap.appendChild(btn);
+            el.insertAdjacentElement('afterend', wrap);
+        }
+
+        function scanExpandable() {
+            document.querySelectorAll('.post-content-text').forEach(makeExpandable);
+            document.querySelectorAll('.comment-item > p, .reply-item > p, .comment-item p[id^="comment-text-"]').forEach(function(el) {
+                if ((el.textContent || '').trim().length > 100) makeExpandable(el);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            scanExpandable();
+            document.querySelectorAll('.post-actions button').forEach(function(btn) {
+                if ((btn.textContent || '').indexOf('Comment') !== -1) {
+                    btn.addEventListener('click', function() {
+                        setTimeout(scanExpandable, 50);
+                    });
+                }
+            });
+        });
+
+        function profileFollowLabel(btn) {
+            var following = btn.getAttribute('data-following') === '1';
+            var followsYou = btn.getAttribute('data-follows-you') === '1';
+            var friends = btn.getAttribute('data-friends') === '1';
+            if (friends) {
+                btn.innerHTML = '<i class="fa-solid fa-user-group"></i> Friends';
+                btn.style.background = 'linear-gradient(135deg,#1EB53A,#00A3DD)';
+                btn.style.color = '#fff';
+                btn.style.boxShadow = '0 4px 12px rgba(30,181,58,0.2)';
+            } else if (following) {
+                btn.textContent = (window.I18N && I18N.unfollow) ? I18N.unfollow : 'Unfollow';
+                btn.style.background = '#e2e8f0';
+                btn.style.color = '#0f172a';
+                btn.style.boxShadow = 'none';
+            } else if (followsYou) {
+                btn.textContent = 'Follow back';
+                btn.style.background = 'linear-gradient(135deg,#00A3DD,#0284c7)';
+                btn.style.color = '#fff';
+                btn.style.boxShadow = '0 4px 12px rgba(0,163,221,0.2)';
+            } else {
+                btn.textContent = (window.I18N && I18N.follow) ? I18N.follow : 'Follow';
+                btn.style.background = '';
+                btn.style.color = '';
+                btn.style.boxShadow = '';
+            }
+        }
+
+        function profileToggleFollow(btn) {
+            if (!btn || btn.disabled) return;
+            var username = btn.getAttribute('data-username');
+            if (!username) return;
+            btn.disabled = true;
+            fetch('/follow/' + encodeURIComponent(username), {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.success) {
+                    showToast(data.message || 'Imeshindikana', 'error');
+                    return;
+                }
+                btn.setAttribute('data-following', data.following ? '1' : '0');
+                btn.setAttribute('data-friends', data.friends ? '1' : '0');
+                if (typeof data.follows_you !== 'undefined') {
+                    btn.setAttribute('data-follows-you', data.follows_you ? '1' : '0');
+                }
+                profileFollowLabel(btn);
+                showToast(data.message || 'OK', 'success');
+            })
+            .catch(function() { showToast('Imeshindikana', 'error'); })
+            .finally(function() { btn.disabled = false; });
+        }
+
+
+        function profileSwitchLinkup(linkupId, btn) {
+            if (!btn || btn.disabled) return;
+            btn.disabled = true;
+            var orig = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            fetch('/linkup/switch', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ linkup_id: linkupId })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.success) {
+                    showToast(data.message || 'Imeshindikana', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = orig;
+                    return;
+                }
+                showToast(data.message || 'Umeswitch', 'success');
+                var url = data.redirect_url || '/';
+                setTimeout(function() { window.location.href = url; }, 400);
+            })
+            .catch(function() {
+                showToast('Imeshindikana', 'error');
+                btn.disabled = false;
+                btn.innerHTML = orig;
+            });
+        }
+
+        function copyProfileLink() {
+            var url = {{ (profile_share_url if profile_share_url is defined else '')|tojson }};
+            if (!url) {
+                url = window.location.origin + '/profile/{{ profile_user.username }}';
+            }
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(function() {
+                    showToast('Link imenakiliwa', 'success');
+                }).catch(function() {
+                    prompt('Nakili link:', url);
+                });
+            } else {
+                prompt('Nakili link:', url);
+            }
+        }
+
+</script>
+</body>
+</html>
+

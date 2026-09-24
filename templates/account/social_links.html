@@ -1,0 +1,765 @@
+{% extends "base.html" %}
+
+{% block title %}Mitandao Yetu | Kijiji Tanzania{% endblock %}
+
+{% block content %}
+
+<style>
+    .social-page {
+        max-width: 1050px;
+        margin: 25px auto 50px;
+        padding: 0 15px;
+    }
+
+    /* HERO */
+    .social-hero {
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(135deg, #1EB53A, #159447);
+        color: white;
+        border-radius: 24px;
+        padding: 45px 25px;
+        text-align: center;
+        margin-bottom: 35px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+    }
+
+    .social-hero::before,
+    .social-hero::after {
+        content: "";
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.08);
+    }
+
+    .social-hero::before {
+        width: 220px;
+        height: 220px;
+        top: -100px;
+        left: -70px;
+    }
+
+    .social-hero::after {
+        width: 180px;
+        height: 180px;
+        bottom: -90px;
+        right: -50px;
+    }
+
+    .social-hero-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .social-hero-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.18);
+        font-size: 35px;
+        backdrop-filter: blur(8px);
+    }
+
+    .social-hero h1 {
+        margin: 0 0 12px;
+        font-size: 34px;
+        font-weight: 800;
+    }
+
+    .social-hero p {
+        max-width: 700px;
+        margin: auto;
+        line-height: 1.7;
+        font-size: 16px;
+        opacity: 0.95;
+    }
+
+    /* SECTIONS */
+    .social-section {
+        margin-bottom: 35px;
+    }
+
+    .section-title {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .section-title h2 {
+        margin: 0 0 7px;
+        font-size: 25px;
+        color: #222;
+    }
+
+    .section-title p {
+        margin: 0;
+        color: #777;
+        font-size: 14px;
+    }
+
+    /* GRID */
+    .social-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+
+    /* CARD */
+    .social-card {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 18px;
+        background: #ffffff;
+        border-radius: 16px;
+        text-decoration: none;
+        color: #222;
+        border: 1px solid #eeeeee;
+        box-shadow: 0 5px 18px rgba(0,0,0,0.06);
+        transition: all 0.25s ease;
+        min-height: 70px;
+        box-sizing: border-box;
+    }
+
+    .social-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.10);
+        border-color: #1EB53A;
+    }
+
+    .social-icon {
+        width: 50px;
+        height: 50px;
+        min-width: 50px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f1f1f1;
+        font-size: 23px;
+    }
+
+    .social-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .social-info strong {
+        display: block;
+        font-size: 16px;
+        margin-bottom: 4px;
+    }
+
+    .social-info span {
+        display: block;
+        color: #777;
+        font-size: 12px;
+    }
+
+    .social-arrow {
+        color: #aaa;
+        font-size: 15px;
+    }
+
+    /* COMMUNITY CARDS */
+    .community-card {
+        background: linear-gradient(135deg, #ffffff, #f8fff9);
+        border: 1px solid #dff1e3;
+    }
+
+    .community-card .social-icon {
+        background: #e9f8ed;
+        color: #1EB53A;
+    }
+
+    /* FOOTER CTA */
+    .social-bottom {
+        text-align: center;
+        margin-top: 40px;
+        padding: 30px 20px;
+        background: #f7f9f8;
+        border-radius: 20px;
+    }
+
+    .social-bottom h3 {
+        margin: 0 0 8px;
+        font-size: 22px;
+        color: #222;
+    }
+
+    .social-bottom p {
+        margin: 0 0 20px;
+        color: #666;
+        line-height: 1.6;
+    }
+
+    .back-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 22px;
+        background: #1EB53A;
+        color: white;
+        text-decoration: none;
+        border-radius: 10px;
+        font-weight: 700;
+        transition: 0.2s ease;
+    }
+
+    .back-button:hover {
+        background: #159447;
+        transform: translateY(-2px);
+    }
+
+    /* MOBILE */
+    @media (max-width: 850px) {
+        .social-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 600px) {
+        .social-page {
+            padding: 0 10px;
+            margin-top: 15px;
+        }
+
+        .social-hero {
+            padding: 35px 18px;
+            border-radius: 20px;
+        }
+
+        .social-hero h1 {
+            font-size: 28px;
+        }
+
+        .social-hero p {
+            font-size: 14px;
+        }
+
+        .social-grid {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .social-card {
+            padding: 15px;
+        }
+
+        .section-title h2 {
+            font-size: 22px;
+        }
+    }
+</style>
+
+<div class="social-page">
+
+    <!-- HERO -->
+    <section class="social-hero">
+        <div class="social-hero-content">
+
+            <div class="social-hero-icon">
+                <i class="fas fa-users"></i>
+            </div>
+
+            <h1>Jiunge na Jumuiya 🇹🇿</h1>
+
+            <p>
+                Karibu kwenye mitandao rasmi ya Kijiji Tanzania.
+                Jiunge na jumuiya yetu, fuatilia taarifa mpya,
+                shiriki mawazo na endelea kuwa sehemu ya Kijiji Tanzania.
+            </p>
+
+        </div>
+    </section>
+
+
+    <!-- COMMUNITY -->
+    <section class="social-section">
+
+        <div class="section-title">
+            <h2>🤝 Jiunge na Jumuiya</h2>
+            <p>Ungana na wanajumuiya wengine kupitia vikundi vyetu.</p>
+        </div>
+
+        <div class="social-grid">
+
+            <!-- WHATSAPP GROUP -->
+            <a href="https://chat.whatsapp.com/F68dj8WRgsv89KfcJ0Pfq7"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="social-card community-card">
+
+                <div class="social-icon">
+                    <i class="fab fa-whatsapp"></i>
+                </div>
+
+                <div class="social-info">
+                    <strong>WhatsApp Group</strong>
+                    <span>Jiunge na group letu</span>
+                </div>
+
+                <div class="social-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+
+            </a>
+
+
+            <!-- TELEGRAM GROUP -->
+            <a href="https://t.me/+7ym24HTKkbg5NjM0"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="social-card community-card">
+
+                <div class="social-icon">
+                    <i class="fab fa-telegram"></i>
+                </div>
+
+                <div class="social-info">
+                    <strong>Telegram Group</strong>
+                    <span>Jiunge na jumuiya yetu</span>
+                </div>
+
+                <div class="social-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+
+            </a>
+
+
+            <!-- FACEBOOK GROUP -->
+            <a href="https://www.facebook.com/share/g/1D8KNLhNuf/"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="social-card community-card">
+
+                <div class="social-icon">
+                    <i class="fab fa-facebook"></i>
+                </div>
+
+                <div class="social-info">
+                    <strong>Facebook Group</strong>
+                    <span>Jiunge na Facebook Group</span>
+                </div>
+
+                <div class="social-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+
+            </a>
+
+        </div>
+
+    </section>
+
+
+    <!-- CHANNELS -->
+    <section class="social-section">
+
+        <div class="section-title">
+            <h2>📢 Channels</h2>
+            <p>Pata taarifa na matangazo kutoka Kijiji Tanzania.</p>
+        </div>
+
+        <div class="social-grid">
+
+            <!-- WHATSAPP CHANNEL -->
+            <a href="https://whatsapp.com/channel/0029VbDokZN0LKZG1Cmh1z1u"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="social-card">
+
+                <div class="social-icon">
+                    <i class="fab fa-whatsapp"></i>
+                </div>
+
+                <div class="social-info">
+                    <strong>WhatsApp Channel</strong>
+                    <span>Follow channel yetu rasmi</span>
+                </div>
+
+                <div class="social-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+
+            </a>
+
+        </div>
+
+
+
+        <div class="social-grid">
+
+            <!-- TELEGRAM CHANNEL -->
+            <a href="https://t.me/+I4SoEn4WlxU3NTBk"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="social-card">
+
+                <div class="social-icon">
+                    <i class="fab fa-telegram"></i>
+                </div>
+
+                <div class="social-info">
+                    <strong>Telegram Channel</strong>
+                    <span>Follow channel yetu rasmi</span>
+                </div>
+
+                <div class="social-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+
+            </a>
+
+        </div>
+
+    </section>
+
+
+    <!-- SOCIAL MEDIA -->
+    <section class="social-section">
+
+        <div class="section-title">
+            <h2>🌐 Tufuate Kwenye Mitandao</h2>
+            <p>Endelea kupata habari, updates na maudhui yetu.</p>
+        </div>
+
+        <div class="social-grid">
+
+            <!-- FACEBOOK -->
+            <a href="https://www.facebook.com/share/19FFx4ZZBc/"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="social-card">
+
+                <div class="social-icon">
+                    <i class="fab fa-facebook"></i>
+                </div>
+
+                <div class="social-info">
+                    <strong>Facebook</strong>
+                    <span>Follow ukurasa wetu</span>
+                </div>
+
+                <div class="social-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+
+            </a>
+
+
+            <!-- INSTAGRAM -->
+            <a href="https://www.instagram.com/matondomaduhu_?stkn=MWFvY3k1NGFsaDIydw=="
+               target="_blank"
+               rel="noopener noreferrer"
+               class="social-card">
+
+                <div class="social-icon">
+                    <i class="fab fa-instagram"></i>
+                </div>
+
+                <div class="social-info">
+                    <strong>Instagram</strong>
+                    <span>Tufuate Instagram</span>
+                </div>
+
+                <div class="social-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+
+            </a>
+
+
+            <!-- TIKTOK -->
+            <a href="https://www.tiktok.com/@tanzania.tanzania81?_r=1&_t=ZS-99YRJNcegnE"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="social-card">
+
+                <div class="social-icon">
+                    <i class="fab fa-tiktok"></i>
+                </div>
+
+                <div class="social-info">
+                    <strong>TikTok</strong>
+                    <span>Tazama video zetu</span>
+                </div>
+
+                <div class="social-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+
+            </a>
+
+
+            <!-- PAMTOT -->
+            <a href="https://pamtok.com/@matondomaduhu?ref=82258710"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="social-card">
+
+                <div class="social-icon">
+                    <i class="fas fa-globe"></i>
+                </div>
+
+                <div class="social-info">
+                    <strong>Pamtok</strong>
+                    <span>Tembelea ukurasa wetu</span>
+                </div>
+
+                <div class="social-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+
+            </a>
+
+
+            <!-- REDDIT -->
+            <a href="https://www.reddit.com/u/efb-9uY/s/snKvfcxiCe"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="social-card">
+
+                <div class="social-icon">
+                    <i class="fab fa-reddit-alien"></i>
+                </div>
+
+                <div class="social-info">
+                    <strong>Reddit</strong>
+                    <span>Jiunge na mazungumzo</span>
+                </div>
+
+                <div class="social-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+
+            </a>
+
+
+            <!-- SUBSTACK -->
+            <a href="https://substack.com/@matondomaduhu?utm_source=share&utm_medium=android&r=8x5xab"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="social-card">
+
+                <div class="social-icon">
+                    <i class="fas fa-newspaper"></i>
+                </div>
+
+                <div class="social-info">
+                    <strong>Substack</strong>
+                    <span>Soma machapisho yetu</span>
+                </div>
+
+                <div class="social-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+
+            </a>
+
+
+            <!-- BLUESKY -->
+            <a href="https://bsky.app/profile/matondomaduhu.bsky.social"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="social-card">
+
+                <div class="social-icon">
+                    <i class="fas fa-cloud"></i>
+                </div>
+
+                <div class="social-info">
+                    <strong>Bluesky</strong>
+                    <span>Tufuate Bluesky</span>
+                </div>
+
+                <div class="social-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+
+            </a>
+
+
+            <!-- THREADS -->
+            <a href="https://www.threads.com/@matondomaduhu_"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="social-card">
+
+                <div class="social-icon">
+                    <i class="fab fa-threads"></i>
+                </div>
+
+                <div class="social-info">
+                    <strong>Threads</strong>
+                    <span>Follow Threads yetu</span>
+                </div>
+
+                <div class="social-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+
+            </a>
+
+
+            <!-- GETTR -->
+            <a href="https://gettr.com/user/matondomaduhu_"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="social-card">
+
+                <div class="social-icon">
+                    <i class="fas fa-comments"></i>
+                </div>
+
+                <div class="social-info">
+                    <strong>GETTR</strong>
+                    <span>Tufuate GETTR</span>
+                </div>
+
+                <div class="social-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+
+            </a>
+
+
+            <!-- JABBURR -->
+            <a href="https://www.jabburr.com/feed/105629"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="social-card">
+
+                <div class="social-icon">
+                    <i class="fas fa-comment-dots"></i>
+                </div>
+
+                <div class="social-info">
+                    <strong>Jabburr</strong>
+                    <span>Ungana nasi Jabburr</span>
+                </div>
+
+                <div class="social-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+
+            </a>
+
+
+            <!-- FLICKR -->
+            <a href="http://flic.kr/p/2szGJK8"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="social-card">
+
+                <div class="social-icon">
+                    <i class="fab fa-flickr"></i>
+                </div>
+
+                <div class="social-info">
+                    <strong>Flickr</strong>
+                    <span>Tazama picha zetu</span>
+                </div>
+
+                <div class="social-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+
+            </a>
+
+
+            <!-- UPSCROLL
+            <a href="WEKA_LINK_YA_UPSCROLL_HAPA"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="social-card">
+
+                <div class="social-icon">
+                    <i class="fas fa-arrow-up"></i>
+                </div>
+
+                <div class="social-info">
+                    <strong>Upscroll</strong>
+                    <span>Ungana nasi Upscroll</span>
+                </div>
+
+                <div class="social-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+
+            </a> -->
+
+
+            <!-- PATREON
+            <a href="WEKA_LINK_YA_PATREON_HAPA"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="social-card">
+
+                <div class="social-icon">
+                    <i class="fab fa-patreon"></i>
+                </div>
+
+                <div class="social-info">
+                    <strong>Patreon</strong>
+                    <span>Support jumuiya yetu</span>
+                </div>
+
+                <div class="social-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+
+            </a> -->
+
+
+            <!-- VIDYFY
+            <a href="WEKA_LINK_YA_VIDYFY_HAPA"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="social-card">
+
+                <div class="social-icon">
+                    <i class="fas fa-video"></i>
+                </div>
+
+                <div class="social-info">
+                    <strong>Vidyfy</strong>
+                    <span>Tazama maudhui yetu</span>
+                </div>
+
+                <div class="social-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+
+            </a> -->
+
+        </div>
+
+    </section>
+
+
+    <!-- BOTTOM -->
+    <div class="social-bottom">
+
+        <h3>🇹🇿 Kijiji Tanzania</h3>
+
+        <p>
+            Asante kwa kuwa sehemu ya jumuiya yetu.
+            Tupo pamoja kujenga Tanzania yenye taarifa,
+            ushirikiano na fursa kwa wote.
+        </p>
+
+        <a href="{{ url_for('about') }}" class="back-button">
+            <i class="fas fa-arrow-left"></i>
+            Rudi Kuhusu Kijiji Tanzania
+        </a>
+
+    </div>
+
+</div>
+
+{% endblock %}

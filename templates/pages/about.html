@@ -1,0 +1,725 @@
+{% extends "base.html" %}
+
+{% block title %}Kuhusu Kijiji Tanzania{% endblock %}
+
+{% block content %}
+
+<style>
+    .about-page {
+        --primary: #0f766e;
+        --primary-dark: #115e59;
+        --accent: #f59e0b;
+        --text: #172033;
+        --muted: #667085;
+        --light: #f6f8fa;
+        --white: #ffffff;
+
+        color: var(--text);
+        background: var(--light);
+        padding-bottom: 50px;
+    }
+
+    .about-hero {
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(135deg, #0f766e, #134e4a);
+        color: white;
+        padding: 65px 20px 75px;
+        text-align: center;
+    }
+
+    .about-hero::before,
+    .about-hero::after {
+        content: "";
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.07);
+    }
+
+    .about-hero::before {
+        width: 260px;
+        height: 260px;
+        top: -130px;
+        left: -90px;
+    }
+
+    .about-hero::after {
+        width: 320px;
+        height: 320px;
+        bottom: -190px;
+        right: -100px;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        max-width: 850px;
+        margin: auto;
+    }
+
+    .brand-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 15px;
+        border-radius: 50px;
+        background: rgba(255,255,255,0.13);
+        border: 1px solid rgba(255,255,255,0.18);
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
+
+    .about-hero h1 {
+        font-size: clamp(34px, 7vw, 58px);
+        line-height: 1.08;
+        margin: 0 0 18px;
+        font-weight: 800;
+        letter-spacing: -1.5px;
+    }
+
+    .about-hero h1 span {
+        color: #fbbf24;
+    }
+
+    .about-hero p {
+        max-width: 700px;
+        margin: auto;
+        font-size: 17px;
+        line-height: 1.8;
+        color: rgba(255,255,255,0.9);
+    }
+
+    .about-container {
+        max-width: 1050px;
+        margin: auto;
+        padding: 0 18px;
+    }
+
+    .about-section {
+        background: var(--white);
+        border-radius: 22px;
+        padding: 30px;
+        margin-top: 25px;
+        box-shadow: 0 10px 35px rgba(15, 23, 42, 0.06);
+        border: 1px solid #edf0f2;
+    }
+
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 0 0 15px;
+        font-size: 25px;
+        font-weight: 750;
+    }
+
+    .section-icon {
+        width: 45px;
+        height: 45px;
+        display: grid;
+        place-items: center;
+        border-radius: 14px;
+        background: #e6f7f5;
+        color: var(--primary);
+        font-size: 21px;
+    }
+
+    .about-section p {
+        color: var(--muted);
+        line-height: 1.8;
+        margin: 10px 0;
+    }
+
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+        margin-top: 25px;
+    }
+
+    .feature-card {
+        padding: 24px;
+        background: #fafcfc;
+        border: 1px solid #edf1f1;
+        border-radius: 18px;
+        transition: 0.25s ease;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(15,118,110,0.10);
+    }
+
+    .feature-icon {
+        font-size: 28px;
+        margin-bottom: 12px;
+    }
+
+    .feature-card h3 {
+        margin: 0 0 8px;
+        font-size: 18px;
+    }
+
+    .feature-card p {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.7;
+    }
+
+    .values {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .value {
+        display: flex;
+        gap: 14px;
+        padding: 18px;
+        border-radius: 16px;
+        background: #f8fafb;
+    }
+
+    .value-icon {
+        flex-shrink: 0;
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+        background: #fff7e6;
+        color: #d97706;
+    }
+
+    .value h4 {
+        margin: 0 0 5px;
+        font-size: 16px;
+    }
+
+    .value p {
+        margin: 0;
+        font-size: 13px;
+    }
+
+    .links-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-top: 20px;
+    }
+
+    .about-link {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 16px 18px;
+        border: 1px solid #e7ebee;
+        border-radius: 14px;
+        text-decoration: none;
+        color: var(--text);
+        background: #fff;
+        transition: 0.2s ease;
+    }
+
+    .about-link:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        transform: translateX(3px);
+    }
+
+    .link-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 600;
+    }
+
+    .link-icon {
+        width: 38px;
+        height: 38px;
+        display: grid;
+        place-items: center;
+        border-radius: 10px;
+        background: #eef7f6;
+    }
+
+    /* =========================
+       JUMUIYA
+       ========================= */
+
+    .community-intro {
+        text-align: center;
+        max-width: 720px;
+        margin: 0 auto 25px;
+    }
+
+    .community-intro p {
+        margin-bottom: 0;
+    }
+
+    .community-button {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 15px;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 18px 20px;
+        margin-top: 18px;
+        border-radius: 16px;
+        text-decoration: none;
+        color: var(--text);
+        background: linear-gradient(135deg, #f8fffe, #ffffff);
+        border: 1px solid #e1e9e8;
+        transition: all 0.25s ease;
+    }
+
+    .community-button:hover {
+        transform: translateY(-3px);
+        border-color: var(--primary);
+        box-shadow: 0 12px 28px rgba(15,118,110,0.10);
+    }
+
+    .community-left {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .community-icon {
+        width: 48px;
+        height: 48px;
+        flex-shrink: 0;
+        display: grid;
+        place-items: center;
+        border-radius: 14px;
+        background: #e6f7f5;
+        font-size: 23px;
+    }
+
+    .community-text strong {
+        display: block;
+        font-size: 16px;
+        margin-bottom: 3px;
+    }
+
+    .community-text small {
+        color: var(--muted);
+        font-size: 12px;
+    }
+
+    .community-arrow {
+        font-size: 22px;
+        color: var(--primary);
+        flex-shrink: 0;
+    }
+
+    .community-note {
+        margin-top: 18px;
+        padding: 14px 16px;
+        border-radius: 13px;
+        background: #fffaf0;
+        border: 1px solid #f8e5b7;
+        color: #805b13;
+        font-size: 13px;
+        line-height: 1.6;
+    }
+
+    /* =========================
+       FINAL CTA
+       ========================= */
+
+    .contact-box {
+        text-align: center;
+        background: linear-gradient(135deg, #0f766e, #115e59);
+        color: white;
+        border-radius: 22px;
+        padding: 38px 25px;
+        margin-top: 25px;
+    }
+
+    .contact-box h2 {
+        margin: 0 0 10px;
+        font-size: 28px;
+    }
+
+    .contact-box p {
+        color: rgba(255,255,255,0.85);
+        line-height: 1.7;
+        max-width: 600px;
+        margin: 0 auto 22px;
+    }
+
+    .contact-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: white;
+        color: var(--primary-dark);
+        text-decoration: none;
+        padding: 13px 22px;
+        border-radius: 12px;
+        font-weight: 700;
+        transition: 0.2s ease;
+    }
+
+    .contact-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+
+    .about-footer {
+        text-align: center;
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 30px;
+        padding: 0 15px;
+    }
+
+    @media (max-width: 760px) {
+
+        .about-hero {
+            padding: 50px 18px 60px;
+        }
+
+        .about-hero p {
+            font-size: 15px;
+        }
+
+        .about-section {
+            padding: 22px 18px;
+            border-radius: 18px;
+        }
+
+        .feature-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .values {
+            grid-template-columns: 1fr;
+        }
+
+        .links-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .section-title {
+            font-size: 21px;
+        }
+
+        .community-button {
+            padding: 15px;
+        }
+
+        .community-icon {
+            width: 44px;
+            height: 44px;
+        }
+    }
+</style>
+
+<div class="about-page">
+
+
+<!-- HERO -->
+<section class="about-hero">
+
+    <div class="hero-content">
+
+        <div class="brand-badge">
+            🇹🇿 <span>Imejengwa kwa ajili ya Tanzania</span>
+        </div>
+
+        <h1>
+            Karibu <span>Kijiji Tanzania</span>
+        </h1>
+
+        <p>
+            Kijiji Tanzania ni jukwaa la kidijitali linalolenga
+            kuwaunganisha Watanzania, kujenga jamii, kushirikishana
+            taarifa, mawazo na fursa katika mazingira rahisi na rafiki.
+        </p>
+
+    </div>
+
+</section>
+
+
+<div class="about-container">
+
+    <!-- ABOUT -->
+    <section class="about-section">
+
+        <h2 class="section-title">
+            <span class="section-icon">🌍</span>
+            Kuhusu Kijiji Tanzania
+        </h2>
+
+        <p>
+            Kijiji Tanzania imejengwa kwa wazo moja kuu:
+            <strong>kuleta watu pamoja.</strong>
+        </p>
+
+        <p>
+            Tunataka kutoa nafasi ambapo watu wanaweza kuwasiliana,
+            kushirikishana mawazo, kujenga mahusiano, kugundua
+            fursa na kuwa sehemu ya jamii inayowahusu.
+        </p>
+
+        <p>
+            Jukwaa hili limeundwa kwa kuzingatia mahitaji ya watumiaji
+            wa Tanzania, likiwa na mazingira yanayoweza kutumika kwa
+            urahisi kwenye simu na vifaa mbalimbali.
+        </p>
+
+    </section>
+
+
+    <!-- FEATURES -->
+    <section class="about-section">
+
+        <h2 class="section-title">
+            <span class="section-icon">✨</span>
+            Kijiji kinakupa nini?
+        </h2>
+
+        <div class="feature-grid">
+
+            <div class="feature-card">
+                <div class="feature-icon">💬</div>
+                <h3>Mawasiliano</h3>
+                <p>
+                    Wasiliana na watu wengine na shiriki mawazo
+                    katika mazingira ya kijamii.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">👥</div>
+                <h3>Jamii</h3>
+                <p>
+                    Jenga na shiriki katika jamii zenye watu
+                    wenye maslahi na malengo yanayofanana.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🚀</div>
+                <h3>Fursa</h3>
+                <p>
+                    Gundua taarifa, mawazo na fursa zinazoweza
+                    kuwa na manufaa kwako na jamii yako.
+                </p>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- VALUES -->
+    <section class="about-section">
+
+        <h2 class="section-title">
+            <span class="section-icon">❤️</span>
+            Tunachoamini
+        </h2>
+
+        <div class="values">
+
+            <div class="value">
+                <div class="value-icon">🤝</div>
+                <div>
+                    <h4>Umoja</h4>
+                    <p>
+                        Tunaamini watu wana nguvu zaidi wanapoungana.
+                    </p>
+                </div>
+            </div>
+
+            <div class="value">
+                <div class="value-icon">🔐</div>
+                <div>
+                    <h4>Usalama</h4>
+                    <p>
+                        Tunathamini mazingira salama na yenye heshima
+                        kwa watumiaji.
+                    </p>
+                </div>
+            </div>
+
+            <div class="value">
+                <div class="value-icon">💡</div>
+                <div>
+                    <h4>Ubunifu</h4>
+                    <p>
+                        Tunaendelea kuboresha teknolojia na uzoefu
+                        wa watumiaji.
+                    </p>
+                </div>
+            </div>
+
+            <div class="value">
+                <div class="value-icon">🇹🇿</div>
+                <div>
+                    <h4>Kwa Tanzania</h4>
+                    <p>
+                        Tunajenga huduma inayozingatia mazingira
+                        na mahitaji ya Watanzania.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- JUMUIYA -->
+    <section class="about-section">
+
+        <h2 class="section-title">
+            <span class="section-icon">🤝</span>
+            Jiunge na Jumuiya
+        </h2>
+
+        <div class="community-intro">
+
+            <p>
+                Ungana na Kijiji Tanzania kupitia jumuiya na mitandao
+                yetu mbalimbali. Chagua sehemu unayotumia na
+                tuungane pamoja.
+            </p>
+
+        </div>
+
+        <a href="/social-links" class="community-button">
+
+            <span class="community-left">
+
+                <span class="community-icon">🌐</span>
+
+                <span class="community-text">
+                    <strong>Jumuiya na Mitandao Yetu</strong>
+                    <small>
+                        WhatsApp, Telegram, Facebook, Instagram na mingine
+                    </small>
+                </span>
+
+            </span>
+
+            <span class="community-arrow">→</span>
+
+        </a>
+
+        <div class="community-note">
+            💡 Ukurasa huu utakupa viungo vya jumuiya na mitandao
+            yote rasmi ya Kijiji Tanzania.
+        </div>
+
+    </section>
+
+
+    <!-- LINKS -->
+    <section class="about-section">
+
+        <h2 class="section-title">
+            <span class="section-icon">🔗</span>
+            Viungo muhimu
+        </h2>
+
+        <p>
+            Tumia viungo vifuatavyo kupata taarifa zaidi kuhusu
+            Kijiji Tanzania.
+        </p>
+
+        <div class="links-grid">
+
+            <a href="/social-links" class="about-link">
+                <span class="link-left">
+                    <span class="link-icon">🤝</span>
+                    Jiunge na Jumuiya
+                </span>
+                <span>→</span>
+            </a>
+
+            <a href="/privacy-policy" class="about-link">
+                <span class="link-left">
+                    <span class="link-icon">🔒</span>
+                    Sera ya Faragha
+                </span>
+                <span>→</span>
+            </a>
+
+            <a href="/terms" class="about-link">
+                <span class="link-left">
+                    <span class="link-icon">📜</span>
+                    Masharti na Vigezo
+                </span>
+                <span>→</span>
+            </a>
+
+            <a href="/help-center" class="about-link">
+                <span class="link-left">
+                    <span class="link-icon">❓</span>
+                    Msaada
+                </span>
+                <span>→</span>
+            </a>
+
+            <a href="/data-deletion" class="about-link">
+                <span class="link-left">
+                    <span class="link-icon">🗑️</span>
+                    Futa Data / Akaunti
+                </span>
+                <span>→</span>
+            </a>
+
+            <a href="/contact-admin" class="about-link">
+                <span class="link-left">
+                    <span class="link-icon">✉️</span>
+                    Wasiliana nasi
+                </span>
+                <span>→</span>
+            </a>
+
+        </div>
+
+    </section>
+
+
+    <!-- FINAL CTA -->
+    <section class="contact-box">
+
+        <h2>Jiunge nasi 🇹🇿</h2>
+
+        <p>
+            Kuwa sehemu ya jumuiya ya Kijiji Tanzania.
+            Ungana nasi kwenye mitandao mbalimbali na
+            usikose taarifa, mijadala na fursa mpya.
+        </p>
+
+        <a href="/social-links" class="contact-button">
+            🤝 Jiunge na Jumuiya
+        </a>
+
+    </section>
+
+
+    <!-- FOOTER -->
+    <div class="about-footer">
+
+        © {{ current_year if current_year else "2026" }}
+        Kijiji Tanzania.
+        Haki zote zimehifadhiwa.
+
+    </div>
+
+</div>
+
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.deactivate-wrap {
+    max-width: 480px;
+    margin: 24px auto;
+    padding: 0 16px 40px;
+}
+.deactivate-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 22px 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    border: 1px solid #eee;
+}
+.deactivate-card h1 {
+    font-size: 20px;
+    color: #c62828;
+    margin: 0 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.deactivate-card p {
+    font-size: 14px;
+    color: #555;
+    line-height: 1.5;
+    margin: 0 0 12px;
+}
+.deactivate-card ul {
+    margin: 0 0 16px 18px;
+    color: #444;
+    font-size: 13.5px;
+    line-height: 1.55;
+}
+.deactivate-card label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #333;
+}
+.deactivate-card input[type="text"],
+.deactivate-card input[type="password"] {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 14px;
+    margin-bottom: 14px;
+    box-sizing: border-box;
+}
+.deactivate-card input:focus {
+    outline: none;
+    border-color: #c62828;
+    box-shadow: 0 0 0 3px rgba(198,40,40,0.12);
+}
+.btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+}
+.btn-cancel {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: #e8e8e8;
+    color: #333;
+    font-weight: 700;
+    font-size: 14px;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+}
+.btn-deactivate {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: #c62828;
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+}
+.btn-deactivate:hover { background: #b71c1c; }
+.note {
+    margin-top: 14px;
+    font-size: 12.5px;
+    color: #1EB53A;
+    background: #e8f8ec;
+    padding: 10px 12px;
+    border-radius: 10px;
+}
+.google-banner {
+    margin: 0 0 16px;
+    background: linear-gradient(135deg, #e8f0fe, #f0f7ff);
+    border: 1px solid #c5d9f7;
+    border-radius: 14px;
+    padding: 14px 14px 12px;
+}
+.google-banner .gb-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 800;
+    font-size: 15px;
+    color: #1a73e8;
+    margin-bottom: 10px;
+}
+.google-banner ol {
+    margin: 0 0 0 18px;
+    padding: 0;
+    color: #1a3a6b;
+    font-size: 13.5px;
+    line-height: 1.65;
+}
+.google-banner ol li { margin-bottom: 4px; }
+.google-banner .gb-hint {
+    margin-top: 10px;
+    font-size: 12.5px;
+    color: #555;
+    background: #fff;
+    border-radius: 8px;
+    padding: 8px 10px;
+}
+.flash-err {
+    background: #fdecea;
+    color: #c62828;
+    padding: 10px 12px;
+    border-radius: 10px;
+    margin-bottom: 14px;
+    font-size: 13px;
+}
+.account-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+}
+.account-type.google {
+    background: #e8f0fe;
+    color: #1a73e8;
+}
+.account-type.local {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+</style>
+
+<div class="deactivate-wrap">
+    <div class="deactivate-card">
+        <h1><i class="fa-solid fa-user-slash"></i> Zima akaunti</h1>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="flash-err">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% if is_google %}
+        <div class="account-type google">
+            <i class="fa-brands fa-google"></i> Akaunti ya Google
+        </div>
+        {% else %}
+        <div class="account-type local">
+            <i class="fa-solid fa-envelope"></i> Akaunti ya kawaida (email)
+        </div>
+        {% endif %}
+
+        <p>Ukizima akaunti yako:</p>
+        <ul>
+            <li>Wasifu na machapisho yako <strong>hayataonekana</strong> kwa watu wengine</li>
+            <li>Status na taarifa zako hazitaonekana kwenye feed</li>
+            <li>Data yako <strong>haifutwi</strong> — inahifadhiwa</li>
+            <li>Unaweza <strong>kuirejesha</strong> wakati wowote kwa kuingia tena</li>
+        </ul>
+
+        {% if is_google %}
+        <div class="google-banner">
+            <div class="gb-title">
+                <i class="fa-brands fa-google"></i> Jinsi ya kuzima (Google)
+            </div>
+            <ol>
+                <li>Andika neno <strong>ndiyo</strong> kwenye kisanduku hapa chini</li>
+                <li>Bonyeza kitufe chekundu <strong>Zima akaunti</strong></li>
+                <li><strong>Hakuna nenosiri</strong> — Google hauna nenosiri kwenye app hii</li>
+            </ol>
+            <div class="gb-hint">
+                <strong>Kuirejesha baadaye:</strong> fungua login → bonyeza
+                <em>Sign in with Google</em> → akaunti inarejea moja kwa moja.
+            </div>
+        </div>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('deactivate') }}" onsubmit="return confirm('Una uhakika unataka kuzima akaunti yako?');">
+            {% if not is_google %}
+            <label for="password">1. Nenosiri lako</label>
+            <input type="password" name="password" id="password" placeholder="Andika nenosiri lako" autocomplete="current-password" required>
+
+            <label for="confirm">2. Andika <strong>ndiyo</strong> kuthibitisha</label>
+            <input type="text" name="confirm" id="confirm" placeholder="ndiyo" autocomplete="off" required>
+            {% else %}
+            <label for="confirm">Andika hapa: <strong>ndiyo</strong></label>
+            <input type="text" name="confirm" id="confirm" placeholder="Andika: ndiyo" autocomplete="off" required
+                   style="border-color:#1a73e8; font-size:16px; font-weight:600;">
+            {% endif %}
+
+            <div class="btn-row">
+                <a class="btn-cancel" href="{{ url_for('settings') }}">Ghairi</a>
+                <button type="submit" class="btn-deactivate">
+                    {% if is_google %}
+                    Zima akaunti (Google)
+                    {% else %}
+                    Zima akaunti
+                    {% endif %}
+                </button>
+            </div>
+        </form>
+
+        <div class="note">
+            <i class="fa-solid fa-circle-info"></i>
+            {% if is_google %}
+            Baada ya kuzima: <strong>Sign in with Google</strong> kwenye login → akaunti inarejeshwa.
+            {% else %}
+            Baada ya kuzima: ingia tena kwa <strong>email + nenosiri</strong> ili kuirejesha.
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

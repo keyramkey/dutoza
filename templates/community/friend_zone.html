@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.community-wrap{max-width:700px;margin:auto;padding:16px 14px 30px}
+.community-wrap a{color:#1EB53A;text-decoration:none;font-weight:600}
+h1{color:#1EB53A;margin:12px 0 6px;font-size:22px}
+.sub{color:#666;font-size:14px;margin-bottom:14px}
+form{display:flex;gap:8px;margin:16px 0}
+input[type=search]{flex:1;padding:12px 14px;border:1.5px solid #ddd;border-radius:12px;font-size:15px;outline:none;background:#f8f9fa}
+input:focus{border-color:#1EB53A;background:#fff}
+button{padding:12px 18px;border:0;border-radius:12px;background:#1EB53A;color:#fff;font-weight:600;cursor:pointer}
+.user-card{background:#fff;border-radius:12px;padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.user-card img{width:48px;height:48px;border-radius:50%;object-fit:cover;background:#e4e6eb}
+.user-card strong{display:block;font-size:15px;color:#111}
+.user-card span{font-size:13px;color:#65676b}
+.btn-view{background:#1EB53A;color:#fff!important;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none}
+.empty{text-align:center;padding:40px 20px;color:#777;background:#f7f7f7;border-radius:12px;margin-top:16px}
+</style>
+<div class="community-wrap">
+    <a href="/community">← Community</a>
+    <h1>👥 Friend Zone</h1>
+    <p class="sub">Tafuta watu waliopo kwenye Kijiji Tanzania.</p>
+    <form action="/community/friend-zone" method="GET">
+        <input name="q" type="search" value="{{ query or '' }}" placeholder="🔎 Tafuta username..." autofocus>
+        <button type="submit">Search</button>
+    </form>
+    {% if query %}
+        {% if results %}
+            {% for u in results %}
+            <div class="user-card">
+                <img src="{{ url_for('static', filename='uploads/' + u.profile_pic) if u.profile_pic else url_for('static', filename='images/default-avatar.png.jfif') }}" onerror="this.src='https://via.placeholder.com/48'">
+                <div style="flex:1">
+                    <strong>@{{ u.username }}</strong>
+                    <span>{{ u.bio or 'Hakuna bio' }}</span>
+                </div>
+                <a href="/profile/{{ u.username }}" class="btn-view">Tazama</a>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty">Hakuna matokeo ya "{{ query }}"</div>
+        {% endif %}
+    {% else %}
+        <div class="empty">Andika jina la mtumiaji ili kutafuta...</div>
+    {% endif %}
+</div>
+{% endblock %}

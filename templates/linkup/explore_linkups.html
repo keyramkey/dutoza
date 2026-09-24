@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gundua Linkups - Kijiji Tanzania</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", system-ui, sans-serif; }
+        body { background: #f0f2f5; color: #1e293b; padding-bottom: 80px; }
+        header {
+            background: #fff; padding: 12px 16px; display: flex; align-items: center; gap: 12px;
+            border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+        }
+        header a { color: #1EB53A; font-size: 20px; text-decoration: none; width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center; border-radius: 10px; }
+        header h1 { font-size: 18px; font-weight: 700; color: #0f172a; }
+        .container { max-width: 620px; margin: 16px auto; padding: 0 12px; }
+        .search-box {
+            background: #fff; border-radius: 14px; padding: 12px; margin-bottom: 14px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04); border: 1px solid #f1f5f9;
+        }
+        .search-row { display: flex; gap: 8px; }
+        .search-row input {
+            flex: 1; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px;
+            font-size: 14px; outline: none;
+        }
+        .search-row input:focus { border-color: #1EB53A; }
+        .search-row button {
+            background: linear-gradient(135deg,#1EB53A,#15803d); color: #fff; border: none;
+            border-radius: 10px; padding: 10px 16px; font-weight: 700; cursor: pointer;
+        }
+        .cats { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 2px; -webkit-overflow-scrolling: touch; }
+        .cats a {
+            flex-shrink: 0; padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 600;
+            text-decoration: none; color: #64748b; background: #f1f5f9; border: 1px solid #e2e8f0;
+        }
+        .cats a.active { background: linear-gradient(135deg,#1EB53A,#15803d); color: #fff; border-color: transparent; }
+        .card {
+            background: #fff; border-radius: 16px; padding: 14px; margin-bottom: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05); border: 1px solid #f1f5f9;
+            display: flex; gap: 12px; align-items: center;
+        }
+        .avatar {
+            width: 56px; height: 56px; border-radius: 50%; flex-shrink: 0;
+            background: linear-gradient(135deg,#1EB53A,#00A3DD); color: #fff;
+            display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 20px;
+            overflow: hidden;
+        }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .info { flex: 1; min-width: 0; }
+        .info a { text-decoration: none; color: inherit; }
+        .info strong { font-size: 15px; color: #0f172a; display: flex; align-items: center; gap: 4px; }
+        .info .meta { font-size: 12px; color: #64748b; margin-top: 2px; }
+        .info .bio { font-size: 13px; color: #475569; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .follow-btn {
+            flex-shrink: 0; border: none; border-radius: 10px; padding: 8px 14px; font-size: 13px;
+            font-weight: 700; cursor: pointer; white-space: nowrap;
+            background: linear-gradient(135deg,#1EB53A,#00A3DD); color: #fff;
+            box-shadow: 0 3px 10px rgba(30,181,58,0.2);
+        }
+        .follow-btn.following { background: #e2e8f0; color: #0f172a; box-shadow: none; }
+        .empty {
+            text-align: center; padding: 40px 20px; background: #fff; border-radius: 16px;
+            color: #64748b; box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+        }
+        .empty i { font-size: 36px; color: #1EB53A; margin-bottom: 10px; }
+        .toast {
+            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+            background: #0f172a; color: #fff; padding: 10px 18px; border-radius: 10px;
+            font-size: 13px; z-index: 999; display: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="{{ url_for('home') }}"><i class="fa-solid fa-arrow-left"></i></a>
+        <h1><i class="fa-solid fa-link" style="color:#1EB53A;"></i> Gundua Linkups</h1>
+    </header>
+
+    <div class="container">
+        <div class="search-box">
+            <form method="get" action="{{ url_for('explore_linkups') }}">
+                <div class="search-row">
+                    <input type="search" name="q" value="{{ q or '' }}" placeholder="Tafuta Linkup…">
+                    <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+                </div>
+                <div class="cats">
+                    <a href="{{ url_for('explore_linkups', q=q) }}" class="{% if category == 'all' or not category %}active{% endif %}">Zote</a>
+                    {% for cat in categories %}
+                    <a href="{{ url_for('explore_linkups', q=q, category=cat[0]) }}"
+                       class="{% if category == cat[0] %}active{% endif %}">{{ cat[1] if cat|length > 1 else cat[0] }}</a>
+                    {% endfor %}
+                </div>
+            </form>
+        </div>
+
+        {% if linkups %}
+            {% for lu in linkups %}
+            <div class="card">
+                <a href="{{ url_for('linkup_public', username=lu.username) }}" class="avatar">
+                    {% if lu.profile_pic %}
+                    <img src="{{ url_for('static', filename='uploads/' + lu.profile_pic) }}" alt="">
+                    {% else %}
+                    {{ (lu.display_name or 'L')[0]|upper }}
+                    {% endif %}
+                </a>
+                <div class="info">
+                    <a href="{{ url_for('linkup_public', username=lu.username) }}">
+                        <strong>
+                            {{ lu.display_name }}
+                            {% if lu.is_verified %}<i class="fa-solid fa-circle-check" style="color:#F5B800;font-size:13px;"></i>{% endif %}
+                        </strong>
+                        <div class="meta">@{{ lu.username }} · {{ lu.posts_count or 0 }} posts · {{ lu.followers_count or 0 }} followers</div>
+                        {% if lu.bio %}<div class="bio">{{ lu.bio }}</div>{% endif %}
+                    </a>
+                </div>
+                {% if session.get('user_id') %}
+                <button type="button"
+                        class="follow-btn {% if lu.is_following %}following{% endif %}"
+                        data-id="{{ lu.id }}"
+                        onclick="toggleFollow(this)">
+                    {% if lu.is_following %}Following{% else %}Follow{% endif %}
+                </button>
+                {% else %}
+                <a href="{{ url_for('login') }}" class="follow-btn" style="text-decoration:none;">Follow</a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="empty">
+            <i class="fa-solid fa-link"></i>
+            <p><strong>Hakuna Linkup</strong></p>
+            <p style="font-size:13px;margin-top:6px;">
+                {% if q %}Hakuna matokeo ya “{{ q }}”.{% else %}Bado hakuna Linkup zilizochapishwa.{% endif %}
+            </p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <script>
+        function showToast(msg) {
+            var t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.display = 'block';
+            setTimeout(function() { t.style.display = 'none'; }, 2200);
+        }
+        function toggleFollow(btn) {
+            if (!btn || btn.disabled) return;
+            var id = btn.getAttribute('data-id');
+            btn.disabled = true;
+            fetch('/linkup/' + id + '/follow', {
+                method: 'POST',
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.success) {
+                    showToast(data.message || 'Imeshindikana');
+                    btn.disabled = false;
+                    return;
+                }
+                var following = !!data.following;
+                btn.classList.toggle('following', following);
+                btn.textContent = following ? 'Following' : 'Follow';
+                showToast(data.message || (following ? 'Umefollow' : 'Umefuta follow'));
+                btn.disabled = false;
+            })
+            .catch(function() {
+                showToast('Imeshindikana');
+                btn.disabled = false;
+            });
+        }
+    </script>
+</body>
+</html>

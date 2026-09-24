@@ -1,0 +1,371 @@
+{% extends "base.html" %}
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  .mod-wrap {
+    max-width: 720px;
+    margin: 16px auto 40px;
+    padding: 0 12px;
+  }
+  .mod-header {
+    background: #fff;
+    border-radius: 14px;
+    padding: 16px 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    margin-bottom: 14px;
+  }
+  .mod-header h1 {
+    font-size: 18px;
+    margin: 0 0 4px;
+    color: #050505;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .mod-header p {
+    margin: 0;
+    font-size: 13px;
+    color: #65676b;
+  }
+  .mod-tabs {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .mod-tab {
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid #e4e6eb;
+    color: #050505;
+    background: #f0f2f5;
+  }
+  .mod-tab.active {
+    background: #1EB53A;
+    color: #fff;
+    border-color: #1EB53A;
+  }
+  .mod-card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+  .mod-card-top {
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid #f0f2f5;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .mod-meta {
+    font-size: 13px;
+    color: #65676b;
+    line-height: 1.45;
+  }
+  .mod-meta strong { color: #050505; }
+  .mod-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .badge-pending { background: #fff3cd; color: #856404; }
+  .badge-resolved { background: #d4edda; color: #155724; }
+  .badge-dismissed { background: #e2e3e5; color: #383d41; }
+  .badge-escalation { background: #f8d7da; color: #721c24; }
+  .badge-review { background: #cce5ff; color: #004085; }
+  .mod-body {
+    padding: 12px 16px;
+  }
+  .mod-content {
+    font-size: 14px;
+    color: #050505;
+    margin-bottom: 10px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .mod-media {
+    border-radius: 10px;
+    overflow: hidden;
+    background: #000;
+    margin-bottom: 10px;
+    max-height: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .mod-media img,
+  .mod-media video {
+    max-width: 100%;
+    max-height: 280px;
+    object-fit: contain;
+    display: block;
+  }
+  .mod-scores {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .mod-chip {
+    background: #f0f2f5;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 12px;
+    color: #050505;
+  }
+  .mod-chip span { color: #65676b; }
+  .mod-actions {
+    padding: 12px 16px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    border-top: 1px solid #f0f2f5;
+  }
+  .mod-btn {
+    border: none;
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .mod-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+  .btn-approve { background: #1EB53A; color: #fff; }
+  .btn-reject { background: #e74c3c; color: #fff; }
+  .btn-delete { background: #c0392b; color: #fff; }
+  .btn-block { background: #2c3e50; color: #fff; }
+  .btn-unblock { background: #00A3DD; color: #fff; }
+  .btn-dismiss { background: #e4e6eb; color: #050505; }
+  .mod-empty {
+    background: #fff;
+    border-radius: 14px;
+    padding: 36px 20px;
+    text-align: center;
+    color: #65676b;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .mod-empty i {
+    font-size: 36px;
+    color: #1EB53A;
+    margin-bottom: 10px;
+  }
+  .mod-note {
+    width: 100%;
+    margin-top: 8px;
+  }
+  .mod-note input {
+    width: 100%;
+    border: 1px solid #e4e6eb;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 13px;
+    outline: none;
+  }
+  .mod-note input:focus { border-color: #1EB53A; }
+  .mod-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #050505;
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 20px;
+    font-size: 13px;
+    z-index: 9999;
+    display: none;
+  }
+  .mod-toast.show { display: block; }
+</style>
+
+<div class="mod-wrap">
+  <div class="mod-header">
+    <h1><i class="fa-solid fa-shield-halved" style="color:#1EB53A"></i> NSFW Moderation</h1>
+    <p>Foleni ya chapisho zinazosubiri ukaguzi au escalation baada ya warnings.</p>
+    <div class="mod-tabs">
+      <a class="mod-tab {% if status_filter == 'pending' %}active{% endif %}"
+         href="{{ url_for('admin_moderation', status='pending') }}">Pending</a>
+      <a class="mod-tab {% if status_filter == 'resolved' %}active{% endif %}"
+         href="{{ url_for('admin_moderation', status='resolved') }}">Resolved</a>
+      <a class="mod-tab {% if status_filter == 'dismissed' %}active{% endif %}"
+         href="{{ url_for('admin_moderation', status='dismissed') }}">Dismissed</a>
+      <a class="mod-tab {% if status_filter == 'all' %}active{% endif %}"
+         href="{{ url_for('admin_moderation', status='all') }}">Zote</a>
+    </div>
+  </div>
+
+  {% if not flags %}
+  <div class="mod-empty">
+    <div><i class="fa-solid fa-check-circle"></i></div>
+    <p>Hakuna flags kwa sasa (status: <strong>{{ status_filter }}</strong>).</p>
+  </div>
+  {% endif %}
+
+  {% for f in flags %}
+  <div class="mod-card" id="flag-{{ f.id }}">
+    <div class="mod-card-top">
+      <div class="mod-meta">
+        <div><strong>@{{ f.owner_name or 'user' }}</strong>
+          {% if f.owner_blocked %}<span class="mod-badge badge-escalation">BLOCKED</span>{% endif %}
+        </div>
+        <div>Post #{{ f.post_id }} · Flag #{{ f.id }}</div>
+        <div>{{ f.created_at or '' }}</div>
+        <div>
+          Warnings: <strong>{{ f.warning_count or 0 }}</strong>
+          {% if f.restricted_until %}
+            · Restricted until <strong>{{ f.restricted_until }}</strong>
+          {% endif %}
+        </div>
+      </div>
+      <div style="text-align:right">
+        {% if f.flag_type == 'escalation' %}
+          <span class="mod-badge badge-escalation">ESCALATION</span>
+        {% else %}
+          <span class="mod-badge badge-review">MANUAL REVIEW</span>
+        {% endif %}
+        <div style="margin-top:6px">
+          {% if f.status == 'pending' %}
+            <span class="mod-badge badge-pending">pending</span>
+          {% elif f.status == 'resolved' %}
+            <span class="mod-badge badge-resolved">resolved</span>
+          {% else %}
+            <span class="mod-badge badge-dismissed">{{ f.status or '—' }}</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="mod-body">
+      {% if f.post_content %}
+      <div class="mod-content">{{ f.post_content }}</div>
+      {% endif %}
+
+      {% if f.file_path %}
+      <div class="mod-media">
+        {% if f.media_type == 'video' %}
+          <video src="{{ url_for('static', filename='uploads/' + f.file_path) }}" controls playsinline></video>
+        {% else %}
+          <img src="{{ url_for('static', filename='uploads/' + f.file_path) }}" alt="media">
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <div class="mod-scores">
+        <div class="mod-chip"><span>NSFW score</span> · <strong>{{ f.nsfw_score if f.nsfw_score is not none else '—' }}</strong></div>
+        <div class="mod-chip"><span>Post status</span> · <strong>{{ f.moderation_status or '—' }}</strong></div>
+        {% if f.labels %}
+        <div class="mod-chip"><span>Labels</span> · {{ f.labels }}</div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if f.status == 'pending' %}
+    <div class="mod-actions" data-flag-id="{{ f.id }}">
+      <button type="button" class="mod-btn btn-approve" data-action="approve">
+        <i class="fa-solid fa-check"></i> Approve
+      </button>
+      <button type="button" class="mod-btn btn-reject" data-action="reject">
+        <i class="fa-solid fa-ban"></i> Reject + warning
+      </button>
+      <button type="button" class="mod-btn btn-delete" data-action="delete_post">
+        <i class="fa-solid fa-trash"></i> Delete post
+      </button>
+      <button type="button" class="mod-btn btn-block" data-action="block_user">
+        <i class="fa-solid fa-user-slash"></i> Block user
+      </button>
+      <button type="button" class="mod-btn btn-unblock" data-action="unblock_restriction">
+        <i class="fa-solid fa-unlock"></i> Lift restriction
+      </button>
+      <button type="button" class="mod-btn btn-dismiss" data-action="dismiss">
+        <i class="fa-solid fa-xmark"></i> Dismiss
+      </button>
+      <div class="mod-note">
+        <input type="text" class="admin-note" placeholder="Kumbuka (optional)…">
+      </div>
+    </div>
+    {% else %}
+    <div class="mod-actions">
+      <span style="font-size:12px;color:#65676b">Tayari imeshughulikiwa
+        {% if f.admin_note %}· Note: {{ f.admin_note }}{% endif %}
+      </span>
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+<div class="mod-toast" id="modToast"></div>
+
+<script>
+(function() {
+  function toast(msg) {
+    var el = document.getElementById('modToast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(function() { el.classList.remove('show'); }, 2200);
+  }
+
+  document.querySelectorAll('.mod-actions[data-flag-id]').forEach(function(box) {
+    var flagId = box.getAttribute('data-flag-id');
+    box.querySelectorAll('button[data-action]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var action = btn.getAttribute('data-action');
+        var noteInput = box.querySelector('.admin-note');
+        var note = noteInput ? noteInput.value.trim() : '';
+
+        if (action === 'delete_post' && !confirm('Futa post hii kabisa?')) return;
+        if (action === 'block_user' && !confirm('Block akaunti hii kabisa?')) return;
+
+        box.querySelectorAll('button').forEach(function(b) { b.disabled = true; });
+
+        fetch('/admin/moderation/' + flagId, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify({ action: action, note: note })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data && data.success) {
+            toast('Imefanikiwa: ' + (data.status || action));
+            var card = document.getElementById('flag-' + flagId);
+            if (card) {
+              card.style.opacity = '0.45';
+              setTimeout(function() {
+                card.remove();
+                if (!document.querySelector('.mod-card')) location.reload();
+              }, 400);
+            }
+          } else {
+            toast((data && data.message) || 'Imeshindikana');
+            box.querySelectorAll('button').forEach(function(b) { b.disabled = false; });
+          }
+        })
+        .catch(function() {
+          toast('Hitilafu ya mtandao');
+          box.querySelectorAll('button').forEach(function(b) { b.disabled = false; });
+        });
+      });
+    });
+  });
+})();
+</script>
+{% endblock %}

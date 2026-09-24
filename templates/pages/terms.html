@@ -1,0 +1,398 @@
+
+{% extends "base.html" %}
+
+{% block title %}Masharti na Vigezo | Kijiji Tanzania{% endblock %}
+
+{% block content %}
+
+<style>
+    .terms-page {
+        background: #f6f8fa;
+        color: #172033;
+        padding-bottom: 50px;
+    }
+
+    .terms-hero {
+        background: linear-gradient(135deg, #0f766e, #134e4a);
+        color: #fff;
+        padding: 55px 20px;
+        text-align: center;
+    }
+
+    .terms-hero-content {
+        max-width: 800px;
+        margin: auto;
+    }
+
+    .terms-badge {
+        display: inline-block;
+        padding: 8px 16px;
+        border-radius: 50px;
+        background: rgba(255,255,255,.13);
+        border: 1px solid rgba(255,255,255,.18);
+        font-size: 14px;
+        margin-bottom: 18px;
+    }
+
+    .terms-hero h1 {
+        margin: 0 0 14px;
+        font-size: clamp(32px, 7vw, 52px);
+        font-weight: 800;
+    }
+
+    .terms-hero p {
+        margin: auto;
+        max-width: 680px;
+        line-height: 1.8;
+        color: rgba(255,255,255,.88);
+        font-size: 15px;
+    }
+
+    .terms-container {
+        max-width: 900px;
+        margin: 25px auto;
+        padding: 0 18px;
+    }
+
+    .terms-card {
+        background: #fff;
+        border: 1px solid #e9edef;
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 18px;
+        box-shadow: 0 8px 28px rgba(15,23,42,.05);
+    }
+
+    .terms-card h2 {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 0 0 14px;
+        font-size: 22px;
+    }
+
+    .terms-icon {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        background: #e6f7f5;
+        color: #0f766e;
+        border-radius: 12px;
+        flex-shrink: 0;
+    }
+
+    .terms-card p {
+        color: #667085;
+        line-height: 1.85;
+        margin: 10px 0;
+        font-size: 15px;
+    }
+
+    .terms-card ul {
+        margin: 12px 0;
+        padding-left: 22px;
+        color: #667085;
+    }
+
+    .terms-card li {
+        margin-bottom: 9px;
+        line-height: 1.7;
+    }
+
+    .important {
+        background: #fff8e7;
+        border: 1px solid #f5dfaa;
+        border-radius: 16px;
+        padding: 18px;
+        margin-top: 15px;
+    }
+
+    .important strong {
+        color: #9a6700;
+    }
+
+    .terms-contact {
+        background: linear-gradient(135deg, #0f766e, #115e59);
+        color: #fff;
+        text-align: center;
+        border-radius: 20px;
+        padding: 32px 20px;
+        margin-top: 25px;
+    }
+
+    .terms-contact h2 {
+        margin: 0 0 10px;
+        font-size: 25px;
+    }
+
+    .terms-contact p {
+        color: rgba(255,255,255,.85);
+        line-height: 1.7;
+        margin-bottom: 20px;
+    }
+
+    .terms-contact a {
+        display: inline-block;
+        padding: 12px 21px;
+        border-radius: 11px;
+        background: #fff;
+        color: #115e59;
+        text-decoration: none;
+        font-weight: 700;
+    }
+
+    .terms-footer {
+        text-align: center;
+        color: #667085;
+        font-size: 13px;
+        margin-top: 28px;
+    }
+
+    @media (max-width: 600px) {
+        .terms-hero {
+            padding: 45px 18px;
+        }
+
+        .terms-card {
+            padding: 22px 18px;
+            border-radius: 17px;
+        }
+
+        .terms-card h2 {
+            font-size: 19px;
+        }
+
+        .terms-card p,
+        .terms-card li {
+            font-size: 14px;
+        }
+    }
+</style>
+
+<div class="terms-page">
+
+    <!-- HERO -->
+    <section class="terms-hero">
+        <div class="terms-hero-content">
+
+            <div class="terms-badge">
+                📜 Kijiji Tanzania
+            </div>
+
+            <h1>Masharti na Vigezo</h1>
+
+            <p>
+                Tafadhali soma masharti haya kwa makini kabla ya kutumia
+                huduma za Kijiji Tanzania.
+            </p>
+
+        </div>
+    </section>
+
+
+    <div class="terms-container">
+
+        <!-- UTANGULIZI -->
+        <section class="terms-card">
+
+            <h2>
+                <span class="terms-icon">👋</span>
+                1. Utangulizi
+            </h2>
+
+            <p>
+                Karibu Kijiji Tanzania. Kwa kutumia jukwaa letu,
+                unakubali kufuata masharti na vigezo vilivyoelezwa
+                katika ukurasa huu.
+            </p>
+
+            <p>
+                Ikiwa hukubaliani na masharti haya, tafadhali
+                usitumie huduma za Kijiji Tanzania.
+            </p>
+
+        </section>
+
+
+        <!-- AKAUNTI -->
+        <section class="terms-card">
+
+            <h2>
+                <span class="terms-icon">👤</span>
+                2. Akaunti ya Mtumiaji
+            </h2>
+
+            <p>
+                Ili kutumia baadhi ya huduma za Kijiji Tanzania,
+                unaweza kuhitajika kuwa na akaunti.
+            </p>
+
+            <ul>
+                <li>Unapaswa kutoa taarifa sahihi wakati wa usajili.</li>
+                <li>Unawajibika kutunza usalama wa akaunti yako.</li>
+                <li>Usitumie akaunti ya mtu mwingine bila ruhusa.</li>
+                <li>Usijaribu kupata akaunti au taarifa za watumiaji wengine.</li>
+            </ul>
+
+        </section>
+
+
+        <!-- MATUMIZI -->
+        <section class="terms-card">
+
+            <h2>
+                <span class="terms-icon">✅</span>
+                3. Matumizi Yanayoruhusiwa
+            </h2>
+
+            <p>
+                Kijiji Tanzania inakusudiwa kutumiwa kwa njia halali,
+                yenye heshima na inayozingatia usalama wa jamii.
+            </p>
+
+            <p>
+                Mtumiaji anakubali kutotumia huduma kwa shughuli
+                zinazokiuka sheria au zinazoweza kuwaathiri vibaya
+                watumiaji wengine.
+            </p>
+
+        </section>
+
+
+        <!-- MAUDHUI -->
+        <section class="terms-card">
+
+            <h2>
+                <span class="terms-icon">📝</span>
+                4. Maudhui ya Watumiaji
+            </h2>
+
+            <p>
+                Watumiaji wanaweza kushiriki maudhui kupitia Kijiji
+                Tanzania. Mtumiaji anawajibika kwa maudhui anayoweka
+                kwenye jukwaa.
+            </p>
+
+            <ul>
+                <li>Usichapishe taarifa za uongo kwa madhara kwa wengine.</li>
+                <li>Usitumie jukwaa kuwasumbua au kuwatisha wengine.</li>
+                <li>Usichapishe maudhui yanayokiuka sheria.</li>
+                <li>Heshimu haki na faragha ya watumiaji wengine.</li>
+            </ul>
+
+        </section>
+
+
+        <!-- USALAMA -->
+        <section class="terms-card">
+
+            <h2>
+                <span class="terms-icon">🛡️</span>
+                5. Usalama wa Jamii
+            </h2>
+
+            <p>
+                Tunataka Kijiji Tanzania iwe sehemu salama na yenye
+                heshima. Tunaweza kuchukua hatua dhidi ya matumizi
+                yanayokiuka sheria au masharti ya jukwaa.
+            </p>
+
+            <div class="important">
+                <strong>⚠️ Muhimu:</strong>
+                Ikiwa utaona maudhui au tabia inayokiuka masharti,
+                unaweza kuripoti kupitia njia zilizowekwa kwenye
+                jukwaa.
+            </div>
+
+        </section>
+
+
+        <!-- FARAGHA -->
+        <section class="terms-card">
+
+            <h2>
+                <span class="terms-icon">🔐</span>
+                6. Faragha
+            </h2>
+
+            <p>
+                Tunaheshimu faragha ya watumiaji wetu. Taarifa kuhusu
+                namna tunavyokusanya na kutumia taarifa za watumiaji
+                zinaelezwa katika Sera yetu ya Faragha.
+            </p>
+
+            <p>
+                Unaweza kusoma Sera ya Faragha kupitia ukurasa
+                wa faragha wa Kijiji Tanzania.
+            </p>
+
+        </section>
+
+
+        <!-- MABADILIKO -->
+        <section class="terms-card">
+
+            <h2>
+                <span class="terms-icon">🔄</span>
+                7. Mabadiliko ya Masharti
+            </h2>
+
+            <p>
+                Kijiji Tanzania inaweza kusasisha au kubadilisha
+                masharti haya wakati wowote pale inapohitajika.
+            </p>
+
+            <p>
+                Tutaweka toleo jipya la masharti kwenye ukurasa huu
+                ili watumiaji waweze kupata taarifa zilizosasishwa.
+            </p>
+
+        </section>
+
+
+        <!-- KUSITISHA -->
+        <section class="terms-card">
+
+            <h2>
+                <span class="terms-icon">🚫</span>
+                8. Kusimamishwa kwa Akaunti
+            </h2>
+
+            <p>
+                Akaunti inaweza kuchukuliwa hatua, kusimamishwa au
+                kuondolewa endapo matumizi yake yatakiuka masharti
+                ya Kijiji Tanzania au sheria zinazotumika.
+            </p>
+
+        </section>
+
+
+        <!-- CONTACT -->
+        <section class="terms-contact">
+
+            <h2>Una swali kuhusu masharti?</h2>
+
+            <p>
+                Kama kuna jambo hujalielewa au unahitaji maelezo
+                zaidi kuhusu masharti haya, unaweza kutemblea sehemu hizi.
+            </p>
+
+            <a href="/social-links">
+                📩 Fuata hivi viungo sasa
+            </a>
+
+        </section>
+
+
+        <div class="terms-footer">
+            © {{ current_year if current_year else "2026" }}
+            Kijiji Tanzania. Haki zote zimehifadhiwa.
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+

@@ -1,0 +1,109 @@
+{
+  "short_name": "JAMII tz",
+  "name": "JAMII TANZANIA",
+  "description": "Kijiji Tanzania – Jamii yako ya kidijitali",
+  "icons": [
+    {
+      "src": "/static/icon-192-v6.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icon-512-v6.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icon-192-maskable-v6.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/static/icon-512-maskable-v6.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Inbox",
+      "short_name": "Inbox",
+      "description": "Ujumbe wako",
+      "url": "/inbox",
+      "icons": [
+        {
+          "src": "/static/icon-192-v6.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Kijiji",
+      "short_name": "Kijiji",
+      "description": "Video na picha",
+      "url": "/kijiji",
+      "icons": [
+        {
+          "src": "/static/icon-192-v6.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "short_name": "Notifs",
+      "description": "Taarifa",
+      "url": "/notifications",
+      "icons": [
+        {
+          "src": "/static/icon-192-v6.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "media",
+          "accept": [
+            "image/*",
+            "video/*",
+            "image/jpeg",
+            "image/png",
+            "image/webp",
+            "video/mp4",
+            "video/webm"
+          ]
+        }
+      ]
+    }
+  },
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "background_color": "#06140c",
+  "theme_color": "#1EB53A",
+  "display": "standalone",
+  "orientation": "portrait",
+  "lang": "sw",
+  "dir": "ltr",
+  "id": "/",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ]
+}

@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thibitisha OTP</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            min-height: 100%;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background:
+                radial-gradient(
+                    circle at top left,
+                    rgba(0, 151, 167, 0.35),
+                    transparent 35%
+                ),
+                radial-gradient(
+                    circle at bottom right,
+                    rgba(0, 80, 50, 0.45),
+                    transparent 40%
+                ),
+                linear-gradient(
+                    145deg,
+                    #061b16,
+                    #082b24 45%,
+                    #03130f
+                );
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(2px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::before {
+            width: 230px;
+            height: 230px;
+            background: rgba(0, 180, 150, 0.12);
+            top: -70px;
+            right: -70px;
+        }
+
+        body::after {
+            width: 280px;
+            height: 280px;
+            background: rgba(255, 193, 7, 0.08);
+            bottom: -120px;
+            left: -100px;
+        }
+
+        .otp-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 430px;
+        }
+
+        .otp-card {
+            width: 100%;
+            padding: 38px 25px 32px;
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.085);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            box-shadow:
+                0 25px 70px rgba(0, 0, 0, 0.45),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            text-align: center;
+            animation: cardIn 0.7s ease;
+        }
+
+        @keyframes cardIn {
+            from {
+                opacity: 0;
+                transform: translateY(25px) scale(0.97);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .icon-circle {
+            width: 82px;
+            height: 82px;
+            margin: 0 auto 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            background: linear-gradient(
+                135deg,
+                #00a884,
+                #00695c
+            );
+            box-shadow:
+                0 12px 35px rgba(0, 168, 132, 0.3),
+                inset 0 1px 1px rgba(255, 255, 255, 0.25);
+            animation: pulse 2.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow:
+                    0 12px 35px rgba(0, 168, 132, 0.3);
+            }
+
+            50% {
+                transform: scale(1.04);
+                box-shadow:
+                    0 15px 42px rgba(0, 168, 132, 0.42);
+            }
+        }
+
+        h2 {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 12px;
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.72);
+            font-size: 15px;
+            line-height: 1.65;
+            margin-bottom: 28px;
+        }
+
+        .otp-label {
+            display: block;
+            text-align: left;
+            margin: 0 5px 9px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .otp-input {
+            width: 100%;
+            height: 64px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            outline: none;
+            border-radius: 18px;
+            background: rgba(0, 0, 0, 0.22);
+            color: white;
+            font-size: 27px;
+            font-weight: 800;
+            text-align: center;
+            letter-spacing: 9px;
+            padding: 0 12px 0 20px;
+            transition: 0.25s ease;
+            box-shadow:
+                inset 0 2px 10px rgba(0, 0, 0, 0.18);
+        }
+
+        .otp-input::placeholder {
+            color: rgba(255, 255, 255, 0.25);
+            letter-spacing: 8px;
+        }
+
+        .otp-input:focus {
+            border-color: #00c49a;
+            background: rgba(0, 196, 154, 0.08);
+            box-shadow:
+                0 0 0 4px rgba(0, 196, 154, 0.12),
+                0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .verify-button {
+            width: 100%;
+            height: 58px;
+            border: none;
+            border-radius: 18px;
+            margin-top: 20px;
+            background: linear-gradient(
+                135deg,
+                #00b894,
+                #008f72
+            );
+            color: white;
+            font-size: 17px;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow:
+                0 12px 28px rgba(0, 184, 148, 0.25);
+            transition: 0.25s ease;
+        }
+
+        .verify-button:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                0 16px 35px rgba(0, 184, 148, 0.35);
+        }
+
+        .verify-button:active {
+            transform: scale(0.98);
+        }
+
+        /* ================= RESEND OTP ================= */
+
+        .resend-section {
+            margin-top: 22px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.10);
+        }
+
+        .resend-text {
+            color: rgba(255, 255, 255, 0.55);
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .resend-button {
+            width: 100%;
+            height: 48px;
+            border: 1px solid rgba(0, 196, 154, 0.35);
+            border-radius: 15px;
+            background: rgba(0, 196, 154, 0.08);
+            color: #72f5d0;
+            font-size: 14px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.25s ease;
+        }
+
+        .resend-button:hover:not(:disabled) {
+            background: rgba(0, 196, 154, 0.16);
+            border-color: rgba(0, 196, 154, 0.55);
+            transform: translateY(-1px);
+        }
+
+        .resend-button:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+
+        .resend-button:disabled {
+            cursor: not-allowed;
+            color: rgba(255, 255, 255, 0.38);
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.10);
+        }
+
+        #countdown {
+            font-weight: 900;
+        }
+
+        .message-box {
+            margin-bottom: 20px;
+        }
+
+        .message-box p {
+            margin: 0;
+        }
+
+        .error,
+        .success,
+        .warning {
+            padding: 12px 15px;
+            border-radius: 13px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .error {
+            color: #ffb4b4;
+            background: rgba(255, 70, 70, 0.10);
+            border: 1px solid rgba(255, 90, 90, 0.18);
+        }
+
+        .success {
+            color: #a9f5d8;
+            background: rgba(0, 200, 140, 0.10);
+            border: 1px solid rgba(0, 200, 140, 0.18);
+        }
+
+        .warning {
+            color: #ffe3a3;
+            background: rgba(255, 193, 7, 0.10);
+            border: 1px solid rgba(255, 193, 7, 0.18);
+        }
+
+        .security-text {
+            margin-top: 23px;
+            color: rgba(255, 255, 255, 0.42);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 420px) {
+
+            body {
+                padding: 14px;
+            }
+
+            .otp-card {
+                padding: 32px 19px 27px;
+                border-radius: 26px;
+            }
+
+            .icon-circle {
+                width: 74px;
+                height: 74px;
+                font-size: 32px;
+            }
+
+            h2 {
+                font-size: 25px;
+            }
+
+            .subtitle {
+                font-size: 14px;
+            }
+
+            .otp-input {
+                height: 60px;
+                font-size: 25px;
+            }
+        }
+
+        @media (max-height: 650px) {
+
+            .otp-card {
+                padding-top: 22px;
+                padding-bottom: 20px;
+            }
+
+            .icon-circle {
+                width: 62px;
+                height: 62px;
+                font-size: 27px;
+                margin-bottom: 13px;
+            }
+
+            h2 {
+                font-size: 23px;
+            }
+
+            .subtitle {
+                margin-bottom: 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="otp-container">
+
+        <div class="otp-card">
+
+            <div class="icon-circle">
+                🔐
+            </div>
+
+            <h2>Thibitisha OTP</h2>
+
+            <p class="subtitle">
+                Tumepeleka OTP kwenye email yako.<br>
+                Ingiza nambari ya tarakimu 6 hapa chini:
+            </p>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+
+                {% if messages %}
+
+                    <div class="message-box">
+
+                        {% for category, message in messages %}
+
+                            <p class="{{ category }}">
+                                {{ message }}
+                            </p>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% endif %}
+
+            {% endwith %}
+
+            <!-- ================= VERIFY OTP ================= -->
+
+            <form method="POST">
+
+                <label class="otp-label">
+                    Nambari ya OTP
+                </label>
+
+                <input
+                    class="otp-input"
+                    type="text"
+                    name="otp"
+                    placeholder="000000"
+                    required
+                    maxlength="6"
+                    minlength="6"
+                    autofocus
+                    inputmode="numeric"
+                    autocomplete="one-time-code"
+                    pattern="[0-9]{6}"
+                >
+
+                <button
+                    class="verify-button"
+                    type="submit"
+                >
+                    Thibitisha OTP
+                </button>
+
+            </form>
+
+            <!-- ================= RESEND OTP ================= -->
+
+            <div class="resend-section">
+
+                <p class="resend-text">
+                    Hukupokea OTP?
+                </p>
+
+                <form
+                    method="POST"
+                    action="{{ url_for('resend_otp') }}"
+                    id="resendForm"
+                >
+
+                    <button
+                        type="submit"
+                        class="resend-button"
+                        id="resendButton"
+                        disabled
+                    >
+                        Tuma OTP tena
+                        <span id="countdown">
+                            (60s)
+                        </span>
+                    </button>
+
+                </form>
+
+            </div>
+
+            <p class="security-text">
+                🔒 Nambari yako ya uthibitisho inalindwa kwa usalama.
+            </p>
+
+        </div>
+
+    </div>
+
+    <script>
+
+        /*
+         * ==========================================================
+         * RESEND OTP COUNTDOWN
+         * ==========================================================
+         */
+
+        const resendButton =
+            document.getElementById("resendButton");
+
+        const countdown =
+            document.getElementById("countdown");
+
+        let seconds = 60;
+
+        function startCountdown() {
+
+            resendButton.disabled = true;
+
+            seconds = 60;
+
+            countdown.textContent =
+                "(" + seconds + "s)";
+
+            const timer = setInterval(function () {
+
+                seconds--;
+
+                if (seconds > 0) {
+
+                    countdown.textContent =
+                        "(" + seconds + "s)";
+
+                } else {
+
+                    clearInterval(timer);
+
+                    resendButton.disabled = false;
+
+                    countdown.textContent = "";
+
+                    resendButton.innerHTML =
+                        "Tuma OTP tena";
+
+                }
+
+            }, 1000);
+        }
+
+        /*
+         * Anza countdown mara tu ukurasa unapofunguka.
+         */
+
+        startCountdown();
+
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="{{ current_language or 'sw' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>{{ t('edit_profile') }} - Kijiji Tanzania</title>
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --tz-green: #1EB53A;
+            --tz-green-dark: #159447;
+            --tz-yellow: #FCD116;
+            --tz-blue: #00A3DD;
+            --tz-black: #000000;
+            --bg: #f0f2f5;
+            --card: #ffffff;
+        }
+
+        body {
+            background: var(--bg);
+            color: #333;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ========== MAIN HEADER ========== */
+        .header {
+            background: #ffffff;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 3px solid var(--tz-yellow);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header a {
+            color: var(--tz-green);
+            font-size: 20px;
+            text-decoration: none;
+        }
+
+        .header h1 {
+            font-size: 19px;
+            color: var(--tz-green);
+            flex: 1;
+            font-weight: 700;
+        }
+
+        /* ========== MAIN MENU (orodha ya batani) ========== */
+        .main-menu {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 0 12px;
+        }
+
+        .menu-btn {
+            width: 100%;
+            background: #ffffff;
+            border: none;
+            border-radius: 12px;
+            padding: 18px 20px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #222;
+            transition: transform 0.15s, box-shadow 0.15s;
+            border-left: 5px solid var(--tz-green);
+        }
+
+        .menu-btn:active {
+            transform: scale(0.98);
+            background: #f8fdf9;
+        }
+
+        .menu-btn .left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .menu-btn .left i {
+            color: var(--tz-green);
+            font-size: 20px;
+            width: 28px;
+            text-align: center;
+        }
+
+        /* Different accent colors for variety (Tanzania flag inspired) */
+        .menu-btn.cover { border-left-color: var(--tz-blue); }
+        .menu-btn.cover .left i { color: var(--tz-blue); }
+
+        .menu-btn.info { border-left-color: var(--tz-yellow); }
+        .menu-btn.info .left i { color: #d4a800; }
+
+        .menu-btn.links { border-left-color: var(--tz-black); }
+        .menu-btn.links .left i { color: #333; }
+
+        /* ========== FULL SCREEN SECTIONS ========== */
+        .fullscreen-section {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg);
+            z-index: 2000;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .fullscreen-section.active {
+            display: block;
+        }
+
+        .fs-header {
+            background: #ffffff;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 3px solid var(--tz-yellow);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .fs-header button {
+            background: none;
+            border: none;
+            color: var(--tz-green);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .fs-header h1 {
+            font-size: 18px;
+            color: var(--tz-green);
+            flex: 1;
+            font-weight: 700;
+        }
+
+        .fs-content {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 16px 12px 40px;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 7px;
+            color: #444;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+            font-size: 14px;
+            margin-bottom: 15px;
+            background: #fff;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            border-color: var(--tz-green);
+            box-shadow: 0 0 0 3px rgba(30, 181, 58, 0.15);
+        }
+
+        textarea {
+            min-height: 110px;
+            resize: vertical;
+        }
+
+        .current-photo {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .current-photo img {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid var(--tz-green);
+        }
+
+        .cover-preview {
+            width: 100%;
+            height: 160px;
+            border-radius: 10px;
+            object-fit: cover;
+            background: #e4e6eb;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .upload-box {
+            background: #f7f9f8;
+            border: 1px dashed var(--tz-green);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+
+        .upload-box input {
+            margin-bottom: 0;
+        }
+
+        .link-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .link-title i {
+            color: var(--tz-green);
+            width: 20px;
+            text-align: center;
+        }
+
+        .hint {
+            color: #777;
+            font-size: 12px;
+            margin-bottom: 16px;
+            line-height: 1.45;
+        }
+
+        /* Category buttons inside Links */
+        .category-btn {
+            width: 100%;
+            background: #ffffff;
+            border: none;
+            border-radius: 12px;
+            padding: 16px 18px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            color: #222;
+            border-left: 5px solid var(--tz-green);
+            transition: transform 0.15s;
+        }
+
+        .category-btn:active {
+            transform: scale(0.98);
+            background: #f8fdf9;
+        }
+
+        .category-btn i {
+            color: var(--tz-green);
+            font-size: 18px;
+            width: 26px;
+            text-align: center;
+            margin-right: 12px;
+        }
+
+        .category-btn.social { border-left-color: #1877F2; }
+        .category-btn.social i { color: #1877F2; }
+
+        .category-btn.messaging { border-left-color: #25D366; }
+        .category-btn.messaging i { color: #25D366; }
+
+        .category-btn.video { border-left-color: #FF0000; }
+        .category-btn.video i { color: #FF0000; }
+
+        .category-btn.pro { border-left-color: #0A66C2; }
+        .category-btn.pro i { color: #0A66C2; }
+
+        .category-btn.blog { border-left-color: #FF5722; }
+        .category-btn.blog i { color: #FF5722; }
+
+        /* Field groups inside Taarifa za Profile */
+        .field-group {
+            margin-bottom: 18px;
+        }
+
+        .field-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .field-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .field-label i {
+            color: var(--tz-green);
+            width: 18px;
+            text-align: center;
+            font-size: 15px;
+        }
+
+        .field-group.birthday .field-label i { color: var(--tz-blue); }
+        .field-group.join .field-label i { color: #d4a800; }
+        .field-group.sex .field-label i { color: #9c27b0; }
+        .field-group.marital .field-label i { color: #e91e63; }
+
+        /* Hide main when section open */
+        body.section-open .main-menu,
+        body.section-open .header {
+            display: none;
+        }
+
+        /* ========== GROUP LABELS (main menu) ========== */
+        .section-group-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 20px 4px 10px;
+            font-size: 12.5px;
+            font-weight: 800;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+            color: var(--tz-green-dark);
+        }
+
+        .section-group-label:first-of-type {
+            margin-top: 2px;
+        }
+
+        .section-group-label i {
+            font-size: 12px;
+            width: 20px;
+            height: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            color: #ffffff;
+            background: linear-gradient(145deg, var(--tz-green) 0%, var(--tz-green-dark) 100%);
+            box-shadow: 0 2px 5px rgba(30,181,58,0.35);
+        }
+
+        /* ========== PER-SECTION STICKY SAVE BAR ========== */
+        .fs-save-bar {
+            position: sticky;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(180deg, rgba(240,242,245,0) 0%, var(--bg) 35%);
+            padding: 22px 12px 16px;
+            margin-top: 6px;
+        }
+
+        .fs-save-bar .save-btn-main {
+            max-width: 600px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .save-btn-main {
+            width: 100%;
+            border: none;
+            background: linear-gradient(135deg, var(--tz-green), var(--tz-green-dark));
+            color: white;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 10px;
+            box-shadow: 0 3px 10px rgba(30, 181, 58, 0.3);
+        }
+
+        .save-btn-main:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ========== MAIN HEADER ========== -->
+    <div class="header" id="mainHeader">
+        <a href="{{ url_for('profile', username=user.username) }}">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
+        <h1>{{ t('edit_profile') }}</h1>
+    </div>
+
+    <!-- ========== MAIN MENU (batani) ========== -->
+    <div class="main-menu" id="mainMenu">
+
+        <div class="section-group-label">
+            <i class="fa-solid fa-images"></i>
+            {{ t('group_photos', 'Picha za Profile') }}
+        </div>
+
+        <button type="button" class="menu-btn" onclick="openSection('profile-pic')">
+            <span class="left">
+                <i class="fa-solid fa-user-circle"></i>
+                {{ t('profile_picture', 'Profile Picture') }}
+            </span>
+        </button>
+
+        <button type="button" class="menu-btn cover" onclick="openSection('cover')">
+            <span class="left">
+                <i class="fa-solid fa-image"></i>
+                {{ t('cover_photo', 'Cover Photo') }}
+            </span>
+        </button>
+
+
+        <div class="section-group-label">
+            <i class="fa-solid fa-address-card"></i>
+            {{ t('group_info', 'Taarifa na Uwepo') }}
+        </div>
+
+        <button type="button" class="menu-btn info" onclick="openSection('info')">
+            <span class="left">
+                <i class="fa-solid fa-user"></i>
+                {{ t('profile_info', 'Taarifa za Profile') }}
+            </span>
+        </button>
+
+        <button type="button" class="menu-btn links" onclick="openSection('links')">
+            <span class="left">
+                <i class="fa-solid fa-link"></i>
+                {{ t('app_website_links', 'Links za Apps na Website') }}
+            </span>
+        </button>
+
+        {% if my_village_mode %}
+        <button type="button" class="menu-btn" style="border-left-color:#8A2BE2;" onclick="openSection('category')">
+            <span class="left">
+                <i class="fa-solid fa-tags" style="color:#8A2BE2;"></i>
+                Category ya Profile
+                {% if user.profile_category %}
+                <span style="margin-left:8px;font-size:11px;font-weight:600;background:#f3e8ff;color:#8A2BE2;padding:3px 9px;border-radius:20px;">{{ user.profile_category }}</span>
+                {% endif %}
+            </span>
+        </button>
+        {% endif %}
+
+        <form method="POST" enctype="multipart/form-data" id="mainForm">
+            <button type="submit" class="save-btn-main">
+                <i class="fa-solid fa-floppy-disk"></i>
+                {{ t('save_changes', 'Hifadhi Mabadiliko') }}
+            </button>
+        </form>
+    </div>
+
+
+    <!-- ==================================================
+         FULL SCREEN: PROFILE PICTURE
+         ================================================== -->
+    <div class="fullscreen-section" id="section-profile-pic">
+        <div class="fs-header">
+            <button type="button" onclick="closeSection()">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <h1>{{ t('profile_picture', 'Profile Picture') }}</h1>
+        </div>
+
+        <div class="fs-content">
+            <div class="card">
+                <div class="current-photo">
+                    <img
+                        src="{{ url_for('static', filename='uploads/' + user.profile_pic) if user.profile_pic else url_for('static', filename='images/default-avatar.png.jfif') }}"
+                        onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/default-avatar.png.jfif') }}';"
+                        alt="Profile Picture">
+                </div>
+
+                <label for="profile_pic">{{ t('change_profile_picture', 'Badilisha Profile Picture') }}</label>
+                <div class="upload-box">
+                    <input type="file"
+                           id="profile_pic"
+                           name="profile_pic"
+                           form="mainForm"
+                           accept="image/*">
+                </div>
+            </div>
+
+            <div class="fs-save-bar">
+                <button type="submit" form="mainForm" class="save-btn-main">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    {{ t('save_changes', 'Hifadhi Mabadiliko') }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ==================================================
+         FULL SCREEN: COVER PHOTO
+         ================================================== -->
+    <div class="fullscreen-section" id="section-cover">
+        <div class="fs-header">
+            <button type="button" onclick="closeSection()">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <h1>{{ t('cover_photo', 'Cover Photo') }}</h1>
+        </div>
+
+        <div class="fs-content">
+            <div class="card">
+                {% if user.cover_photo %}
+                    <img
+                        id="coverPreview"
+                        class="cover-preview"
+                        src="{{ url_for('static', filename='uploads/' + user.cover_photo) }}"
+                        alt="Cover Photo">
+                {% else %}
+                    <div id="coverPlaceholder"
+                         class="cover-preview"
+                         style="display:flex;align-items:center;justify-content:center;color:#777;">
+                        <i class="fa-solid fa-image" style="font-size:35px;margin-right:10px;"></i>
+                        {{ t('no_cover_photo', 'Hakuna cover photo') }}
+                    </div>
+                    <img id="coverPreview"
+                         class="cover-preview"
+                         style="display:none;"
+                         alt="Cover Preview">
+                {% endif %}
+
+                <label for="cover_photo">{{ t('change_cover_photo', 'Badilisha Cover Photo') }}</label>
+                <div class="upload-box">
+                    <input type="file"
+                           id="cover_photo"
+                           name="cover_photo"
+                           form="mainForm"
+                           accept="image/*"
+                           onchange="previewCover(this)">
+                </div>
+            </div>
+
+            <div class="fs-save-bar">
+                <button type="submit" form="mainForm" class="save-btn-main">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    {{ t('save_changes', 'Hifadhi Mabadiliko') }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ==================================================
+         FULL SCREEN: TAARIFA ZA PROFILE
+         ================================================== -->
+    <div class="fullscreen-section" id="section-info">
+        <div class="fs-header">
+            <button type="button" onclick="closeSection()">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <h1>{{ t('profile_info', 'Taarifa za Profile') }}</h1>
+        </div>
+
+        <div class="fs-content">
+            <div class="card">
+
+                <div class="field-group">
+                    <div class="field-label">
+                        <i class="fa-solid fa-id-card"></i>
+                        {{ t('full_name') }}
+                    </div>
+                    <input type="text" id="full_name" name="full_name" form="mainForm"
+                           placeholder="{{ t('name_example', 'Mfano: Matondo Maduhu') }}"
+                           maxlength="80"
+                           value="{{ user.full_name or '' }}">
+                    <p class="hint" style="margin-top:-8px;">{{ t('name_display_hint', 'Jina hili si unique — linaonyeshwa kwenye profile juu ya @username.') }}</p>
+                </div>
+
+                <div class="field-group">
+                    <div class="field-label">
+                        <i class="fa-solid fa-pen"></i>
+                        {{ t('bio') }}
+                    </div>
+                    <textarea id="bio" name="bio" form="mainForm"
+                              placeholder="{{ t('bio_placeholder', 'Andika kitu kuhusu wewe...') }}">{{ user.bio or '' }}</textarea>
+                </div>
+
+                <div class="field-group birthday">
+                    <div class="field-label">
+                        <i class="fa-solid fa-cake-candles"></i>
+                        {{ t('birthday', 'Birthday') }}
+                    </div>
+                    <input type="date" id="birthday" name="birthday" form="mainForm"
+                           value="{{ user.birthday or '' }}">
+                </div>
+
+                <div class="field-group join">
+                    <div class="field-label">
+                        <i class="fa-solid fa-calendar-days"></i>
+                        {{ t('join_year', 'Join Year') }}
+                    </div>
+                    <input type="text" id="join_year" name="join_year" form="mainForm"
+                           value="{{ user.join_year or (user.created_at[:4] if user.created_at else '') }}"
+                           readonly
+                           style="background:#f0f2f5;color:#65676b;cursor:not-allowed;">
+                    <p class="hint" style="margin-top:-8px;">
+                        {{ t('join_year_auto_hint', 'Hii inajazwa moja kwa moja kutoka tarehe ya kweli uliyojiunga — haiwezi kubadilishwa.') }}
+                    </p>
+                </div>
+
+                <div class="field-group sex">
+                    <div class="field-label">
+                        <i class="fa-solid fa-venus-mars"></i>
+                        {{ t('sex', 'Sex') }}
+                    </div>
+                    <select id="sex" name="sex" form="mainForm">
+                        <option value="">{{ t('choose', 'Chagua') }}</option>
+                        <option value="Male" {% if user.sex == 'Male' %}selected{% endif %}>Male</option>
+                        <option value="Female" {% if user.sex == 'Female' %}selected{% endif %}>Female</option>
+                    </select>
+                </div>
+
+                <div class="field-group marital">
+                    <div class="field-label">
+                        <i class="fa-solid fa-heart"></i>
+                        {{ t('marital_status', 'Marital Status') }}
+                    </div>
+                    <select id="marital_status" name="marital_status" form="mainForm">
+                        <option value="">{{ t('choose', 'Chagua') }}</option>
+                        <option value="Single" {% if user.marital_status == 'Single' %}selected{% endif %}>Single</option>
+                        <option value="Married" {% if user.marital_status == 'Married' %}selected{% endif %}>Married</option>
+                        <option value="Other" {% if user.marital_status == 'Other' %}selected{% endif %}>Other</option>
+                    </select>
+                </div>
+
+            </div>
+
+            <div class="fs-save-bar">
+                <button type="submit" form="mainForm" class="save-btn-main">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    {{ t('save_changes', 'Hifadhi Mabadiliko') }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ==================================================
+         FULL SCREEN: KIJIJI MODE - CATEGORY YA PROFILE
+         ================================================== -->
+    <div class="fullscreen-section" id="section-category">
+        <div class="fs-header">
+            <button type="button" onclick="closeSection()">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <h1>Category ya Profile</h1>
+        </div>
+
+        <div class="fs-content">
+            <div class="card" style="padding-bottom:6px;">
+                <p class="hint" style="margin-bottom:12px;">
+                    Chagua category inayokuelezea vizuri zaidi. Itaonekana kwenye profile yako.
+                </p>
+
+                <div style="position:relative;margin-bottom:14px;">
+                    <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#999;"></i>
+                    <input type="text" id="categorySearchInput"
+                           placeholder="Tafuta category... (mfano: Muziki, Biashara, Creator)"
+                           oninput="filterCategories(this.value)"
+                           style="padding-left:38px;margin-bottom:0;">
+                </div>
+
+                <div id="selectedCategoryPill" style="{% if not user.profile_category %}display:none;{% endif %}margin-bottom:14px;">
+                    <span style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1EB53A,#00A3DD);color:#fff;padding:8px 14px;border-radius:20px;font-size:13.5px;font-weight:700;">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span id="selectedCategoryText">{{ user.profile_category or '' }}</span>
+                        <i class="fa-solid fa-xmark" style="cursor:pointer;opacity:.85;" onclick="selectCategory('')" title="Ondoa"></i>
+                    </span>
+                </div>
+
+                <div id="categoryChipsGrid" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+                <p id="categoryNoResults" style="display:none;text-align:center;color:#999;padding:20px 0;font-size:13.5px;">Hakuna category iliyopatikana.</p>
+            </div>
+
+            <div class="fs-save-bar">
+                <button type="submit" form="mainForm" class="save-btn-main">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    {{ t('save_changes', 'Hifadhi Mabadiliko') }}
+                </button>
+            </div>
+        </div>
+
+        <input type="hidden" id="profile_category" name="profile_category" form="mainForm" value="{{ user.profile_category or '' }}">
+    </div>
+
+
+    <!-- ==================================================
+         FULL SCREEN: LINKS (orodha ya categories)
+         ================================================== -->
+    <div class="fullscreen-section" id="section-links">
+        <div class="fs-header">
+            <button type="button" onclick="closeSection()">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <h1>{{ t('app_website_links', 'Links za Apps na Website') }}</h1>
+        </div>
+
+        <div class="fs-content">
+            <p class="hint" style="margin-bottom:14px;">
+                {{ t('choose_link_category', 'Chagua category ili uweke au ubadilishe links.') }}
+            </p>
+
+            <button type="button" class="category-btn" onclick="openSection('cat-website')">
+                <i class="fa-solid fa-globe"></i>
+                {{ t('website', 'Website') }}
+            </button>
+
+            <button type="button" class="category-btn social" onclick="openSection('cat-social')">
+                <i class="fa-solid fa-share-nodes"></i>
+                {{ t('social_media', 'Social Media') }}
+            </button>
+
+            <button type="button" class="category-btn messaging" onclick="openSection('cat-messaging')">
+                <i class="fa-solid fa-comments"></i>
+                {{ t('messaging', 'Messaging') }}
+            </button>
+
+            <button type="button" class="category-btn video" onclick="openSection('cat-video')">
+                <i class="fa-solid fa-play"></i>
+                {{ t('video_music', 'Video & Music') }}
+            </button>
+
+            <button type="button" class="category-btn pro" onclick="openSection('cat-pro')">
+                <i class="fa-solid fa-briefcase"></i>
+                {{ t('professional_dev', 'Professional & Dev') }}
+            </button>
+
+            <button type="button" class="category-btn blog" onclick="openSection('cat-blog')">
+                <i class="fa-solid fa-pen"></i>
+                {{ t('blogging', 'Blogging') }}
+            </button>
+        </div>
+    </div>
+
+
+    <!-- ==================================================
+         FULL SCREEN: CATEGORY - WEBSITE
+         ================================================== -->
+    <div class="fullscreen-section" id="section-cat-website">
+        <div class="fs-header">
+            <button type="button" onclick="openSection('links')">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <h1>{{ t('website', 'Website') }}</h1>
+        </div>
+        <div class="fs-content">
+            <div class="card">
+                <div class="link-title"><i class="fa-solid fa-globe"></i> Website</div>
+                <input type="url" name="website" form="mainForm" placeholder="https://example.com" value="{{ user.website or '' }}">
+            </div>
+
+            <div class="fs-save-bar">
+                <button type="submit" form="mainForm" class="save-btn-main">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    {{ t('save_changes', 'Hifadhi Mabadiliko') }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ==================================================
+         FULL SCREEN: CATEGORY - SOCIAL MEDIA
+         ================================================== -->
+    <div class="fullscreen-section" id="section-cat-social">
+        <div class="fs-header">
+            <button type="button" onclick="openSection('links')">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <h1>{{ t('social_media', 'Social Media') }}</h1>
+        </div>
+        <div class="fs-content">
+            <div class="card">
+                <div class="link-title"><i class="fa-brands fa-facebook-f"></i> Facebook</div>
+                <input type="url" name="facebook" form="mainForm" placeholder="https://facebook.com/..." value="{{ user.facebook or '' }}">
+
+                <div class="link-title"><i class="fa-brands fa-instagram"></i> Instagram</div>
+                <input type="url" name="instagram" form="mainForm" placeholder="https://instagram.com/..." value="{{ user.instagram or '' }}">
+
+                <div class="link-title"><i class="fa-brands fa-tiktok"></i> TikTok</div>
+                <input type="url" name="tiktok" form="mainForm" placeholder="https://tiktok.com/@..." value="{{ user.tiktok or '' }}">
+
+                <div class="link-title"><i class="fa-brands fa-x-twitter"></i> X</div>
+                <input type="url" name="x" form="mainForm" placeholder="https://x.com/..." value="{{ user.x or '' }}">
+
+                <div class="link-title"><i class="fa-brands fa-threads"></i> Threads</div>
+                <input type="url" name="threads" form="mainForm" placeholder="https://threads.net/..." value="{{ user.threads or '' }}">
+
+                <div class="link-title"><i class="fa-brands fa-snapchat"></i> Snapchat</div>
+                <input type="url" name="snapchat" form="mainForm" placeholder="https://snapchat.com/..." value="{{ user.snapchat or '' }}">
+
+                <div class="link-title"><i class="fa-brands fa-pinterest"></i> Pinterest</div>
+                <input type="url" name="pinterest" form="mainForm" placeholder="https://pinterest.com/..." value="{{ user.pinterest or '' }}">
+
+                <div class="link-title"><i class="fa-brands fa-reddit"></i> Reddit</div>
+                <input type="url" name="reddit" form="mainForm" placeholder="https://reddit.com/u/..." value="{{ user.reddit or '' }}">
+            </div>
+
+            <div class="fs-save-bar">
+                <button type="submit" form="mainForm" class="save-btn-main">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    {{ t('save_changes', 'Hifadhi Mabadiliko') }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ==================================================
+         FULL SCREEN: CATEGORY - MESSAGING
+         ================================================== -->
+    <div class="fullscreen-section" id="section-cat-messaging">
+        <div class="fs-header">
+            <button type="button" onclick="openSection('links')">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <h1>{{ t('messaging', 'Messaging') }}</h1>
+        </div>
+        <div class="fs-content">
+            <div class="card">
+                <div class="link-title"><i class="fa-brands fa-whatsapp"></i> WhatsApp</div>
+                <input type="url" name="whatsapp" form="mainForm" placeholder="https://wa.me/..." value="{{ user.whatsapp or '' }}">
+
+                <div class="link-title"><i class="fa-brands fa-telegram"></i> Telegram</div>
+                <input type="url" name="telegram" form="mainForm" placeholder="https://t.me/..." value="{{ user.telegram or '' }}">
+
+                <div class="link-title"><i class="fa-brands fa-discord"></i> Discord</div>
+                <input type="url" name="discord" form="mainForm" placeholder="Discord link" value="{{ user.discord or '' }}">
+            </div>
+
+            <div class="fs-save-bar">
+                <button type="submit" form="mainForm" class="save-btn-main">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    {{ t('save_changes', 'Hifadhi Mabadiliko') }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ==================================================
+         FULL SCREEN: CATEGORY - VIDEO & MUSIC
+         ================================================== -->
+    <div class="fullscreen-section" id="section-cat-video">
+        <div class="fs-header">
+            <button type="button" onclick="openSection('links')">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <h1>{{ t('video_music', 'Video & Music') }}</h1>
+        </div>
+        <div class="fs-content">
+            <div class="card">
+                <div class="link-title"><i class="fa-brands fa-youtube"></i> YouTube</div>
+                <input type="url" name="youtube" form="mainForm" placeholder="https://youtube.com/..." value="{{ user.youtube or '' }}">
+
+                <div class="link-title"><i class="fa-brands fa-twitch"></i> Twitch</div>
+                <input type="url" name="twitch" form="mainForm" placeholder="https://twitch.tv/..." value="{{ user.twitch or '' }}">
+
+                <div class="link-title"><i class="fa-brands fa-spotify"></i> Spotify</div>
+                <input type="url" name="spotify" form="mainForm" placeholder="https://open.spotify.com/..." value="{{ user.spotify or '' }}">
+
+                <div class="link-title"><i class="fa-brands fa-vimeo-v"></i> Vimeo</div>
+                <input type="url" name="vimeo" form="mainForm" placeholder="https://vimeo.com/..." value="{{ user.vimeo or '' }}">
+            </div>
+
+            <div class="fs-save-bar">
+                <button type="submit" form="mainForm" class="save-btn-main">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    {{ t('save_changes', 'Hifadhi Mabadiliko') }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ==================================================
+         FULL SCREEN: CATEGORY - PROFESSIONAL & DEV
+         ================================================== -->
+    <div class="fullscreen-section" id="section-cat-pro">
+        <div class="fs-header">
+            <button type="button" onclick="openSection('links')">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <h1>{{ t('professional_dev', 'Professional & Dev') }}</h1>
+        </div>
+        <div class="fs-content">
+            <div class="card">
+                <div class="link-title"><i class="fa-brands fa-linkedin-in"></i> LinkedIn</div>
+                <input type="url" name="linkedin" form="mainForm" placeholder="https://linkedin.com/in/..." value="{{ user.linkedin or '' }}">
+
+                <div class="link-title"><i class="fa-brands fa-github"></i> GitHub</div>
+                <input type="url" name="github" form="mainForm" placeholder="https://github.com/..." value="{{ user.github or '' }}">
+
+                <div class="link-title"><i class="fa-brands fa-medium"></i> Medium</div>
+                <input type="url" name="medium" form="mainForm" placeholder="https://medium.com/@..." value="{{ user.medium or '' }}">
+            </div>
+
+            <div class="fs-save-bar">
+                <button type="submit" form="mainForm" class="save-btn-main">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    {{ t('save_changes', 'Hifadhi Mabadiliko') }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ==================================================
+         FULL SCREEN: CATEGORY - BLOGGING
+         ================================================== -->
+    <div class="fullscreen-section" id="section-cat-blog">
+        <div class="fs-header">
+            <button type="button" onclick="openSection('links')">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <h1>{{ t('blogging', 'Blogging') }}</h1>
+        </div>
+        <div class="fs-content">
+            <div class="card">
+                <div class="link-title"><i class="fa-brands fa-wordpress"></i> WordPress</div>
+                <input type="url" name="wordpress" form="mainForm" placeholder="https://wordpress.com/..." value="{{ user.wordpress or '' }}">
+
+                <div class="link-title"><i class="fa-brands fa-blogger"></i> Blogger</div>
+                <input type="url" name="blogger" form="mainForm" placeholder="https://....blogspot.com" value="{{ user.blogger or '' }}">
+
+                <div class="link-title"><i class="fa-brands fa-tumblr"></i> Tumblr</div>
+                <input type="url" name="tumblr" form="mainForm" placeholder="https://tumblr.com/..." value="{{ user.tumblr or '' }}">
+            </div>
+
+            <div class="fs-save-bar">
+                <button type="submit" form="mainForm" class="save-btn-main">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    {{ t('save_changes', 'Hifadhi Mabadiliko') }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        function openSection(id) {
+            document.querySelectorAll('.fullscreen-section').forEach(el => {
+                el.classList.remove('active');
+            });
+
+            const section = document.getElementById('section-' + id);
+            if (section) {
+                section.classList.add('active');
+                document.body.classList.add('section-open');
+                section.scrollTop = 0;
+            }
+        }
+
+        function closeSection() {
+            document.querySelectorAll('.fullscreen-section').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.body.classList.remove('section-open');
+        }
+
+        // ==================================================
+        // KIJIJI MODE — CATEGORY YA PROFILE (search + chips)
+        // ==================================================
+        var PROFILE_CATEGORIES = [
+            // Waundaji wa Maudhui (Creators)
+            "Digital Creator", "Content Creator", "Influencer", "Blogger", "Vlogger",
+            "Podcaster", "Public Figure", "Mwandishi (Writer)", "Mshairi (Poet)",
+
+            // Muziki na Burudani
+            "Msanii wa Muziki (Musician)", "Mtunzi wa Nyimbo (Songwriter)",
+            "Mzalishaji wa Muziki (Music Producer)", "DJ", "MC / Mtangazaji wa Matukio",
+            "Studio ya Muziki", "Label ya Muziki", "Meneja wa Wasanii",
+            "Mwigizaji (Actor/Actress)", "Mchekeshaji (Comedian)", "Msanii wa Filamu (Filmmaker)",
+            "Studio ya Filamu",
+
+            // Sanaa na Design
+            "Msanii wa Sanaa (Artist)", "Mpiga Picha (Photographer)", "Videographer",
+            "Mhariri wa Video (Video Editor)", "Graphic Designer", "Animator",
+            "UI/UX Designer", "Msanii wa Ufundi wa Mikono (Handicraft)",
+            "Mhandisi wa Sauti (Sound Engineer)",
+
+            // Michezo
+            "Mwanamichezo (Athlete)", "Kocha wa Michezo (Coach)", "Fitness Trainer",
+            "Yoga Instructor", "Klabu ya Michezo", "Esports Player",
+            "Mchezaji wa Michezo ya Video (Gamer)", "Game Developer",
+
+            // Biashara na Ujasiriamali
+            "Mjasiriamali (Entrepreneur)", "Mmiliki wa Biashara (Business Owner)",
+            "Duka la Mtandaoni (Online Store)", "Msambazaji / Wholesaler",
+            "Real Estate Agent", "Mshauri wa Biashara (Business Consultant)",
+            "Mshauri wa Fedha (Financial Advisor)", "Bank / Huduma za Fedha",
+            "Mfuko wa Uwekezaji (Investment)", "Kampuni ya Usafirishaji (Logistics)",
+            "Life Coach", "Mzungumzaji wa Kuhamasisha (Motivational Speaker)",
+
+            // Kilimo na Mazingira
+            "Mkulima (Farmer)", "Mfugaji (Livestock)", "Agribusiness",
+            "Mvuvi (Fisherman)", "Mwanamazingira (Environmentalist)",
+            "Daktari wa Mifugo (Veterinarian)",
+
+            // Afya
+            "Daktari (Doctor)", "Muuguzi (Nurse)", "Daktari wa Meno (Dentist)",
+            "Mfamasia (Pharmacist)", "Nutritionist", "Mtaalamu wa Afya ya Akili",
+
+            // Elimu
+            "Mwalimu (Teacher)", "Mwanafunzi (Student)", "Chuo / Shule",
+            "Mkufunzi wa Lugha (Language Tutor)", "Book Club / Klabu ya Vitabu",
+
+            // Teknolojia
+            "Mtaalamu wa Teknolojia (Tech Expert)", "Programmer / Developer",
+            "Cyber Security Expert", "Data Analyst", "Digital Marketer", "SEO Specialist",
+
+            // Fashion na Urembo
+            "Fashion Designer", "Model", "Stylist wa Mitindo", "Beauty & Cosmetics",
+            "Hair Stylist / Msusi", "Makeup Artist",
+
+            // Vyombo vya Habari
+            "Mtangazaji wa Redio (Radio Presenter)", "Mtangazaji wa TV (TV Presenter)",
+            "Mwandishi wa Habari (Journalist)", "Ukurasa wa Habari (News Page)",
+
+            // Dini na Jamii
+            "Kanisa (Church)", "Msikiti (Mosque)", "Kiongozi wa Dini",
+            "Nonprofit / NGO", "Asasi ya Kiraia", "Kikundi cha Kijamii",
+            "Mratibu wa Jamii (Community Organizer)",
+
+            // Siasa na Serikali
+            "Mwanasiasa (Politician)", "Afisa wa Serikali", "Chama cha Siasa",
+
+            // Wataalamu Wengine
+            "Wakili (Lawyer)", "Mhasibu (Accountant)", "Mhandisi (Engineer)",
+            "Mbunifu wa Majengo (Architect)", "Mpishi (Chef)", "Hoteli / Mkahawa",
+            "Msafiri / Travel Blogger", "Tour Guide", "Event Planner",
+            "Mratibu wa Harusi (Wedding Planner)", "Photographer wa Harusi",
+            "Fundi (Technician/Artisan)", "Fundi wa Umeme (Electrician)",
+            "Fundi Ujenzi (Construction)", "Mpenzi wa Wanyama (Pet Page)",
+            "Mzazi / Familia (Parenting)",
+
+            // Kijiji Tanzania
+            "Member of Kijiji Tanzania", "Fan of Kijiji Tanzania",
+            "Msaidizi wa Kijiji Tanzania (Volunteer)",
+
+            "Nyingine (Other)"
+        ];
+
+        var POPULAR_CATEGORIES = [
+            "Digital Creator", "Content Creator", "Influencer", "Mjasiriamali (Entrepreneur)",
+            "Msanii wa Muziki (Musician)", "Mchekeshaji (Comedian)", "Mwandishi wa Habari (Journalist)",
+            "Member of Kijiji Tanzania", "Fan of Kijiji Tanzania", "Nyingine (Other)"
+        ];
+
+        function renderCategoryChips(list) {
+            var grid = document.getElementById('categoryChipsGrid');
+            var noResults = document.getElementById('categoryNoResults');
+            var current = document.getElementById('profile_category').value;
+            if (!list.length) {
+                grid.innerHTML = '';
+                noResults.style.display = 'block';
+                return;
+            }
+            noResults.style.display = 'none';
+            grid.innerHTML = list.map(function(cat) {
+                var active = (cat === current);
+                return '<button type="button" onclick="selectCategory(\'' + cat.replace(/'/g, "\\'") + '\')" ' +
+                    'style="padding:9px 14px;border-radius:20px;border:1.5px solid ' + (active ? '#1EB53A' : '#ddd') + ';' +
+                    'background:' + (active ? '#e6f9ec' : '#fff') + ';color:' + (active ? '#159447' : '#333') + ';' +
+                    'font-size:13px;font-weight:600;cursor:pointer;">' + cat + '</button>';
+            }).join('');
+        }
+
+        function filterCategories(query) {
+            query = (query || '').trim().toLowerCase();
+            if (!query) {
+                renderCategoryChips(POPULAR_CATEGORIES);
+                return;
+            }
+            var filtered = PROFILE_CATEGORIES.filter(function(c) {
+                return c.toLowerCase().indexOf(query) !== -1;
+            });
+            renderCategoryChips(filtered);
+        }
+
+        function selectCategory(cat) {
+            document.getElementById('profile_category').value = cat;
+            var pill = document.getElementById('selectedCategoryPill');
+            var pillText = document.getElementById('selectedCategoryText');
+            if (cat) {
+                pillText.textContent = cat;
+                pill.style.display = 'block';
+            } else {
+                pill.style.display = 'none';
+            }
+            filterCategories(document.getElementById('categorySearchInput').value);
+        }
+
+        // Onyesha categories maarufu mwanzoni
+        renderCategoryChips(POPULAR_CATEGORIES);
+
+        function previewCover(input) {
+            const preview = document.getElementById('coverPreview');
+            const placeholder = document.getElementById('coverPlaceholder');
+
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    if (placeholder) {
+                        placeholder.style.display = 'none';
+                    }
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    </script>
+
+</body>
+</html>

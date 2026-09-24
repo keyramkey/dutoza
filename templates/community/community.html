@@ -1,0 +1,1225 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+/* =========================================================
+   COMMUNITY PAGE - TANZANIA FLAG THEME
+   ========================================================= */
+
+:root {
+    --tz-green: #1EB53A;
+    --tz-yellow: #FCD116;
+    --tz-blue: #00A3DD;
+    --tz-black: #111111;
+    --tz-dark-green: #0d6730;
+}
+
+/* ---------------------------------------------------------
+   COMMUNITY PAGE
+   --------------------------------------------------------- */
+
+html, body {
+    width: 100%;
+    min-height: 100%;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow-x: hidden;
+}
+
+body {
+    background: #f7f8fa !important;
+}
+
+/*
+   Community haitumii navbar ya juu ya base.html.
+   Bottom navigation bado inaendelea kuwepo.
+*/
+body .navbar {
+    display: none !important;
+}
+
+.community-page {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    background: #f7f8fa;
+    position: relative;
+    padding-top: 68px; /* Nafasi ili content isifunikwe na fixed topbar */
+}
+
+
+/* =========================================================
+   TOP BAR (FIXED)
+   ========================================================= */
+
+.comm-topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 12px 14px;
+
+    background: linear-gradient(
+        135deg,
+        var(--tz-green),
+        var(--tz-dark-green)
+    );
+
+    color: #fff;
+
+    box-shadow:
+        0 2px 12px rgba(30, 181, 58, 0.3);
+}
+
+
+/*
+   Center title
+*/
+.comm-topbar .center {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.comm-topbar h1 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.comm-topbar .title-icon {
+    font-size: 22px;
+}
+
+
+/* =========================================================
+   BEAUTIFUL RUDI BUTTON
+   ========================================================= */
+
+.comm-topbar .back-area {
+    width: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.rudi-btn {
+    width: 44px;
+    height: 44px;
+
+    border: 1px solid rgba(255,255,255,0.25);
+
+    background: rgba(255,255,255,0.16);
+
+    border-radius: 14px;
+
+    color: #fff;
+
+    font-size: 25px;
+    font-weight: 300;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    text-decoration: none;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.15s ease,
+        background 0.2s ease,
+        box-shadow 0.2s ease;
+
+    box-shadow:
+        0 4px 12px rgba(0,0,0,0.12);
+
+    -webkit-tap-highlight-color: transparent;
+}
+
+.rudi-btn:active {
+    transform: scale(0.90);
+    background: rgba(255,255,255,0.28);
+}
+
+.rudi-btn:hover {
+    background: rgba(255,255,255,0.23);
+}
+
+.comm-topbar .menu-area {
+    width: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.menu-btn {
+    width: 44px;
+    height: 44px;
+    border: 1px solid rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.16);
+    border-radius: 14px;
+    color: #fff;
+    font-size: 25px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.menu-btn:active {
+    transform: scale(0.90);
+    background: rgba(255,255,255,0.28);
+}
+
+.menu-btn:hover {
+    background: rgba(255,255,255,0.23);
+}
+
+.community-link {
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+
+
+/* =========================================================
+   EMPTY MIDDLE AREA
+   ========================================================= */
+
+.comm-middle {
+    flex: 1;
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 30px 20px 80px;
+
+    text-align: center;
+}
+
+.comm-middle .empty-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    opacity: 0.85;
+}
+
+.comm-middle h2 {
+    margin: 0 0 8px;
+
+    font-size: 22px;
+
+    color: var(--tz-black);
+
+    font-weight: 700;
+}
+
+.comm-middle p {
+    margin: 0;
+
+    font-size: 14px;
+
+    color: #666;
+
+    max-width: 280px;
+
+    line-height: 1.5;
+}
+
+
+/* Yellow accent line */
+
+.comm-middle .accent-line {
+    width: 60px;
+    height: 4px;
+
+    background: var(--tz-yellow);
+
+    border-radius: 4px;
+
+    margin: 18px auto 0;
+}
+
+
+/* =========================================================
+   COMMUNITY BOTTOM BUTTONS
+   HIZI ZIMEACHWA KAMA ULIVYOZITAKA
+   ========================================================= */
+
+.comm-bottom {
+    position: fixed;
+
+    bottom: 55px;
+
+    left: 0;
+    right: 0;
+
+    z-index: 90;
+
+    display: flex;
+
+    background: #fff;
+
+    border-top: 3px solid var(--tz-yellow);
+
+    box-shadow:
+        0 -4px 20px rgba(0,0,0,0.08);
+
+    padding: 8px 6px;
+}
+
+.comm-bottom a {
+    flex: 1;
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 4px;
+
+    padding: 10px 4px;
+
+    text-decoration: none;
+
+    color: var(--tz-black);
+
+    font-size: 11px;
+
+    font-weight: 600;
+
+    border-radius: 12px;
+
+    transition:
+        background 0.2s,
+        color 0.2s;
+}
+
+.comm-bottom a .b-icon {
+    font-size: 22px;
+}
+
+.comm-bottom a:active {
+    background: #f0f0f0;
+}
+
+.comm-bottom a:nth-child(1) {
+    color: var(--tz-green);
+}
+
+.comm-bottom a:nth-child(2) {
+    color: var(--tz-blue);
+}
+
+.comm-bottom a:nth-child(3) {
+    color: var(--tz-black);
+}
+
+
+/* =========================================================
+   COMMUNITY SWIPE PANEL
+   SWIPE LEFT
+   ========================================================= */
+
+.hamburger-overlay {
+    position: fixed;
+
+    inset: 0;
+
+    background: rgba(0,0,0,0.45);
+
+    z-index: 10000;
+
+    opacity: 0;
+    visibility: hidden;
+
+    transition:
+        opacity 0.25s ease,
+        visibility 0.25s ease;
+}
+
+.hamburger-overlay.open {
+    opacity: 1;
+    visibility: visible;
+}
+
+
+/*
+   FULL SCREEN COMMUNITY PANEL
+*/
+
+.hamburger-panel {
+    position: fixed;
+
+    top: 0;
+    left: 0;
+
+    width: 100vw;
+    max-width: none;
+
+    height: 100dvh;
+
+    background: #fff;
+
+    z-index: 10001;
+
+    transform: translateX(-105%);
+
+    transition:
+        transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+
+    display: flex;
+    flex-direction: column;
+
+    box-shadow:
+        8px 0 30px rgba(0,0,0,0.15);
+}
+
+.hamburger-panel.open {
+    transform: translateX(0);
+}
+
+
+/* =========================================================
+   COMMUNITY PANEL HEADER
+   ========================================================= */
+
+.panel-header {
+    background:
+        linear-gradient(
+            135deg,
+            var(--tz-green),
+            var(--tz-dark-green)
+        );
+
+    color: #fff;
+
+    padding:
+        calc(16px + env(safe-area-inset-top))
+        18px
+        16px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    border-bottom: 3px solid var(--tz-yellow);
+
+    flex-shrink: 0;
+}
+
+.panel-header h3 {
+    margin: 0;
+
+    font-size: 19px;
+
+    font-weight: 700;
+}
+
+.panel-close {
+    width: 42px;
+    height: 42px;
+
+    border: none;
+
+    background: rgba(255,255,255,0.18);
+
+    border-radius: 13px;
+
+    color: #fff;
+
+    font-size: 20px;
+
+    cursor: pointer;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+}
+
+.panel-close:active {
+    transform: scale(0.9);
+}
+
+
+/* =========================================================
+   COMMUNITY PANEL BODY
+   ========================================================= */
+
+.panel-body {
+    flex: 1;
+
+    overflow-y: auto;
+
+    padding:
+        16px
+        14px
+        calc(30px + env(safe-area-inset-bottom));
+}
+
+.panel-body .cat-btn {
+    display: flex;
+
+    align-items: center;
+
+    gap: 14px;
+
+    padding: 16px 14px;
+
+    margin-bottom: 10px;
+
+    background: #fff;
+
+    border: 1.5px solid #e8e8e8;
+
+    border-radius: 16px;
+
+    text-decoration: none;
+
+    color: var(--tz-black);
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.04);
+
+    transition:
+        transform 0.15s,
+        box-shadow 0.15s,
+        border-color 0.15s;
+}
+
+.panel-body .cat-btn:active {
+    transform: scale(0.98);
+}
+
+.panel-body .cat-btn:hover {
+    border-color: var(--tz-green);
+
+    box-shadow:
+        0 4px 14px rgba(30,181,58,0.15);
+}
+
+.cat-btn .cat-emoji {
+    width: 48px;
+    height: 48px;
+
+    border-radius: 14px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    font-size: 24px;
+
+    flex-shrink: 0;
+}
+
+.cat-btn:nth-child(1) .cat-emoji {
+    background: rgba(30,181,58,0.15);
+}
+
+.cat-btn:nth-child(2) .cat-emoji {
+    background: rgba(0,163,221,0.15);
+}
+
+.cat-btn:nth-child(3) .cat-emoji {
+    background: rgba(252,209,22,0.25);
+}
+
+.cat-btn:nth-child(4) .cat-emoji {
+    background: rgba(30,181,58,0.12);
+}
+
+.cat-btn:nth-child(5) .cat-emoji {
+    background: rgba(0,163,221,0.12);
+}
+
+.cat-btn .cat-text strong {
+    display: block;
+
+    font-size: 15px;
+
+    font-weight: 700;
+
+    margin-bottom: 3px;
+
+    color: #111;
+}
+
+.cat-btn .cat-text small {
+    display: block;
+
+    font-size: 12px;
+
+    color: #666;
+
+    line-height: 1.35;
+}
+
+
+
+/* =========================================================
+   BASE SIDEBAR OVERRIDE
+   COMMUNITY PEKEEKEE
+   ========================================================= */
+
+/*
+   Base.html ina sidebar ya kawaida ya 280px.
+   Kwenye Community tunaifanya full screen.
+*/
+
+body .sidebar-menu {
+    width: 100vw !important;
+    max-width: none !important;
+
+    left: -105% !important;
+
+    height: 100dvh !important;
+
+    transition:
+        left 0.28s cubic-bezier(0.4,0,0.2,1) !important;
+
+    z-index: 10002 !important;
+
+    padding:
+        calc(20px + env(safe-area-inset-top))
+        20px
+        20px !important;
+}
+
+body .sidebar-menu.active {
+    left: 0 !important;
+}
+
+body .sidebar-overlay {
+    z-index: 10001 !important;
+}
+
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+    .comm-topbar {
+        padding:
+            10px 12px;
+    }
+
+    .comm-topbar h1 {
+        font-size: 19px;
+    }
+
+    .rudi-btn {
+        width: 44px;
+        height: 44px;
+    }
+
+    .comm-middle {
+        padding:
+            20px
+            16px
+            90px;
+    }
+
+    .comm-bottom {
+        bottom: 55px;
+    }
+
+}
+</style>
+
+
+<!-- =========================================================
+     COMMUNITY PAGE
+     ========================================================= -->
+
+<div class="community-page" id="communityPage">
+
+    <!-- TOP BAR (FIXED) -->
+    <div class="comm-topbar">
+
+        <!-- RUDI -->
+        <div class="back-area">
+
+            <button
+                type="button"
+                class="rudi-btn"
+                id="communityBackBtn"
+                aria-label="Rudi nyuma"
+                title="Rudi nyuma">
+                ‹
+            </button>
+
+        </div>
+
+
+        <!-- TITLE -->
+        <div class="center">
+
+            <span class="title-icon">🌐</span>
+
+            <a href="#communities"
+               class="community-link"
+               id="communityTitleLink"
+               aria-label="Fungua Communities">
+                <h1>Community</h1>
+            </a>
+
+        </div>
+
+
+        <!-- HAMBURGER - TOP RIGHT -->
+        <div class="menu-area">
+            <button
+                type="button"
+                class="menu-btn"
+                id="communityMenuBtn"
+                aria-label="Fungua menu"
+                title="Fungua menu">☰</button>
+        </div>
+
+    </div>
+
+
+    <!-- MIDDLE -->
+    <div class="comm-middle">
+
+        <div class="empty-icon">
+            🇹🇿
+        </div>
+
+        <h2>
+            Karibu Community
+        </h2>
+
+        <p>
+            Bonyeza <strong>Community</strong> hapo juu kuona communities.
+        </p>
+
+        <div class="accent-line"></div>
+
+    </div>
+
+
+    <!-- =====================================================
+         COMMUNITY BUTTONS
+         HIZI ZIMEBAKI
+         ===================================================== -->
+
+    <div class="comm-bottom">
+
+        <a href="/community/find-group">
+
+            <span class="b-icon">
+                🔎
+            </span>
+
+            Find Group
+
+        </a>
+
+
+        <a href="/community/create-group">
+
+            <span class="b-icon">
+                ＋
+            </span>
+
+            Create Group
+
+        </a>
+
+
+        <a href="/community/friend-zone">
+
+            <span class="b-icon">
+                👥
+            </span>
+
+            Friend Zone
+
+        </a>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     COMMUNITY PANEL
+     SWIPE LEFT
+     ========================================================= -->
+
+<div
+    class="hamburger-overlay"
+    id="hamburgerOverlay">
+</div>
+
+
+<div
+    class="hamburger-panel"
+    id="hamburgerPanel">
+
+    <div class="panel-header">
+
+        <h3>
+            🌐 Communities
+        </h3>
+
+        <button
+            type="button"
+            class="panel-close"
+            id="closeHamburger"
+            aria-label="Funga">
+            ✕
+        </button>
+
+    </div>
+
+
+    <div class="panel-body">
+
+        <a
+            href="/community/university"
+            class="cat-btn">
+
+            <div class="cat-emoji">
+                🎓
+            </div>
+
+            <div class="cat-text">
+
+                <strong>
+                    Vyuo Vikuu
+                </strong>
+
+                <small>
+                    Arts, Sciences, notes, books na discussions.
+                </small>
+
+            </div>
+
+        </a>
+
+
+        <a
+            href="/community/gamers"
+            class="cat-btn">
+
+            <div class="cat-emoji">
+                🎮
+            </div>
+
+            <div class="cat-text">
+
+                <strong>
+                    Gamers
+                </strong>
+
+                <small>
+                    Adventure, Action, Racing, Sports na zaidi.
+                </small>
+
+            </div>
+
+        </a>
+
+
+        <a
+            href="/community/politics"
+            class="cat-btn">
+
+            <div class="cat-emoji">
+                🗳️
+            </div>
+
+            <div class="cat-text">
+
+                <strong>
+                    Siasa
+                </strong>
+
+                <small>
+                    News, magazine na mijadala.
+                </small>
+
+            </div>
+
+        </a>
+
+
+        <a
+            href="/community/agriculture-business"
+            class="cat-btn">
+
+            <div class="cat-emoji">
+                🌱
+            </div>
+
+            <div class="cat-text">
+
+                <strong>
+                    Agriculture & Business
+                </strong>
+
+                <small>
+                    Kilimo, ufugaji na biashara.
+                </small>
+
+            </div>
+
+        </a>
+
+
+        <a
+            href="/community/for-you"
+            class="cat-btn">
+
+            <div class="cat-emoji">
+                ✨
+            </div>
+
+            <div class="cat-text">
+
+                <strong>
+                    For You
+                </strong>
+
+                <small>
+                    Community zinazokufaa.
+                </small>
+
+            </div>
+
+        </a>
+
+    </div>
+
+</div>
+
+
+<script>
+(function () {
+
+    /* =====================================================
+       ELEMENTS
+       ===================================================== */
+
+    const backBtn = document.getElementById(
+        'communityBackBtn'
+    );
+
+    const closeBtn = document.getElementById(
+        'closeHamburger'
+    );
+
+    const communityOverlay = document.getElementById(
+        'hamburgerOverlay'
+    );
+
+    const communityPanel = document.getElementById(
+        'hamburgerPanel'
+    );
+
+    const sidebar = document.getElementById(
+        'sidebarMenu'
+    );
+
+    const sidebarOverlay = document.getElementById(
+        'sidebarOverlay'
+    );
+
+    const communityMenuBtn = document.getElementById(
+        'communityMenuBtn'
+    );
+
+    const communityTitleLink = document.getElementById(
+        'communityTitleLink'
+    );
+
+
+
+    /* =====================================================
+       TOP NAV BUTTONS
+       ===================================================== */
+
+    if (communityTitleLink) {
+        communityTitleLink.addEventListener('click', function (e) {
+            e.preventDefault();
+            openCommunityPanel();
+        });
+    }
+
+    if (communityMenuBtn) {
+        communityMenuBtn.addEventListener('click', function () {
+            openCommunityPanel();
+        });
+    }
+
+    /* =====================================================
+       RUDI NYUMA
+       ===================================================== */
+
+    if (backBtn) {
+
+        backBtn.addEventListener(
+            'click',
+            function () {
+
+                /*
+                 * history.back() inarudisha hatua moja
+                 * ya browser history.
+                 *
+                 * Mfano:
+                 * Page 1 → Page 2 → Page 3
+                 *
+                 * Ukiwa Page 3:
+                 * Rudi = Page 2
+                 */
+
+                if (window.history.length > 1) {
+
+                    window.history.back();
+
+                } else {
+
+                    /*
+                     * Kama hakuna history,
+                     * tunapeleka Home.
+                     */
+
+                    window.location.href = '/home';
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       COMMUNITY PANEL
+       ===================================================== */
+
+    function openCommunityPanel() {
+
+        if (!communityPanel || !communityOverlay) {
+            return;
+        }
+
+        /*
+         * Kama menu ya base iko wazi,
+         * ifunge kwanza.
+         */
+
+        if (sidebar) {
+            sidebar.classList.remove('active');
+        }
+
+        if (sidebarOverlay) {
+            sidebarOverlay.style.display = 'none';
+        }
+
+        communityOverlay.classList.add('open');
+
+        communityPanel.classList.add('open');
+
+        document.body.style.overflow = 'hidden';
+    }
+
+
+    function closeCommunityPanel() {
+
+        if (!communityPanel || !communityOverlay) {
+            return;
+        }
+
+        communityOverlay.classList.remove('open');
+
+        communityPanel.classList.remove('open');
+
+        document.body.style.overflow = '';
+    }
+
+
+    if (closeBtn) {
+
+        closeBtn.addEventListener(
+            'click',
+            closeCommunityPanel
+        );
+
+    }
+
+
+    if (communityOverlay) {
+
+        communityOverlay.addEventListener(
+            'click',
+            closeCommunityPanel
+        );
+
+    }
+
+
+    /* =====================================================
+       BASE MENU
+       SWIPE RIGHT
+       ===================================================== */
+
+    function openMainMenu() {
+
+        /*
+         * Community panel ifungwe kwanza
+         */
+
+        closeCommunityPanel();
+
+
+        if (!sidebar) {
+            return;
+        }
+
+        sidebar.classList.add('active');
+
+        if (sidebarOverlay) {
+            sidebarOverlay.style.display = 'block';
+        }
+
+        document.body.style.overflow = 'hidden';
+    }
+
+
+    function closeMainMenu() {
+
+        if (!sidebar) {
+            return;
+        }
+
+        sidebar.classList.remove('active');
+
+        if (sidebarOverlay) {
+            sidebarOverlay.style.display = 'none';
+        }
+
+        document.body.style.overflow = '';
+    }
+
+
+    /*
+     * Override toggleSidebar ya base kwenye Community.
+     * Hii inafanya X/overlay ya menu iendelee kufanya kazi.
+     */
+
+    window.toggleSidebar = function () {
+
+        if (!sidebar) {
+            return;
+        }
+
+        const isOpen =
+            sidebar.classList.contains('active');
+
+        if (isOpen) {
+
+            closeMainMenu();
+
+        } else {
+
+            openMainMenu();
+
+        }
+
+    };
+
+
+    /* =====================================================
+       KEYBOARD
+       ===================================================== */
+
+    document.addEventListener(
+        'keydown',
+        function (e) {
+
+            if (e.key === 'Escape') {
+
+                closeCommunityPanel();
+
+                closeMainMenu();
+
+            }
+
+        }
+    );
+
+
+    /* =====================================================
+       PREVENT SCROLL LOCK WHEN PANELS OPEN
+       ===================================================== */
+
+    document.addEventListener(
+        'touchmove',
+        function (e) {
+
+            const communityOpen =
+                communityPanel &&
+                communityPanel.classList.contains('open');
+
+            const mainOpen =
+                sidebar &&
+                sidebar.classList.contains('active');
+
+
+            /*
+             * Panel yenyewe iruhusu scrolling.
+             */
+
+            if (
+                communityOpen &&
+                e.target.closest('.panel-body')
+            ) {
+                return;
+            }
+
+
+            if (
+                mainOpen &&
+                e.target.closest('.sidebar-menu')
+            ) {
+                return;
+            }
+
+        },
+        { passive: true }
+    );
+
+})();
+</script>
+
+{% endblock %}

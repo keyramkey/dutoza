@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="{{ current_language or 'sw' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>{{ t('register') }} - Kijiji Tanzania</title>
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="https://accounts.google.com/gsi/client"
+            async defer></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        html, body {
+            width: 100%;
+            min-height: 100%;
+        }
+
+        body {
+            background:
+                radial-gradient(circle at 15% 15%, rgba(255,255,255,0.18), transparent 28%),
+                radial-gradient(circle at 85% 85%, rgba(255,255,255,0.15), transparent 32%),
+                linear-gradient(135deg, #0a7a28 0%, #00A3DD 50%, #FCD116 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        /* =========================
+           MAIN CARD + FLAG FRAME
+        ========================= */
+        .register-container {
+            width: 100%;
+            max-width: 430px;
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(12px);
+            border-radius: 28px;
+            padding: 32px 28px 28px;
+            box-shadow:
+                0 25px 60px rgba(0, 0, 0, 0.22),
+                0 8px 25px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: visible;
+        }
+
+        /* FLAG FRAME inayozunguka card yote + inapumua */
+        .register-container::before {
+            content: "";
+            position: absolute;
+            inset: -5px;
+            border-radius: 32px;
+            padding: 5px;
+            background: linear-gradient(
+                90deg,
+                #1EB53A,
+                #FCD116,
+                #000000,
+                #00A3DD,
+                #1EB53A
+            );
+            background-size: 300% 100%;
+            -webkit-mask: 
+                linear-gradient(#fff 0 0) content-box, 
+                linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            animation: flagPulse 3s ease-in-out infinite, flagMove 6s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes flagPulse {
+            0%, 100% { 
+                opacity: 0.85;
+                transform: scale(1);
+                filter: brightness(1);
+            }
+            50% { 
+                opacity: 1;
+                transform: scale(1.015);
+                filter: brightness(1.15);
+            }
+        }
+
+        @keyframes flagMove {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 300% 50%; }
+        }
+
+        /* =========================
+           BRAND
+        ========================= */
+        .brand-icon {
+            width: 60px;
+            height: 60px;
+            margin: 8px auto 12px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1EB53A, #00A3DD);
+            color: white;
+            font-size: 24px;
+            box-shadow: 0 12px 28px rgba(30, 181, 58, 0.28);
+            animation: softPulse 2.5s ease-in-out infinite;
+        }
+
+        .register-container h1 {
+            text-align: center;
+            color: #0f172a;
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 6px;
+            letter-spacing: -0.6px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #64748b;
+            font-size: 13.5px;
+            margin-bottom: 24px;
+            font-weight: 500;
+        }
+
+        /* =========================
+           MOBILE SECTION BUTTONS
+        ========================= */
+        .mobile-section-buttons {
+            display: none;
+        }
+
+        .mobile-section-btn {
+            width: 100%;
+            border: 2px solid transparent;
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 14.5px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            color: white;
+        }
+
+        /* Basic Info - Kijani */
+        #basicInfoBtn {
+            background: linear-gradient(135deg, #1EB53A, #15803d);
+            box-shadow: 0 6px 18px rgba(30, 181, 58, 0.35);
+            animation: breatheGreen 2.2s ease-in-out infinite;
+        }
+
+        #basicInfoBtn:hover,
+        #basicInfoBtn.active {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            box-shadow: 0 8px 22px rgba(30, 181, 58, 0.45);
+            transform: translateY(-1px);
+        }
+
+        /* Password - Bluu */
+        #passwordBtn {
+            background: linear-gradient(135deg, #00A3DD, #0284c7);
+            box-shadow: 0 6px 18px rgba(0, 163, 221, 0.35);
+            animation: breatheBlue 2.4s ease-in-out infinite;
+        }
+
+        #passwordBtn:hover,
+        #passwordBtn.active {
+            background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+            box-shadow: 0 8px 22px rgba(0, 163, 221, 0.45);
+            transform: translateY(-1px);
+        }
+
+        .mobile-section-btn:active {
+            transform: scale(0.98);
+        }
+
+        .mobile-section-left {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+        }
+
+        .mobile-section-left i {
+            color: white;
+            width: 20px;
+            text-align: center;
+            font-size: 15px;
+        }
+
+        .mobile-section-arrow {
+            transition: transform 0.25s ease;
+            color: rgba(255,255,255,0.85);
+        }
+
+        .mobile-section-btn.active .mobile-section-arrow {
+            transform: rotate(180deg);
+        }
+
+        .mobile-section-content {
+            display: none;
+            padding: 4px 2px 8px;
+            animation: fadeIn 0.25s ease;
+        }
+
+        .mobile-section-content.open {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* =========================
+           FORM
+        ========================= */
+        .form-group {
+            margin-bottom: 16px;
+            text-align: left;
+            position: relative;
+        }
+
+        .form-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            margin-bottom: 7px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .form-group label::before {
+            content: "";
+            width: 4px;
+            height: 15px;
+            border-radius: 10px;
+            background: linear-gradient(to bottom, #1EB53A, #00A3DD);
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #00A3DD;
+            font-size: 15px;
+            pointer-events: none;
+            z-index: 2;
+            transition: color 0.2s;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 46px 14px 44px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px;
+            outline: none;
+            font-size: 14.5px;
+            color: #0f172a;
+            background: #f8fafc;
+            transition: all 0.2s ease;
+        }
+
+        .form-group input::placeholder {
+            color: #94a3b8;
+        }
+
+        .form-group input:focus {
+            border-color: #1EB53A;
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(30, 181, 58, 0.12);
+            transform: translateY(-1px);
+        }
+
+        .input-wrapper:focus-within .input-icon {
+            color: #1EB53A;
+        }
+
+        .form-group input.user-ok {
+            border-color: #10b981;
+            background: #ecfdf5;
+        }
+
+        .form-group input.user-bad {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+
+        .password-wrapper input {
+            padding-right: 50px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #64748b;
+            cursor: pointer;
+            border-radius: 10px;
+            font-size: 15px;
+            z-index: 5;
+            transition: all 0.2s;
+        }
+
+        .toggle-password:hover {
+            background: #ecfdf5;
+            color: #1EB53A;
+        }
+
+        .username-preview {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            background: #f0f7f1;
+            border: 1px solid #d7ebda;
+        }
+        .username-preview .up-at {
+            font-weight: 700;
+            color: #0f1a12;
+            font-size: 15px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .username-preview .up-at .up-placeholder { color: #8a8d91; font-weight: 500; }
+        .username-preview .up-edit-btn {
+            flex-shrink: 0;
+            border: none;
+            background: none;
+            color: #1EB53A;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            padding: 4px 6px;
+        }
+        .username-preview .up-edit-btn:active { opacity: 0.6; }
+        #usernameEditBox.hidden { display: none; }
+
+        #username-status,
+        #password-match-status {
+            min-height: 18px;
+            margin-top: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        #username-status.ok,
+        #password-match-status.ok {
+            color: #059669;
+        }
+
+        #username-status.bad,
+        #password-match-status.bad {
+            color: #dc2626;
+        }
+
+        #username-status.wait,
+        #password-match-status.wait {
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .suggestions {
+            margin-top: 9px;
+            text-align: left;
+        }
+
+        .suggestions-title {
+            font-size: 12px;
+            color: #475569;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .sug-btn {
+            display: inline-block;
+            margin: 3px 5px 3px 0;
+            padding: 6px 12px;
+            background: #ecfdf5;
+            border: 1px solid #1EB53A;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #065f46;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.15s ease;
+        }
+
+        .sug-btn:hover {
+            background: #1EB53A;
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .match-success {
+            border-color: #10b981 !important;
+            background: #ecfdf5 !important;
+        }
+
+        .match-error {
+            border-color: #ef4444 !important;
+            background: #fef2f2 !important;
+        }
+
+        /* =========================
+           REGISTER BUTTON (JISAJILI)
+        ========================= */
+        .btn-register {
+            width: 100%;
+            background: linear-gradient(135deg, #1EB53A, #15803d);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 6px;
+            box-shadow: 0 10px 24px rgba(30, 181, 58, 0.3);
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            animation: breatheGreen 2s ease-in-out infinite;
+        }
+
+        .btn-register:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 14px 30px rgba(30, 181, 58, 0.4);
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+        }
+
+        .btn-register:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        /* =========================
+           DIVIDER
+        ========================= */
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0 16px;
+            color: #94a3b8;
+            font-size: 11.5px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: #e2e8f0;
+        }
+
+        .divider span {
+            padding: 0 14px;
+        }
+
+        /* =========================
+           GOOGLE BUTTON
+        ========================= */
+        .btn-google {
+            width: 100%;
+            background: linear-gradient(135deg, #ffffff, #f1f5f9);
+            color: #334155;
+            border: 2px solid #e2e8f0;
+            padding: 13px;
+            border-radius: 14px;
+            font-size: 14.5px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 11px;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+            animation: breatheWhite 2.6s ease-in-out infinite;
+        }
+
+        .btn-google:hover {
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+            border-color: #00A3DD;
+        }
+
+        .btn-google img {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* =========================
+           FOOTER - INGIA HAPA
+        ========================= */
+        .footer-text {
+            margin-top: 22px;
+            font-size: 14.5px;
+            color: #64748b;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .login-box {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+            padding: 12px 28px;
+            background: linear-gradient(135deg, #00A3DD, #0284c7);
+            color: white !important;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 15px;
+            border-radius: 50px;
+            box-shadow: 0 8px 20px rgba(0, 163, 221, 0.35);
+            transition: all 0.25s ease;
+            animation: breatheBlue 1.9s ease-in-out infinite;
+        }
+
+        .login-box:hover {
+            transform: scale(1.06);
+            box-shadow: 0 12px 28px rgba(0, 163, 221, 0.5);
+            background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+        }
+
+        /* =========================
+           HELP CENTER BUTTON
+        ========================= */
+        .help-footer {
+            margin-top: 18px;
+            padding-top: 6px;
+            text-align: center;
+        }
+
+        .help-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, #FCD116, #eab308);
+            color: #1e293b !important;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 15px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(252, 209, 22, 0.4);
+            transition: all 0.25s ease;
+            animation: breatheYellow 2.1s ease-in-out infinite;
+            letter-spacing: 0.3px;
+        }
+
+        .help-btn:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 14px 32px rgba(252, 209, 22, 0.55);
+            background: linear-gradient(135deg, #fde047, #FCD116);
+        }
+
+        .help-btn i {
+            font-size: 17px;
+        }
+
+        /* =========================
+           ANIMATIONS (MAJONJO)
+        ========================= */
+        @keyframes breatheGreen {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 8px 20px rgba(30, 181, 58, 0.3);
+            }
+            50% { 
+                transform: scale(1.03);
+                box-shadow: 0 12px 28px rgba(30, 181, 58, 0.45);
+            }
+        }
+
+        @keyframes breatheBlue {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 8px 20px rgba(0, 163, 221, 0.3);
+            }
+            50% { 
+                transform: scale(1.03);
+                box-shadow: 0 12px 28px rgba(0, 163, 221, 0.45);
+            }
+        }
+
+        @keyframes breatheWhite {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+            }
+            50% { 
+                transform: scale(1.02);
+                box-shadow: 0 8px 20px rgba(0, 163, 221, 0.15);
+            }
+        }
+
+        @keyframes breatheYellow {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 8px 20px rgba(252, 209, 22, 0.35);
+            }
+            50% { 
+                transform: scale(1.03);
+                box-shadow: 0 12px 28px rgba(252, 209, 22, 0.5);
+            }
+        }
+
+        @keyframes softPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.06); }
+        }
+
+        /* =========================
+           FLASH
+        ========================= */
+        .flash-msg {
+            background: #fef2f2;
+            color: #b91c1c;
+            padding: 11px 12px;
+            border-radius: 12px;
+            margin-bottom: 14px;
+            font-size: 13px;
+            border: 1px solid #fecaca;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .flash-msg.success {
+            background: #ecfdf5;
+            color: #047857;
+            border-color: #a7f3d0;
+        }
+
+        /* ==================================================
+           MOBILE
+        ================================================== */
+        @media (max-width: 600px) {
+            body {
+                padding: 12px;
+                min-height: 100vh;
+                min-height: 100dvh;
+                align-items: stretch;
+                background: linear-gradient(145deg, #0c8a1f, #00A3DD 55%, #FCD116);
+            }
+
+            .register-container {
+                width: 100%;
+                max-width: none;
+                min-height: calc(100vh - 24px);
+                min-height: calc(100dvh - 24px);
+                border-radius: 22px;
+                padding: 22px 18px 24px;
+                box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+                overflow: visible;
+                backdrop-filter: none;
+            }
+
+            .register-container::before {
+                inset: -4px;
+                border-radius: 26px;
+                padding: 4px;
+            }
+
+            .brand-icon {
+                width: 50px;
+                height: 50px;
+                margin: 4px auto 8px;
+                border-radius: 16px;
+                font-size: 21px;
+            }
+
+            .register-container h1 {
+                font-size: 24px;
+                margin-bottom: 4px;
+            }
+
+            .subtitle {
+                font-size: 12.5px;
+                margin-bottom: 16px;
+            }
+
+            .mobile-section-buttons {
+                display: block;
+            }
+
+            .mobile-section-content {
+                display: none;
+            }
+
+            .mobile-section-content.open {
+                display: block;
+            }
+
+            .form-group {
+                margin-bottom: 12px;
+            }
+
+            .form-group label {
+                font-size: 12.5px;
+                margin-bottom: 6px;
+            }
+
+            .form-group input {
+                padding-top: 12px;
+                padding-bottom: 12px;
+                font-size: 14px;
+            }
+
+            .btn-register {
+                padding: 14px;
+                margin-top: 6px;
+                font-size: 15px;
+            }
+
+            .divider {
+                margin: 15px 0 12px;
+            }
+
+            .btn-google {
+                padding: 13px;
+                font-size: 14px;
+            }
+
+            .footer-text {
+                margin-top: 18px;
+                font-size: 14px;
+            }
+
+            .login-box {
+                padding: 13px 26px;
+                font-size: 15px;
+                margin-top: 12px;
+            }
+
+            .help-footer {
+                margin-top: 16px;
+            }
+
+            .help-btn {
+                padding: 15px 18px;
+                font-size: 15px;
+                border-radius: 14px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .register-container {
+                padding-left: 14px;
+                padding-right: 14px;
+            }
+
+            .mobile-section-btn {
+                padding: 12px 13px;
+                font-size: 13.5px;
+            }
+
+            .register-container h1 {
+                font-size: 22px;
+            }
+        }
+
+        @media (max-height: 700px) and (max-width: 600px) {
+            .register-container {
+                padding-top: 16px;
+                padding-bottom: 18px;
+            }
+
+            .brand-icon {
+                width: 44px;
+                height: 44px;
+                margin: 2px auto 5px;
+                font-size: 18px;
+            }
+
+            .register-container h1 {
+                font-size: 22px;
+            }
+
+            .subtitle {
+                margin-bottom: 10px;
+            }
+
+            .mobile-section-btn {
+                padding: 11px 13px;
+                margin-bottom: 8px;
+            }
+
+            .form-group {
+                margin-bottom: 9px;
+            }
+
+            .form-group input {
+                padding-top: 10px;
+                padding-bottom: 10px;
+            }
+
+            .btn-register {
+                padding: 12px;
+            }
+
+            .divider {
+                margin: 11px 0 9px;
+            }
+
+            .btn-google {
+                padding: 11px;
+            }
+
+            .footer-text {
+                margin-top: 12px;
+            }
+
+            .login-box {
+                padding: 11px 22px;
+                font-size: 14px;
+            }
+
+            .help-btn {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<audio id="bg-music" loop>
+    <source
+        src="{{ url_for('static', filename='uploads/background.mp3') }}"
+        type="audio/mp3">
+</audio>
+
+
+<div class="register-container">
+
+    <div class="brand-icon">
+        <i class="fa-solid fa-user-plus"></i>
+    </div>
+
+    <h1>Kijiji Tanzania</h1>
+
+    <p class="subtitle">
+        {{ t('register_subtitle', 'Jiunge na jamii yetu') }}
+    </p>
+
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for cat, message in messages %}
+                <div class="flash-msg {% if cat == 'success' %}success{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% else %}
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="flash-msg">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        {% endif %}
+    {% endwith %}
+
+
+    <form
+        action="{{ url_for('register') }}"
+        method="POST"
+        id="regForm"
+        onsubmit="return onRegisterSubmit()">
+
+        <div class="mobile-section-buttons">
+
+            <!-- BASIC INFO - KIJANI -->
+            <button
+                type="button"
+                class="mobile-section-btn"
+                id="basicInfoBtn"
+                onclick="toggleMobileSection('basicInfo')">
+                <span class="mobile-section-left">
+                    <i class="fa-solid fa-user"></i>
+                    <span>Basic Info</span>
+                </span>
+                <i class="fa-solid fa-chevron-down mobile-section-arrow"></i>
+            </button>
+
+            <div id="basicInfo" class="mobile-section-content">
+
+                <div class="form-group">
+                    <label for="full_name">{{ t('full_name') }}</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-user input-icon"></i>
+                        <input
+                            type="text"
+                            id="full_name"
+                            name="full_name"
+                            placeholder="Andika jina lako"
+                            value="{{ form_full_name or '' }}"
+                            required
+                            minlength="2"
+                            maxlength="80"
+                            autocomplete="name">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">{{ t('email') }}</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-envelope input-icon"></i>
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            placeholder="Enter email"
+                            value="{{ form_email or '' }}"
+                            required
+                            autocomplete="email">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="username">{{ t('username') }}</label>
+
+                    <div class="username-preview" id="usernamePreview">
+                        <span class="up-at" id="usernamePreviewText">
+                            {% if form_username or suggested_username %}@{{ form_username or suggested_username }}{% else %}<span class="up-placeholder">Itatokana na jina lako</span>{% endif %}
+                        </span>
+                        <button type="button" class="up-edit-btn" onclick="showUsernameEdit()">
+                            <i class="fa-solid fa-pen"></i> Badilisha
+                        </button>
+                    </div>
+
+                    <div id="usernameEditBox" class="hidden">
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-at input-icon"></i>
+                            <input
+                                type="text"
+                                id="username"
+                                name="username"
+                                placeholder="chagua username yako"
+                                value="{{ form_username or suggested_username or '' }}"
+                                minlength="3"
+                                maxlength="30"
+                                pattern="[A-Za-z0-9_]+"
+                                title="Herufi, namba na underscore (_) tu"
+                                autocomplete="username">
+                        </div>
+                        <div id="username-status" class="wait"></div>
+                        <div class="suggestions" id="suggestions-box"
+                             style="{% if not username_suggestions %}display:none{% endif %}">
+                            <div class="suggestions-title">
+                                {{ t('suggestions', 'Mapendekezo:') }}
+                            </div>
+                            <div id="suggestions-list">
+                                {% for s in username_suggestions or [] %}
+                                    <button type="button" class="sug-btn" data-u="{{ s }}">
+                                        @{{ s }}
+                                    </button>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PASSWORD - BLUU -->
+            <button
+                type="button"
+                class="mobile-section-btn"
+                id="passwordBtn"
+                onclick="toggleMobileSection('passwordSection')">
+                <span class="mobile-section-left">
+                    <i class="fa-solid fa-lock"></i>
+                    <span>Password</span>
+                </span>
+                <i class="fa-solid fa-chevron-down mobile-section-arrow"></i>
+            </button>
+
+            <div id="passwordSection" class="mobile-section-content">
+
+                <div class="form-group">
+                    <label for="password">{{ t('password') }}</label>
+                    <div class="password-wrapper input-wrapper">
+                        <i class="fa-solid fa-lock input-icon"></i>
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            placeholder="Weka nenosiri"
+                            required
+                            minlength="6"
+                            autocomplete="new-password">
+                        <button type="button" class="toggle-password"
+                                onclick="togglePassword('password','eyeIcon')"
+                                aria-label="Onyesha au ficha nenosiri">
+                            <i class="fa-solid fa-eye" id="eyeIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm_password">Thibitisha nenosiri</label>
+                    <div class="password-wrapper input-wrapper">
+                        <i class="fa-solid fa-shield-halved input-icon"></i>
+                        <input
+                            type="password"
+                            id="confirm_password"
+                            name="confirm_password"
+                            placeholder="Rudia nenosiri"
+                            required
+                            minlength="6"
+                            autocomplete="new-password">
+                        <button type="button" class="toggle-password"
+                                onclick="togglePassword('confirm_password','confirmEyeIcon')"
+                                aria-label="Onyesha au ficha uthibitisho wa nenosiri">
+                            <i class="fa-solid fa-eye" id="confirmEyeIcon"></i>
+                        </button>
+                    </div>
+                    <div id="password-match-status" class="wait"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- JISAJILI - KIJANI -->
+        <button type="submit" class="btn-register" id="submitBtn">
+            <i class="fa-solid fa-user-plus"></i>
+            {{ t('register') }}
+        </button>
+    </form>
+
+
+    <div class="divider">
+        <span>{{ t('or','au') }}</span>
+    </div>
+
+
+    <!-- GOOGLE - NYEUPE/BLUU -->
+    <button type="button" class="btn-google" id="googleBtn" onclick="handleGoogleLogin()">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+        {{ t('continue_google','Continue with Google') }}
+    </button>
+
+
+    <!-- INGIA HAPA - BLUU -->
+    <div class="footer-text">
+        {{ t('have_account','Una akaunti tayari?') }}
+        <br>
+        <a href="{{ url_for('login') }}" class="login-box">
+            <i class="fa-solid fa-right-to-bracket"></i>
+            {{ t('login_here','Ingia hapa') }}
+        </a>
+    </div>
+
+
+    <!-- KITU CHA MSAADA - MANJANO -->
+    <div class="help-footer">
+        <a href="{{ url_for('help_center') }}" class="help-btn">
+            <i class="fa-solid fa-circle-question"></i>
+            {{ t('help_center','Kituo cha Msaada') }}
+        </a>
+    </div>
+
+</div>
+
+
+<script>
+/* =====================================================
+   MOBILE SECTION
+===================================================== */
+function toggleMobileSection(sectionId) {
+    const section = document.getElementById(sectionId);
+    if (!section) return;
+
+    const button = sectionId === 'basicInfo'
+        ? document.getElementById('basicInfoBtn')
+        : document.getElementById('passwordBtn');
+
+    const isOpen = section.classList.contains('open');
+    section.classList.toggle('open', !isOpen);
+
+    if (button) {
+        button.classList.toggle('active', !isOpen);
+    }
+}
+
+
+/* =====================================================
+   GOOGLE
+===================================================== */
+const GOOGLE_CLIENT_ID =
+"1083614983079-k0oeie8lkao98r62m91dc0aqcgomhk15.apps.googleusercontent.com";
+
+let googleReady = false;
+
+function initGoogle() {
+    if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+        google.accounts.id.initialize({
+            client_id: GOOGLE_CLIENT_ID,
+            callback: onGoogleSignIn,
+            auto_select: false,
+            cancel_on_tap_outside: true
+        });
+        googleReady = true;
+    } else {
+        setTimeout(initGoogle, 400);
+    }
+}
+
+
+window.addEventListener('DOMContentLoaded', () => {
+    const music = document.getElementById('bg-music');
+
+    if (music) {
+        const stored = localStorage.getItem('kijiji_bg_volume');
+        let vol = 20;
+
+        if (stored !== null && stored !== '') {
+            const n = parseInt(stored, 10);
+            if (!isNaN(n) && n >= 0 && n <= 100) {
+                vol = n;
+            }
+        }
+
+        music.volume = vol / 100;
+
+        music.play().catch(() => {
+            document.body.addEventListener('click', () => music.play(), { once: true });
+        });
+    }
+
+    initGoogle();
+
+    if (usernameInput.value.trim()) {
+        scheduleCheck();
+    }
+
+    bindSuggestionButtons();
+    checkPasswordMatch();
+});
+
+
+function stopMusicBeforeSubmit() {
+    const music = document.getElementById('bg-music');
+    if (music) {
+        music.pause();
+        music.currentTime = 0;
+    }
+}
+
+
+function togglePassword(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+
+
+function handleGoogleLogin() {
+    if (!googleReady) {
+        let tries = 0;
+        const wait = setInterval(() => {
+            tries++;
+            if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+                clearInterval(wait);
+                googleReady = true;
+                google.accounts.id.initialize({
+                    client_id: GOOGLE_CLIENT_ID,
+                    callback: onGoogleSignIn
+                });
+                google.accounts.id.prompt();
+            } else if (tries > 15) {
+                clearInterval(wait);
+                alert('Google haijapakiwa. Angalia internet yako kisha refresh page.');
+            }
+        }, 400);
+        return;
+    }
+    google.accounts.id.prompt();
+}
+
+function onGoogleSignIn(response) {
+    if (!response || !response.credential) {
+        alert('Google login imeshindikana. Jaribu tena.');
+        return;
+    }
+
+    stopMusicBeforeSubmit();
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/auth/google';
+
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'credential';
+    input.value = response.credential;
+
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
+}
+
+
+/* =====================================================
+   USERNAME
+===================================================== */
+const usernameInput = document.getElementById('username');
+const emailInput = document.getElementById('email');
+const fullNameInput = document.getElementById('full_name');
+const statusEl = document.getElementById('username-status');
+const sugBox = document.getElementById('suggestions-box');
+const sugList = document.getElementById('suggestions-list');
+
+let debounceTimer = null;
+let lastChecked = '';
+let usernameAvailable = null;
+
+
+function sanitizeLocal(local) {
+    return (local || '')
+        .toLowerCase()
+        .replace(/[.\-+]/g, '_')
+        .replace(/[^a-z0-9_]/g, '')
+        .replace(/^_+|_+$/g, '')
+        .slice(0, 24);
+}
+
+function updateUsernamePreviewText(u) {
+    const el = document.getElementById('usernamePreviewText');
+    if (!el) return;
+    el.innerHTML = u
+        ? '@' + u
+        : '<span class="up-placeholder">Itatokana na jina lako</span>';
+}
+
+function showUsernameEdit() {
+    const preview = document.getElementById('usernamePreview');
+    const editBox = document.getElementById('usernameEditBox');
+    if (preview) preview.style.display = 'none';
+    if (editBox) {
+        editBox.classList.remove('hidden');
+        usernameInput.focus();
+        usernameInput.select();
+    }
+}
+
+function autoUsernameFromName() {
+    updateUsernamePreviewText(sanitizeLocal((fullNameInput.value || '').replace(/\s+/g, '_')));
+
+    if (usernameInput.dataset.touched === '1') return;
+
+    const local = sanitizeLocal((fullNameInput.value || '').replace(/\s+/g, '_'));
+    usernameInput.value = local;
+
+    if (local) scheduleCheck();
+}
+
+fullNameInput.addEventListener('input', autoUsernameFromName);
+fullNameInput.addEventListener('change', autoUsernameFromName);
+
+usernameInput.addEventListener('input', function () {
+    updateUsernamePreviewText(this.value.trim());
+});
+
+// Ikiwa server iliyorudisha ukurasa ina makosa/suggestions za username,
+// fungua sanduku la kuhariri moja kwa moja badala ya preview.
+if (document.getElementById('suggestions-box') &&
+    document.getElementById('suggestions-box').style.display !== 'none') {
+    showUsernameEdit();
+}
+
+usernameInput.addEventListener('input', function () {
+    this.dataset.touched = '1';
+    usernameAvailable = null;
+    scheduleCheck();
+});
+
+
+function scheduleCheck() {
+    clearTimeout(debounceTimer);
+    const u = usernameInput.value.trim();
+
+    if (!u) {
+        statusEl.textContent = '';
+        statusEl.className = 'wait';
+        usernameInput.classList.remove('user-ok', 'user-bad');
+        sugBox.style.display = 'none';
+        usernameAvailable = null;
+        return;
+    }
+
+    if (u.length < 3) {
+        statusEl.textContent = 'Username iwe angalau herufi 3.';
+        statusEl.className = 'bad';
+        usernameInput.classList.add('user-bad');
+        usernameInput.classList.remove('user-ok');
+        usernameAvailable = false;
+        return;
+    }
+
+    statusEl.textContent = 'Inaangalia…';
+    statusEl.className = 'wait';
+    debounceTimer = setTimeout(checkUsername, 400);
+}
+
+function checkUsername() {
+    const u = usernameInput.value.trim();
+    if (!u) return;
+
+    const email = emailInput.value.trim();
+    const url = '/api/check-username?username=' + encodeURIComponent(u) +
+                (email ? '&email=' + encodeURIComponent(email) : '');
+
+    fetch(url, { headers: { 'Accept': 'application/json' } })
+    .then(r => r.json())
+    .then(data => {
+        lastChecked = u;
+        statusEl.textContent = data.message || '';
+
+        if (data.available) {
+            usernameAvailable = true;
+            statusEl.className = 'ok';
+            usernameInput.classList.add('user-ok');
+            usernameInput.classList.remove('user-bad');
+            sugBox.style.display = 'none';
+            sugList.innerHTML = '';
+        } else {
+            usernameAvailable = false;
+            statusEl.className = 'bad';
+            usernameInput.classList.add('user-bad');
+            usernameInput.classList.remove('user-ok');
+
+            if (data.suggestions && data.suggestions.length) {
+                sugList.innerHTML = data.suggestions
+                    .map(s => '<button type="button" class="sug-btn" data-u="' + s + '">@' + s + '</button>')
+                    .join('');
+                sugBox.style.display = 'block';
+                bindSuggestionButtons();
+            } else {
+                sugBox.style.display = 'none';
+            }
+        }
+    })
+    .catch(() => {
+        statusEl.textContent = 'Imeshindwa kuangalia. Jaribu tena.';
+        statusEl.className = 'bad';
+        usernameAvailable = null;
+    });
+}
+
+
+function bindSuggestionButtons() {
+    sugList.querySelectorAll('.sug-btn').forEach(btn => {
+        btn.onclick = function () {
+            usernameInput.value = btn.getAttribute('data-u');
+            usernameInput.dataset.touched = '1';
+            lastChecked = '';
+            usernameAvailable = null;
+            scheduleCheck();
+        };
+    });
+}
+
+
+/* =====================================================
+   PASSWORD MATCH
+===================================================== */
+const passwordInput = document.getElementById('password');
+const confirmPasswordInput = document.getElementById('confirm_password');
+const passwordMatchStatus = document.getElementById('password-match-status');
+
+passwordInput.addEventListener('input', checkPasswordMatch);
+confirmPasswordInput.addEventListener('input', checkPasswordMatch);
+
+function checkPasswordMatch() {
+    const password = passwordInput.value;
+    const confirm = confirmPasswordInput.value;
+
+    confirmPasswordInput.classList.remove('match-success', 'match-error');
+
+    if (!confirm) {
+        passwordMatchStatus.textContent = '';
+        passwordMatchStatus.className = 'wait';
+        return false;
+    }
+
+    if (password === confirm && password.length >= 6) {
+        passwordMatchStatus.innerHTML = '<i class="fa-solid fa-circle-check"></i> Nenosiri zinafanana.';
+        passwordMatchStatus.className = 'ok';
+        confirmPasswordInput.classList.add('match-success');
+        return true;
+    }
+
+    passwordMatchStatus.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Nenosiri hazifanani.';
+    passwordMatchStatus.className = 'bad';
+    confirmPasswordInput.classList.add('match-error');
+    return false;
+}
+
+
+/* =====================================================
+   REGISTER SUBMIT
+===================================================== */
+function onRegisterSubmit() {
+    stopMusicBeforeSubmit();
+
+    const u = usernameInput.value.trim();
+
+    if (!u && emailInput.value) {
+        autoUsernameFromName();
+    }
+
+    if (usernameInput.classList.contains('user-bad') || usernameAvailable === false) {
+        if (window.innerWidth <= 600) {
+            const section = document.getElementById('basicInfo');
+            const button = document.getElementById('basicInfoBtn');
+            section.classList.add('open');
+            button.classList.add('active');
+        }
+        statusEl.textContent = 'Chagua username nyingine — hii imeshatumika.';
+        statusEl.className = 'bad';
+        usernameInput.focus();
+        return false;
+    }
+
+    if (passwordInput.value.length < 6) {
+        if (window.innerWidth <= 600) {
+            const section = document.getElementById('passwordSection');
+            const button = document.getElementById('passwordBtn');
+            section.classList.add('open');
+            button.classList.add('active');
+        }
+        passwordMatchStatus.textContent = 'Nenosiri lazima liwe na angalau herufi 6.';
+        passwordMatchStatus.className = 'bad';
+        passwordInput.focus();
+        return false;
+    }
+
+    if (!checkPasswordMatch()) {
+        if (window.innerWidth <= 600) {
+            const section = document.getElementById('passwordSection');
+            const button = document.getElementById('passwordBtn');
+            section.classList.add('open');
+            button.classList.add('active');
+        }
+        confirmPasswordInput.focus();
+        return false;
+    }
+
+    return true;
+}
+</script>
+
+</body>
+</html>

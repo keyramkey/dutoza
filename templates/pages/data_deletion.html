@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}Kufuta Akaunti na Data | Kijiji Tanzania{% endblock %}
+
+{% block content %}
+
+<style>
+    .deletion-container {
+        max-width: 850px;
+        margin: 25px auto 45px;
+        padding: 0 15px;
+    }
+
+    .deletion-card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 4px 18px rgba(0,0,0,.08);
+    }
+
+    .deletion-card h1 {
+        margin: 0 0 10px;
+        font-size: 28px;
+    }
+
+    .deletion-card h2 {
+        margin-top: 28px;
+        font-size: 20px;
+    }
+
+    .deletion-card p,
+    .deletion-card li {
+        color: #333;
+        line-height: 1.7;
+        font-size: 15px;
+    }
+
+    .deletion-card ul,
+    .deletion-card ol {
+        padding-left: 24px;
+    }
+
+    .deletion-form {
+        margin-top: 25px;
+        padding: 20px;
+        background: #f6f7f9;
+        border-radius: 12px;
+    }
+
+    .deletion-form label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+    }
+
+    .deletion-form input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 13px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-size: 15px;
+        margin-bottom: 12px;
+    }
+
+    .deletion-form button {
+        width: 100%;
+        padding: 13px;
+        border: 0;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .deletion-contact {
+        margin-top: 25px;
+        padding: 18px;
+        border-radius: 10px;
+        background: #f6f7f9;
+    }
+
+    .deletion-note {
+        margin-top: 25px;
+        padding: 15px;
+        border-left: 4px solid #555;
+        background: #f8f8f8;
+    }
+
+    @media (max-width: 600px) {
+        .deletion-container {
+            margin-top: 15px;
+            padding: 0 10px;
+        }
+
+        .deletion-card {
+            padding: 20px;
+        }
+
+        .deletion-card h1 {
+            font-size: 24px;
+        }
+    }
+</style><div class="deletion-container">
+    <div class="deletion-card">    <h1>Kufuta Akaunti na Data</h1>
+
+    <p>
+        Kijiji Tanzania inaheshimu haki yako ya kudhibiti taarifa zako.
+        Unaweza kuwasilisha ombi la kufuta akaunti yako na data
+        zinazohusiana nayo.
+    </p>
+
+    <h2>Wasilisha Ombi la Kufuta Akaunti</h2>
+
+    <div class="deletion-form">
+        <form method="POST" action="{{ url_for('data_deletion') }}">
+
+            <label for="email">
+                Email ya akaunti yako
+            </label>
+
+            <input
+                type="email"
+                id="email"
+                name="email"
+                placeholder="mfano@email.com"
+                autocomplete="email"
+                required
+            >
+
+            <button type="submit">
+                Wasilisha Ombi la Kufuta Data
+            </button>
+
+        </form>
+    </div>
+
+    <h2>Jinsi mchakato unavyofanya kazi</h2>
+
+    <ol>
+        <li>
+            Weka email inayohusishwa na akaunti yako.
+        </li>
+
+        <li>
+            Tuma ombi lako kwa kubonyeza kitufe cha
+            <strong>Wasilisha Ombi la Kufuta Data</strong>.
+        </li>
+
+        <li>
+            Ombi lako litawekwa kwenye mfumo kwa ajili ya kushughulikiwa.
+        </li>
+    </ol>
+
+    <h2>Data zinazohusiana na akaunti</h2>
+
+    <p>
+        Ombi la kufuta akaunti linaweza kuhusisha taarifa na data
+        zinazohusishwa na akaunti yako, kulingana na taarifa
+        zilizohifadhiwa kwenye mfumo wa Kijiji Tanzania.
+    </p>
+
+    <p>
+        Hii inaweza kujumuisha taarifa za akaunti, wasifu,
+        maudhui uliyoweka na taarifa nyingine zinazohusishwa
+        na akaunti yako.
+    </p>
+
+    <h2>Facebook Login</h2>
+
+    <p>
+        Kama ulitumia Facebook Login kuingia Kijiji Tanzania,
+        unaweza kutumia ukurasa huu kuwasilisha ombi la kufuta
+        akaunti na data zinazohusiana na akaunti yako ya Kijiji Tanzania.
+    </p>
+
+    <div class="deletion-contact">
+        <strong>Kwa msaada kuhusu data deletion:</strong><br>
+        <a href="mailto:tanzaniakijiji@gmail.com">
+            tanzaniakijiji@gmail.com
+        </a>
+    </div>
+
+    <div class="deletion-note">
+        <strong>Muhimu:</strong>
+        Usitume nenosiri lako. Hatuhitaji nenosiri lako kupitia
+        ukurasa huu au kupitia email.
+    </div>
+
+</div>
+
+</div>{% endblock %}

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simamia Watumiaji - Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background: #f0f2f5; padding-bottom: 40px; }
+        .topbar {
+            background: #1EB53A; color: white; padding: 14px 18px;
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .topbar h1 { font-size: 17px; display: flex; align-items: center; gap: 8px; }
+        .topbar a { color: white; text-decoration: none; font-size: 13px; background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 6px; }
+        .container { max-width: 900px; margin: 16px auto; padding: 0 12px; }
+        .flash-msg { background: #e7f3ff; color: #1EB53A; padding: 10px; border-radius: 8px; margin-bottom: 14px; text-align: center; font-size: 14px; border: 1px solid #b6d4fe; }
+        .sub-tabs { display: flex; gap: 8px; margin-bottom: 14px; overflow-x: auto; }
+        .sub-tab {
+            background: #f0f2f5; border: none; padding: 8px 16px; border-radius: 20px;
+            font-size: 13px; font-weight: bold; color: #65676b; cursor: pointer; white-space: nowrap;
+        }
+        .sub-tab.active { background: #1EB53A; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .item-row {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #fff; border-radius: 12px; padding: 12px 14px; margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); flex-wrap: wrap; gap: 10px;
+        }
+        .item-info strong { font-size: 15px; color: #333; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+        .item-info span { display: block; font-size: 12px; color: #777; }
+        .action-btns { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+        .btn-verify { background: #00A3DD; color: white; border: none; padding: 6px 10px; border-radius: 5px; font-size: 12px; cursor: pointer; font-weight: bold; }
+        .btn-block { background: #d9534f; color: white; border: none; padding: 6px 10px; border-radius: 5px; font-size: 12px; cursor: pointer; font-weight: bold; }
+        .btn-unblock { background: #f0ad4e; color: white; border: none; padding: 6px 10px; border-radius: 5px; font-size: 12px; cursor: pointer; font-weight: bold; }
+        .btn-delete { background: #333; color: white; border: none; padding: 6px 10px; border-radius: 5px; font-size: 12px; cursor: pointer; font-weight: bold; }
+        .empty { color: #777; font-size: 14px; padding: 20px 0; text-align: center; }
+    </style>
+</head>
+<body>
+<div class="topbar">
+    <h1><i class="fa-solid fa-user-gear"></i> Simamia Watumiaji</h1>
+    <a href="{{ url_for('admin_dashboard') }}"><i class="fa-solid fa-arrow-left"></i> Dashboard</a>
+</div>
+
+<div class="container">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="flash-msg">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="sub-tabs">
+        <button class="sub-tab active" onclick="switchTab('verified', this)">
+            <i class="fa-solid fa-certificate" style="color:#00A3DD;"></i> Wenye Badge
+        </button>
+        <button class="sub-tab" onclick="switchTab('unverified', this)">
+            <i class="fa-solid fa-users"></i> Wasio na Badge
+        </button>
+        <button class="sub-tab" onclick="switchTab('deactivated', this)">
+            <i class="fa-solid fa-user-slash" style="color:#c62828;"></i> Zimezimwa
+        </button>
+    </div>
+
+    <!-- WENYE BADGE -->
+    <div id="tab-verified" class="tab-content active">
+        {% set count = 0 %}
+        {% for u in users %}
+            {% if u.is_verified == 1 %}
+            {% set count = count + 1 %}
+            <div class="item-row">
+                <div class="item-info">
+                    <strong>
+                        <a href="/profile/{{ u.username }}" target="_blank" style="color:#1EB53A;text-decoration:none;">{{ u.full_name or u.username }}</a>
+                        <i class="fa-solid fa-circle-check" style="color:#00A3DD;"></i>
+                        {% if u.auth_provider == 'google' %}<span style="font-size:11px;background:#e8f0fe;color:#1a73e8;padding:2px 8px;border-radius:10px;">Google</span>
+                        {% else %}<span style="font-size:11px;background:#e8f5e9;color:#2e7d32;padding:2px 8px;border-radius:10px;">Kawaida</span>{% endif %}
+                        {% if u.is_deactivated == 1 %}<span style="font-size:11px;background:#fdecea;color:#c62828;padding:2px 8px;border-radius:10px;">Zimezimwa</span>{% endif %}
+                    </strong>
+                    <span>@{{ u.username }} · {{ u.email }}</span>
+                    <span>Alijiunga: {{ u.joined_date or '—' }} · {{ u.joined_label or '' }}</span>
+                </div>
+                <div class="action-btns">
+                    <form action="/admin/verify/{{ u.id }}" method="POST">
+                        <button type="submit" class="btn-verify">Ondoa Badge</button>
+                    </form>
+                    <form action="/admin/block/{{ u.id }}" method="POST">
+                        <button type="submit" class="{% if u.is_blocked == 1 %}btn-unblock{% else %}btn-block{% endif %}">
+                            {% if u.is_blocked == 1 %}Unblock{% else %}Block{% endif %}
+                        </button>
+                    </form>
+                    <button type="button" class="btn-delete" onclick="deleteUser({{ u.id }}, this)">
+                        <i class="fa-solid fa-trash"></i> Futa
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+        {% if count == 0 %}<p class="empty">Hakuna mtumiaji mwenye badge kwa sasa.</p>{% endif %}
+    </div>
+
+    <!-- WASIO NA BADGE -->
+    <div id="tab-unverified" class="tab-content">
+        {% set count = 0 %}
+        {% for u in users %}
+            {% if u.is_verified != 1 %}
+            {% set count = count + 1 %}
+            <div class="item-row">
+                <div class="item-info">
+                    <strong>
+                        <a href="/profile/{{ u.username }}" target="_blank" style="color:#1EB53A;text-decoration:none;">{{ u.full_name or u.username }}</a>
+                        {% if u.auth_provider == 'google' %}<span style="font-size:11px;background:#e8f0fe;color:#1a73e8;padding:2px 8px;border-radius:10px;">Google</span>
+                        {% else %}<span style="font-size:11px;background:#e8f5e9;color:#2e7d32;padding:2px 8px;border-radius:10px;">Kawaida</span>{% endif %}
+                        {% if u.is_deactivated == 1 %}<span style="font-size:11px;background:#fdecea;color:#c62828;padding:2px 8px;border-radius:10px;">Zimezimwa</span>{% endif %}
+                    </strong>
+                    <span>@{{ u.username }} · {{ u.email }}</span>
+                    <span>Alijiunga: {{ u.joined_date or '—' }} · {{ u.joined_label or '' }}</span>
+                </div>
+                <div class="action-btns">
+                    <form action="/admin/verify/{{ u.id }}" method="POST">
+                        <button type="submit" class="btn-verify">Mpe Badge</button>
+                    </form>
+                    <form action="/admin/block/{{ u.id }}" method="POST">
+                        <button type="submit" class="{% if u.is_blocked == 1 %}btn-unblock{% else %}btn-block{% endif %}">
+                            {% if u.is_blocked == 1 %}Unblock{% else %}Block{% endif %}
+                        </button>
+                    </form>
+                    <button type="button" class="btn-delete" onclick="deleteUser({{ u.id }}, this)">
+                        <i class="fa-solid fa-trash"></i> Futa
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+        {% if count == 0 %}<p class="empty">Hakuna mtumiaji asiye na badge.</p>{% endif %}
+    </div>
+
+    <!-- ZIMEZIMWA -->
+    <div id="tab-deactivated" class="tab-content">
+        {% set count = 0 %}
+        {% for u in users %}
+            {% if u.is_deactivated == 1 %}
+            {% set count = count + 1 %}
+            <div class="item-row">
+                <div class="item-info">
+                    <strong>
+                        <a href="/profile/{{ u.username }}" target="_blank" style="color:#1EB53A;text-decoration:none;">{{ u.full_name or u.username }}</a>
+                        <span style="font-size:11px;background:#fdecea;color:#c62828;padding:2px 8px;border-radius:10px;">Zimezimwa</span>
+                    </strong>
+                    <span>@{{ u.username }} · {{ u.email }}</span>
+                    <span>Alijiunga: {{ u.joined_date or '—' }} · {{ u.joined_label or '' }}</span>
+                    <span style="color:#c62828;">Imezimwa: {{ u.deactivated_at or '—' }}</span>
+                </div>
+                <div class="action-btns">
+                    <button type="button" class="btn-delete" onclick="deleteUser({{ u.id }}, this)">
+                        <i class="fa-solid fa-trash"></i> Futa
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+        {% if count == 0 %}<p class="empty">Hakuna akaunti zilizozimwa kwa sasa.</p>{% endif %}
+    </div>
+</div>
+
+<script>
+function switchTab(name, btn) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.sub-tab').forEach(el => el.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    btn.classList.add('active');
+}
+
+function deleteUser(userId, btn) {
+    if (!confirm('Una uhakika unataka kufuta user huyu?')) return;
+    fetch(`/admin/delete_user/${userId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const row = btn.closest('.item-row');
+            if (row) {
+                row.style.transition = 'opacity 0.3s';
+                row.style.opacity = '0';
+                setTimeout(() => row.remove(), 300);
+            }
+        } else {
+            alert(data.message || 'Imeshindikana kufuta user');
+        }
+    })
+    .catch(() => alert('Kuna tatizo limetokea'));
+}
+</script>
+</body>
+</html>

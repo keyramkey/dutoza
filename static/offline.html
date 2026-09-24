@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1EB53A">
+  <title>Offline — Kijiji Tanzania</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+      overscroll-behavior-y: contain; /* no rubber-band bounce that felt like "shaking" */
+    }
+
+    body {
+      min-height: 100vh;   /* fallback for old browsers */
+      min-height: 100dvh;  /* real, stable full-screen height on mobile (no jump when the address bar hides/shows) */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      background: radial-gradient(ellipse at 30% 20%, #1a2e22 0%, #0d120f 50%, #0a0f0c 100%);
+      color: #edf5ef;
+      text-align: center;
+      overflow-x: hidden;
+      overflow-y: auto;      /* if content grows (e.g. video list opens) it scrolls instead of shoving the whole card around */
+      -webkit-overflow-scrolling: touch;
+      position: relative;
+      padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
+    }
+
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(60px);
+      opacity: 0.35;
+      pointer-events: none;
+      animation: float 12s ease-in-out infinite;
+    }
+    .orb-1 {
+      width: 280px; height: 280px;
+      background: #1EB53A;
+      top: -80px; left: -60px;
+    }
+    .orb-2 {
+      width: 200px; height: 200px;
+      background: #0d9e2f;
+      bottom: -40px; right: -30px;
+      animation-delay: -4s;
+    }
+    .orb-3 {
+      width: 140px; height: 140px;
+      background: #2dd45a;
+      top: 40%; right: 10%;
+      opacity: 0.2;
+      animation-delay: -7s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(20px, -25px) scale(1.05); }
+    }
+
+    .dots {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgba(30, 181, 58, 0.12) 1px, transparent 1px);
+      background-size: 28px 28px;
+      mask-image: radial-gradient(ellipse at center, black 20%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .card {
+      position: relative;
+      max-width: 400px;
+      width: 100%;
+      margin: auto;
+      background: linear-gradient(160deg, #1c2a22 0%, #15201a 100%);
+      border-radius: 24px;
+      padding: 36px 24px 28px;
+      box-shadow:
+        0 20px 50px rgba(0,0,0,.45),
+        0 0 0 1px rgba(30, 181, 58, 0.15),
+        inset 0 1px 0 rgba(255,255,255,0.04);
+      z-index: 2;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 20%; right: 20%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #1EB53A, transparent);
+      opacity: 0.7;
+    }
+
+    .icon-wrap {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon-bg {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 35%, rgba(30,181,58,0.25), rgba(30,181,58,0.05));
+      border: 1.5px solid rgba(30,181,58,0.35);
+      animation: pulse 3.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.08); opacity: 0.85; }
+    }
+
+    .main-icon {
+      width: 64px;
+      height: 64px;
+      color: #1EB53A;
+      filter: drop-shadow(0 0 12px rgba(30,181,58,0.5));
+      z-index: 1;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0 0 10px;
+      color: #ffffff;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      color: #9aa99e;
+      line-height: 1.55;
+      margin: 0 0 22px;
+      max-width: 300px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .net-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+    .net-status.offline {
+      background: rgba(180, 83, 9, 0.25);
+      color: #fbbf24;
+      border: 1px solid rgba(251, 191, 36, 0.35);
+    }
+    .net-status.online {
+      background: rgba(30, 181, 58, 0.2);
+      color: #4ade80;
+      border: 1px solid rgba(74, 222, 128, 0.35);
+    }
+    .net-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: blink 1.4s ease-in-out infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.35; }
+    }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: linear-gradient(135deg, #1EB53A, #17a034);
+      color: #fff;
+      text-decoration: none;
+      padding: 13px 24px;
+      border-radius: 14px;
+      font-weight: 700;
+      font-size: 15px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(30,181,58,0.35);
+      transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+      min-width: 220px;
+      font-family: inherit;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(30,181,58,0.45); }
+    .btn:active { transform: translateY(0); }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1.5px solid rgba(30,181,58,0.4);
+      color: #1EB53A;
+      box-shadow: none;
+      font-weight: 600;
+    }
+    .btn-secondary:hover {
+      background: rgba(30,181,58,0.08);
+      box-shadow: none;
+    }
+
+    .btn-ghost {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: #c5d4c9;
+      box-shadow: none;
+      font-weight: 600;
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.1); }
+
+    .btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+    .toast {
+      display: none;
+      margin-top: 14px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+    .toast.show { display: block; }
+    .toast.info {
+      background: rgba(30,181,58,0.15);
+      color: #8bc99a;
+      border: 1px solid rgba(30,181,58,0.25);
+    }
+    .toast.warn {
+      background: rgba(180, 83, 9, 0.2);
+      color: #fbbf24;
+      border: 1px solid rgba(251, 191, 36, 0.3);
+    }
+
+    /* Offline videos section */
+    .ov-section {
+      margin-top: 22px;
+      text-align: left;
+      display: none;
+    }
+    .ov-section.show { display: block; }
+    .ov-section h3 {
+      font-size: 14px;
+      color: #fff;
+      margin: 0 0 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .ov-list {
+      max-height: 220px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .ov-item {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      background: rgba(0,0,0,0.35);
+      border-radius: 12px;
+      padding: 8px 10px;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .ov-item video, .ov-item .thumb {
+      width: 72px; height: 48px;
+      object-fit: cover;
+      border-radius: 8px;
+      background: #222;
+      flex-shrink: 0;
+    }
+    .ov-meta { flex: 1; min-width: 0; }
+    .ov-meta strong {
+      display: block;
+      font-size: 13px;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .ov-meta small {
+      display: block;
+      color: #8a9a8e;
+      font-size: 11px;
+      margin-top: 2px;
+    }
+    .ov-play {
+      border: none;
+      background: #1EB53A;
+      color: #fff;
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .status {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 22px;
+      flex-wrap: wrap;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(30,181,58,0.1);
+      border: 1px solid rgba(30,181,58,0.2);
+      color: #8bc99a;
+      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: 20px;
+    }
+    .chip svg { width: 14px; height: 14px; }
+
+    .note {
+      margin-top: 18px;
+      font-size: 12px;
+      color: #6b7a6f;
+    }
+
+    .works-list {
+      margin: 0 0 18px;
+      padding: 12px 14px;
+      background: rgba(0,0,0,0.25);
+      border-radius: 12px;
+      text-align: left;
+      font-size: 13px;
+      color: #a8b8ac;
+      line-height: 1.55;
+    }
+    .works-list strong { color: #c5d4c9; }
+    .works-list .ok { color: #4ade80; }
+    .works-list .no { color: #f87171; }
+
+    .video-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+    .video-overlay.show { display: flex; }
+    .video-overlay video {
+      width: 100%;
+      max-height: 100%;
+      max-height: 100dvh;
+    }
+    .video-close {
+      position: absolute;
+      top: calc(16px + env(safe-area-inset-top));
+      right: calc(16px + env(safe-area-inset-right));
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      z-index: 10000;
+    }
+  </style>
+</head>
+<body>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="dots"></div>
+
+  <div class="card">
+    <div class="icon-wrap">
+      <div class="icon-bg"></div>
+      <svg class="main-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18.36 6.64a9 9 0 1 1-12.73 0"/>
+        <line x1="12" y1="2" x2="12" y2="12"/>
+      </svg>
+    </div>
+
+    <div class="net-status offline" id="netStatus">
+      <span class="net-dot"></span>
+      <span id="netStatusText">Offline</span>
+    </div>
+
+    <h1 id="mainTitle">Uko Offline</h1>
+    <p class="subtitle" id="mainSub">
+      Hakuna mtandao sasa.
+    </p>
+
+    <div class="actions">
+      <button type="button" class="btn" id="btnRetry" data-action="retry">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+          <path d="M3 3v5h5"/>
+          <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+          <path d="M16 16h5v5"/>
+        </svg>
+        Jaribu Tena
+      </button>
+
+      <button type="button" class="btn btn-secondary" id="btnHome" data-action="home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        Rudi Home
+      </button>
+
+      <button type="button" class="btn btn-ghost" id="btnVideos" data-action="videos">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="5 3 19 12 5 21 5 3"/>
+        </svg>
+        Video Offline <span id="ovCount"></span>
+      </button>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="ov-section" id="ovSection">
+      <h3>📥 Video zilizohifadhiwa</h3>
+      <div class="ov-list" id="ovList"></div>
+    </div>
+
+    <div class="status">
+      <div class="chip">Offline Mode</div>
+      <div class="chip">Power Save</div>
+    </div>
+
+    <p class="note">Kijiji Tanzania • Offline Experience</p>
+  </div>
+
+  <div class="video-overlay" id="videoOverlay">
+    <button type="button" class="video-close" id="videoClose" aria-label="Funga">✕</button>
+    <video id="offlineVideoPlayer" controls autoplay playsinline></video>
+  </div>
+
+  <script>
+  (function () {
+    var OFFLINE_INDEX_KEY = 'kijiji_offline_videos';
+    var toastTimer = null;
+
+    function $(id) { return document.getElementById(id); }
+
+    function showToast(msg, type) {
+      var t = $('toast');
+      if (!t) return;
+      t.textContent = msg;
+      t.className = 'toast show ' + (type || 'info');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () {
+        t.classList.remove('show');
+      }, 3200);
+    }
+
+    function getOfflineIndex() {
+      try {
+        return JSON.parse(localStorage.getItem(OFFLINE_INDEX_KEY) || '[]');
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function updateNetUI() {
+      var online = navigator.onLine;
+      var st = $('netStatus');
+      var txt = $('netStatusText');
+      var title = $('mainTitle');
+      var sub = $('mainSub');
+
+      if (online) {
+        st.className = 'net-status online';
+        txt.textContent = 'Online';
+        title.textContent = 'Umerudi Online!';
+        sub.textContent = 'Mtandao umerudi. Bonyeza Jaribu Tena au Rudi Home kuendelea.';
+      } else {
+        st.className = 'net-status offline';
+        txt.textContent = 'Offline';
+        title.textContent = 'Uko Offline';
+        sub.textContent = 'Hakuna mtandao sasa.';
+      }
+    }
+
+    // Ukurasa uliokuwa unaufungua kabla ya kuanguka kwa mtandao (ikiwezekana),
+    // ili "Jaribu Tena" ikupeleke huko na siyo home moja kwa moja.
+    var TARGET_KEY = 'kijiji_offline_target_url';
+    function getTargetUrl() {
+      try {
+        var saved = sessionStorage.getItem(TARGET_KEY);
+        if (saved) return saved;
+      } catch (e) {}
+      if (document.referrer) {
+        try {
+          var ref = new URL(document.referrer);
+          if (ref.origin === location.origin && !/\/offline\/?$/.test(ref.pathname)) {
+            return ref.pathname + ref.search;
+          }
+        } catch (e) {}
+      }
+      return '/home';
+    }
+    try {
+      var t = getTargetUrl();
+      if (t) sessionStorage.setItem(TARGET_KEY, t);
+    } catch (e) {}
+
+    // Uthibitisho halisi wa mtandao (navigator.onLine peke yake sio sahihi kila wakati)
+    function probeNetwork() {
+      if (!navigator.onLine) return Promise.resolve(false);
+      return fetch('/static/icon-192-v6.png', { method: 'HEAD', cache: 'no-store' })
+        .then(function (res) { return !!(res && res.ok); })
+        .catch(function () { return false; });
+    }
+
+    function tryAgain() {
+      showToast('Inakagua mtandao...', 'info');
+      probeNetwork().then(function (isUp) {
+        if (isUp) {
+          showToast('Mtandao upo — inafungua...', 'info');
+          setTimeout(function () {
+            location.href = getTargetUrl();
+          }, 350);
+        } else {
+          showToast('Bado hakuna mtandao. Angalia data/WiFi kisha jaribu tena.', 'warn');
+          setTimeout(function () {
+            location.reload();
+          }, 900);
+        }
+      });
+    }
+
+    function goHome() {
+      // Hii inafanya kazi hata bila mtandao kwa sababu /home imehifadhiwa na Service Worker
+      showToast(navigator.onLine ? 'Inafungua Home...' : 'Inatafuta Home kwenye cache...', 'info');
+      try { sessionStorage.removeItem(TARGET_KEY); } catch (e) {}
+      location.href = '/home';
+    }
+
+    function toggleOfflineVideos() {
+      var sec = $('ovSection');
+      if (!sec) return;
+      if (sec.classList.contains('show')) {
+        sec.classList.remove('show');
+        return;
+      }
+      renderOfflineVideos();
+      sec.classList.add('show');
+    }
+
+    // Bandika matukio kwa JS badala ya onclick="" ndani ya HTML — hii inahakikisha
+    // vitufe vinafanya kazi hata kama sera kali za usalama (CSP) za tovuti
+    // zinazuia inline onclick attributes.
+    function bindActions() {
+      var retryBtn = $('btnRetry');
+      var homeBtn = $('btnHome');
+      var videosBtn = $('btnVideos');
+      var videoClose = $('videoClose');
+      var videoOverlay = $('videoOverlay');
+      if (retryBtn) retryBtn.addEventListener('click', tryAgain);
+      if (homeBtn) homeBtn.addEventListener('click', goHome);
+      if (videosBtn) videosBtn.addEventListener('click', toggleOfflineVideos);
+      if (videoClose) videoClose.addEventListener('click', closeVideoOverlay);
+      if (videoOverlay) {
+        videoOverlay.addEventListener('click', function (e) {
+          if (e.target === videoOverlay) closeVideoOverlay();
+        });
+      }
+    }
+
+    // Bado tunaziacha hizi globally kwa uoanifu, ikiwa sehemu nyingine ya app inaziita
+    window.tryAgain = tryAgain;
+    window.goHome = goHome;
+    window.toggleOfflineVideos = toggleOfflineVideos;
+
+    function formatBytes(n) {
+      n = Number(n) || 0;
+      if (n < 1024) return n + ' B';
+      if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
+      return (n / 1048576).toFixed(1) + ' MB';
+    }
+
+    function renderOfflineVideos() {
+      var list = getOfflineIndex();
+      var box = $('ovList');
+      var countEl = $('ovCount');
+      if (countEl) {
+        countEl.textContent = list.length ? '(' + list.length + ')' : '';
+      }
+      if (!box) return;
+
+      if (!list.length) {
+        box.innerHTML = '<div style="color:#8a9a8e;font-size:13px;padding:12px 4px;text-align:center;">Bado huna video offline.<br><br>Ukirudi online: fungua video → bonyeza <strong>Offline</strong>.</div>';
+        return;
+      }
+
+      box.innerHTML = list.map(function (item, idx) {
+        var title = item.content || ('Video ya @' + (item.username || 'user'));
+        var safeTitle = String(title).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        var src = String(item.src || '').replace(/"/g, '');
+        return (
+          '<div class="ov-item">' +
+          '<video class="thumb" src="' + src + '#t=0.5" muted preload="metadata" playsinline></video>' +
+          '<div class="ov-meta"><strong>@' + (item.username || 'user') + '</strong>' +
+          '<small>' + safeTitle + '</small>' +
+          '<small>' + formatBytes(item.size) + '</small></div>' +
+          '<button type="button" class="ov-play" data-idx="' + idx + '">Cheza</button>' +
+          '</div>'
+        );
+      }).join('');
+
+      box.querySelectorAll('.ov-play').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var idx = parseInt(btn.getAttribute('data-idx'), 10);
+          playOffline(idx);
+        });
+      });
+    }
+
+    function playOffline(idx) {
+      var list = getOfflineIndex();
+      var item = list[idx];
+      if (!item || !item.src) {
+        showToast('Video haipatikani', 'warn');
+        return;
+      }
+      var overlay = $('videoOverlay');
+      var player = $('offlineVideoPlayer');
+      if (!overlay || !player) {
+        showToast('Imeshindikana kufungua video', 'warn');
+        return;
+      }
+      // Fungua ndani ya ukurasa huu huu badala ya dirisha jipya — window.open +
+      // document.write huvurugika kwenye simu (hasa app ikiwa imewekwa home
+      // screen / PWA), ndiyo maana ilikuwa inaonyesha "about:blank".
+      var absoluteSrc;
+      try {
+        absoluteSrc = new URL(item.src, location.href).href;
+      } catch (e) {
+        absoluteSrc = item.src;
+      }
+      player.src = absoluteSrc;
+      overlay.classList.add('show');
+      player.play().catch(function () {
+        // Autoplay ikizuiwa, mtumiaji anaweza kubonyeza play mwenyewe kwenye controls
+      });
+    }
+
+    function closeVideoOverlay() {
+      var overlay = $('videoOverlay');
+      var player = $('offlineVideoPlayer');
+      if (player) {
+        player.pause();
+        player.removeAttribute('src');
+        player.load();
+      }
+      if (overlay) overlay.classList.remove('show');
+    }
+
+    // Update video count on load
+    function refreshCount() {
+      var n = getOfflineIndex().length;
+      var el = $('ovCount');
+      if (el) el.textContent = n ? '(' + n + ')' : '';
+    }
+
+    // Online / offline live updates (no reload needed for status)
+    window.addEventListener('online', function () {
+      updateNetUI();
+      showToast('✅ Mtandao umerudi! Bonyeza Jaribu Tena.', 'info');
+    });
+    window.addEventListener('offline', function () {
+      updateNetUI();
+      showToast('📡 Umeenda offline', 'warn');
+    });
+
+    bindActions();
+    updateNetUI();
+    refreshCount();
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Share @{{ profile_user.username }} - Kijiji Tanzania</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; }
+        body { background: #f0f2f5; color: #0f172a; padding: 20px 12px 40px; line-height: 1.45; }
+        .card {
+            max-width: 420px; margin: 0 auto; background: #fff;
+            border-radius: 18px; padding: 22px; box-shadow: 0 4px 20px rgba(0,0,0,.06);
+            text-align: center;
+        }
+        h1 { font-size: 20px; font-weight: 800; margin-bottom: 4px; color: #0f172a; }
+        .uname { color: #64748b; font-size: 14px; margin-bottom: 16px; font-weight: 500; }
+        .qr-wrap {
+            background: #f8fafc; border-radius: 14px; padding: 12px; margin-bottom: 16px;
+            border: 1px solid #f1f5f9;
+        }
+        .qr-wrap img { max-width: 100%; height: auto; border-radius: 10px; display: block; margin: 0 auto; }
+        .link-box {
+            width: 100%; padding: 12px; border: 1.5px solid #e2e8f0; border-radius: 12px;
+            font-size: 13px; background: #f8fafc; margin-bottom: 14px; text-align: left; color: #334155;
+        }
+        .btns { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+        .btn {
+            flex: 1 1 140px; padding: 12px 14px; border-radius: 12px; border: none;
+            font-weight: 700; font-size: 14px; cursor: pointer; text-decoration: none;
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px; color: #fff;
+            transition: transform 0.15s;
+        }
+        .btn:hover { transform: translateY(-1px); }
+        .btn-green {
+            background: linear-gradient(135deg, #1EB53A, #15803d);
+            box-shadow: 0 4px 12px rgba(30,181,58,0.2);
+        }
+        .btn-wa { background: #25D366; box-shadow: 0 4px 12px rgba(37,211,102,0.25); }
+        .btn-gray { background: #e2e8f0; color: #0f172a; }
+        .back {
+            display: inline-block; margin-top: 18px; color: #1EB53A;
+            text-decoration: none; font-weight: 600; font-size: 14px;
+        }
+        .toast {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+            background: #15803d; color: #fff; padding: 12px 20px; border-radius: 12px;
+            font-size: 14px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 99;
+        }
+        .toast.show { opacity: 1; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>{{ profile_user.full_name or profile_user.username }}</h1>
+        <div class="uname">@{{ profile_user.username }}</div>
+
+        <div class="qr-wrap">
+            <img src="{{ qr_img_url }}" alt="QR Code ya profile ya @{{ profile_user.username }}">
+        </div>
+
+        <input class="link-box" type="text" readonly value="{{ share_url }}" id="shareUrl" onclick="this.select()">
+
+        <div class="btns">
+            <a class="btn btn-green" href="{{ qr_download_url }}">
+                <i class="fa-solid fa-download"></i> Pakua QR
+            </a>
+            <a class="btn btn-wa" href="{{ wa_link }}" target="_blank" rel="noopener noreferrer">
+                <i class="fa-brands fa-whatsapp"></i> WhatsApp
+            </a>
+            <button type="button" class="btn btn-gray" onclick="copyLink()">
+                <i class="fa-solid fa-copy"></i> Nakili Link
+            </button>
+            <a class="btn btn-gray" href="{{ share_url }}">
+                <i class="fa-solid fa-user"></i> Fungua Profile
+            </a>
+        </div>
+
+        <a class="back" href="{{ url_for('profile', username=profile_user.username) }}">
+            ← Rudi profile
+        </a>
+    </div>
+    <div id="toast" class="toast">Link imenakiliwa!</div>
+    <script>
+        function copyLink() {
+            var el = document.getElementById('shareUrl');
+            var toast = document.getElementById('toast');
+            function showOk() {
+                toast.classList.add('show');
+                setTimeout(function() { toast.classList.remove('show'); }, 2000);
+            }
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(el.value).then(showOk).catch(function() {
+                    el.select();
+                    try { document.execCommand('copy'); showOk(); } catch (e) {}
+                });
+            } else {
+                el.select();
+                try { document.execCommand('copy'); showOk(); } catch (e) {}
+            }
+        }
+    </script>
+</body>
+</html>

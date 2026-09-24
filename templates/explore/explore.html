@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Explore · Kijiji</title>
+<style>
+:root {
+  --bg-gradient: linear-gradient(135deg, #1e1b4b 0%, #0f172a 50%, #172554 100%);
+  --topbar-bg: rgba(30, 27, 75, 0.85);
+  --card-bg: linear-gradient(145deg, #2e1065, #1e1b4b);
+  --card-user-bg: linear-gradient(145deg, #064e3b, #022c22);
+  --tag-bg: linear-gradient(135deg, #d97706, #b45309);
+  --border: #6b21a8;
+  --text: #f3e8ff;
+  --muted: #cbd5e1;
+  --accent: #f59e0b;
+  --accent2: #d97706;
+  --btn-primary: linear-gradient(135deg, #10b981, #059669);
+  --btn-ghost: linear-gradient(135deg, #4c1d95, #3b0764);
+  --radius: 16px;
+  --shadow: 0 10px 25px rgba(0,0,0,0.4);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg-gradient);
+  background-attachment: fixed;
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.45;
+}
+
+a { color: #38bdf8; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  background: var(--topbar-bg);
+  backdrop-filter: blur(12px);
+  border-bottom: 2px solid var(--border);
+  padding: 12px 16px;
+  display: flex; align-items: center; gap: 12px;
+}
+.topbar h1 { font-size: 1.15rem; font-weight: 700; flex: 1; color: #fbbf24; }
+.topbar .back {
+  color: var(--text); font-size: 1.2rem; padding: 6px 12px;
+  border-radius: 10px; background: var(--btn-ghost);
+}
+
+.wrap { max-width: 720px; margin: 0 auto; padding: 16px; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  border: none; cursor: pointer; border-radius: 10px;
+  padding: 8px 12px; font-weight: 600; font-size: .85rem;
+  transition: transform .15s ease, background .15s ease;
+}
+.btn:active { transform: scale(0.96); }
+.btn-primary { background: var(--btn-primary); color: #ecfdf5; }
+.btn-ghost { background: var(--btn-ghost); color: #f3e8ff; border: 1px solid #7e22ce; }
+.btn-sm { padding: 6px 12px; font-size: .8rem; }
+.muted { color: var(--muted); font-size: .82rem; }
+
+.tag-box {
+  display: flex; flex-wrap: wrap; gap: 10px;
+  background: linear-gradient(135deg, rgba(76,29,149,.45), rgba(30,27,75,.65));
+  border: 1px solid rgba(168,85,247,.45);
+  border-radius: var(--radius);
+  padding: 14px;
+  box-shadow: var(--shadow);
+}
+.tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  max-width: 100%;
+  padding: 7px 8px 7px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(196,181,253,.35);
+  color: #f5f3ff; font-size: .9rem; font-weight: 600;
+  text-decoration: none;
+  transition: transform .15s ease, background .15s ease, border-color .15s ease;
+}
+.tag:hover { text-decoration: none; background: rgba(255,255,255,.13); border-color: #fbbf24; }
+.tag:active { transform: scale(0.96); }
+.tag-hash { color: #fbbf24; font-weight: 800; }
+.tag-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tag-count {
+  min-width: 24px; text-align: center;
+  padding: 2px 8px; border-radius: 999px;
+  background: rgba(251,191,36,.18); color: #fde68a;
+  font-size: .72rem; font-weight: 700;
+}
+.tag-hot {
+  background: linear-gradient(135deg, rgba(217,119,6,.35), rgba(180,83,9,.25));
+  border-color: #f59e0b;
+}
+.tag-hot .tag-count { background: #f59e0b; color: #1e1b4b; }
+
+.section-title {
+  font-size: .85rem; text-transform: uppercase; letter-spacing: .08em;
+  color: #38bdf8; margin: 20px 0 10px; font-weight: 700;
+}
+
+/* Horizontal Scroll Container */
+.scroll-row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: #a855f7 transparent;
+}
+.scroll-row::-webkit-scrollbar { height: 6px; }
+.scroll-row::-webkit-scrollbar-thumb {
+  background: #a855f7; border-radius: 10px;
+}
+
+.verified-badge-custom { width: 16px; height: 16px; display: inline-block; flex-shrink: 0; vertical-align: middle; }
+.name-row { display: flex; align-items: center; justify-content: center; gap: 4px; max-width: 100%; min-width: 0; }
+.name-row .username { min-width: 0; }
+.post-card .user-info .author { min-width: 0; }
+
+/* Kadi za Watu wa Kufollow */
+.user-card {
+  flex: 0 0 145px;
+  background: var(--card-user-bg);
+  border: 1px solid #059669;
+  border-radius: var(--radius);
+  padding: 14px 12px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: var(--shadow);
+}
+.user-card .avatar {
+  width: 52px; height: 52px; border-radius: 50%;
+  object-fit: cover; background: #065f46; margin-bottom: 8px;
+  border: 2px solid #34d399;
+}
+.user-card .username {
+  font-size: .88rem; font-weight: 700; color: #a7f3d0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+}
+.user-card .followers {
+  font-size: .75rem; color: #93c5fd; margin-bottom: 10px;
+}
+
+/* Kadi za Posts */
+.post-card {
+  flex: 0 0 210px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: var(--shadow);
+}
+.post-card .user-info {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+}
+.post-card .avatar-sm {
+  width: 30px; height: 30px; border-radius: 50%;
+  object-fit: cover; background: #581c87; border: 1px solid #c084fc;
+}
+.post-card .author {
+  font-size: .82rem; font-weight: 700; color: #f0abfc;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.post-card .post-text {
+  font-size: .83rem; line-height: 1.35; margin-bottom: 8px; color: #e2e8f0;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+  overflow: hidden; text-overflow: ellipsis; white-space: normal;
+}
+
+/* Video Wrapper & Kibatani cha Play */
+.video-wrapper {
+  position: relative;
+  width: 100%; height: 110px;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  background: #31104b;
+  border: 1px solid #7e22ce;
+  cursor: pointer;
+}
+.video-wrapper video {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.play-btn {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 38px; height: 38px;
+  background: rgba(217, 119, 6, 0.85);
+  border: 2px solid #fef08a;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 14px; padding-left: 3px;
+  pointer-events: none;
+  transition: transform .2s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.video-wrapper:hover .play-btn {
+  transform: translate(-50%, -50%) scale(1.15);
+  background: rgba(234, 88, 12, 0.95);
+}
+
+.media-preview {
+  width: 100%; height: 110px; object-fit: cover;
+  border-radius: 10px; margin-bottom: 8px; background: #31104b;
+  border: 1px solid #7e22ce;
+}
+.post-card .actions {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: .78rem; color: #f472b6; margin-top: auto; font-weight: 600;
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back" href="{{ url_for('home') }}">←</a>
+  <h1>🔍 Explore</h1>
+  <a class="btn btn-ghost btn-sm" href="{{ url_for('trending') }}">Trending</a>
+</header>
+
+<main class="wrap">
+
+  <!-- HASHTAGS -->
+  {% if trending %}
+  <div class="section-title">Hashtags maarufu</div>
+  <div class="tag-box">
+    {% for t in trending %}
+      <a class="tag {% if loop.index <= 3 %}tag-hot{% endif %}" href="{{ url_for('hashtag_posts', tag=t.tag) }}">
+        {% if loop.index <= 3 %}<span>🔥</span>{% endif %}
+        <span class="tag-hash">#</span><span class="tag-name">{{ t.tag }}</span>
+        <span class="tag-count">{{ t.use_count }}</span>
+      </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- WATU WA KUFOLLOW (ROW) -->
+  {% if suggested_users %}
+  <div class="section-title">Watu wa kufollow</div>
+  <div class="scroll-row">
+    {% for u in suggested_users %}
+    <div class="user-card">
+      <img class="avatar" src="{{ u.profile_pic|avatar(u.full_name or u.username) }}" onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/default-avatar.png.jfif') }}';" alt="">
+      <div class="name-row">
+        <a class="username" href="{{ url_for('profile', username=u.username) }}">@{{ u.username }}</a>
+        {% if u.is_verified == 1 %}<svg class="verified-badge-custom" viewBox="0 0 24 24" title="Verified Account"><path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="#8A2BE2"/><path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#FFFFFF"/></svg>{% endif %}
+      </div>
+      <div class="followers">{{ u.followers_count or 0 }} followers</div>
+      <form method="post" action="{{ url_for('follow_user', target_username=u.username) }}" style="width: 100%;">
+        <button class="btn btn-primary btn-sm" style="width: 100%;" type="submit">Follow</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- POST MAARUFU (ROW) -->
+  <div class="section-title">Post maarufu (siku 7)</div>
+  {% if posts_data %}
+  <div class="scroll-row">
+    {% for p in posts_data %}
+    <article class="post-card">
+      <div>
+        <div class="user-info">
+          <img class="avatar-sm" src="{{ p.profile_pic|avatar(p.full_name or p.username) }}" onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/default-avatar.png.jfif') }}';" alt="">
+          <a class="author" href="{{ url_for('profile', username=p.username) }}">@{{ p.username }}</a>
+          {% if p.is_verified == 1 %}<svg class="verified-badge-custom" viewBox="0 0 24 24" title="Verified Account"><path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="#8A2BE2"/><path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#FFFFFF"/></svg>{% endif %}
+        </div>
+        {% if p.content %}<div class="post-text">{{ p.content }}</div>{% endif %}
+        {% if p.file_path %}
+          {% if p.media_type == 'video' %}
+            <div class="video-wrapper" onclick="togglePlay(this)">
+              <video src="{{ url_for('static', filename='uploads/' + p.file_path) }}"></video>
+              <div class="play-btn">▶</div>
+            </div>
+          {% else %}
+            <img class="media-preview" src="{{ url_for('static', filename='uploads/' + p.file_path) }}" alt="">
+          {% endif %}
+        {% endif %}
+      </div>
+      <div class="actions">
+        <span>❤️ {{ p.likes_count or 0 }}</span>
+        <span>💬 {{ p.comments_count or 0 }}</span>
+        <a href="{{ url_for('post_detail', post_id=p.id) }}" style="color: #38bdf8;">Fungua</a>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+    <div style="text-align: center; padding: 30px; color: var(--muted);">Hakuna post bado. Anza kuchapisha na #hashtag!</div>
+  {% endif %}
+
+</main>
+
+<script>
+function togglePlay(wrapper) {
+  const video = wrapper.querySelector('video');
+  const btn = wrapper.querySelector('.play-btn');
+  if (video.paused) {
+    video.play();
+    btn.style.display = 'none';
+  } else {
+    video.pause();
+    btn.style.display = 'flex';
+  }
+}
+</script>
+
+</body>
+</html>

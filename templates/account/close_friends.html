@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Close Friends · Kijiji</title>
+<style>
+
+:root {
+  --bg: #0f1419;
+  --bg2: #1a2332;
+  --bg3: #243044;
+  --card: #1e293b;
+  --border: #334155;
+  --text: #f1f5f9;
+  --muted: #94a3b8;
+  --accent: #22c55e;
+  --accent2: #16a34a;
+  --danger: #ef4444;
+  --warn: #f59e0b;
+  --blue: #3b82f6;
+  --radius: 14px;
+  --shadow: 0 8px 24px rgba(0,0,0,.35);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.45;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(15,20,25,.92);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  display: flex; align-items: center; gap: 12px;
+}
+.topbar h1 { font-size: 1.15rem; font-weight: 700; flex: 1; }
+.topbar .back {
+  color: var(--text); font-size: 1.2rem; padding: 6px 10px;
+  border-radius: 10px; background: var(--bg3);
+}
+.wrap { max-width: 720px; margin: 0 auto; padding: 16px; }
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+}
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  border: none; cursor: pointer; border-radius: 10px;
+  padding: 10px 14px; font-weight: 600; font-size: .92rem;
+  transition: .15s ease;
+}
+.btn-primary { background: var(--accent); color: #052e16; }
+.btn-primary:hover { background: var(--accent2); }
+.btn-ghost { background: var(--bg3); color: var(--text); }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-sm { padding: 6px 10px; font-size: .82rem; }
+.muted { color: var(--muted); font-size: .88rem; }
+.row { display: flex; align-items: center; gap: 12px; }
+.verified-badge-custom { width: 16px; height: 16px; display: inline-block; vertical-align: middle; flex-shrink: 0; }
+.user-link {
+  display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;
+  color: inherit; text-decoration: none; -webkit-tap-highlight-color: transparent;
+}
+.user-link:hover { text-decoration: none; }
+.user-link:active { opacity: .7; }
+.user-meta { min-width: 0; }
+.user-name { display: flex; align-items: center; gap: 4px; font-weight: 700; color: var(--text); }
+.user-name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.user-meta .muted { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  object-fit: cover; background: var(--bg3); flex-shrink: 0;
+}
+.tag {
+  display: inline-block; background: var(--bg3); color: var(--accent);
+  padding: 4px 10px; border-radius: 999px; font-size: .85rem; font-weight: 600;
+  margin: 4px;
+}
+.stats {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+}
+.stat {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px; text-align: center;
+}
+.stat b { display: block; font-size: 1.35rem; color: var(--accent); }
+.stat span { font-size: .78rem; color: var(--muted); }
+.empty {
+  text-align: center; padding: 40px 16px; color: var(--muted);
+}
+.input, textarea, select {
+  width: 100%; background: var(--bg2); border: 1px solid var(--border);
+  color: var(--text); border-radius: 10px; padding: 10px 12px; font-size: .95rem;
+}
+textarea { min-height: 90px; resize: vertical; }
+.flash-ok { background: #14532d; color: #bbf7d0; padding: 10px 12px; border-radius: 10px; margin-bottom: 12px; }
+.flash-err { background: #7f1d1d; color: #fecaca; padding: 10px 12px; border-radius: 10px; margin-bottom: 12px; }
+.badge {
+  font-size: .72rem; padding: 2px 8px; border-radius: 999px;
+  background: var(--bg3); color: var(--muted);
+}
+.badge.pending { background: #78350f; color: #fde68a; }
+.badge.resolved { background: #14532d; color: #bbf7d0; }
+.badge.dismissed { background: #3f3f46; color: #d4d4d8; }
+.media {
+  width: 100%; max-height: 320px; object-fit: cover;
+  border-radius: 12px; margin-top: 8px; background: #000;
+}
+.post-text { white-space: pre-wrap; margin-top: 6px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.section-title {
+  font-size: .8rem; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--muted); margin: 18px 0 8px;
+}
+
+
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back" href="{{ url_for('settings') }}">←</a>
+  <h1>💚 Close Friends</h1>
+</header>
+<main class="wrap">
+  <p class="muted" style="margin-bottom:12px">Chagua watu wanaoweza kuona status zako za "Close Friends".</p>
+
+  <div class="section-title">Orodha yako ({{ friends|length if friends else 0 }})</div>
+  {% if friends %}
+    {% for u in friends %}
+    <div class="card row" id="cf-{{ u.id }}">
+      <a class="user-link" href="{{ url_for('profile', username=u.username) }}">
+        <img class="avatar" src="{{ u.profile_pic|avatar(u.full_name or u.username) }}" onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/default-avatar.png.jfif') }}';" alt="">
+        <div class="user-meta">
+          <div class="user-name"><span>{{ u.full_name or u.username }}</span>{% if u.is_verified == 1 %}<svg class="verified-badge-custom" viewBox="0 0 24 24" title="Verified Account"><path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="#8A2BE2"/><path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#FFFFFF"/></svg>{% endif %}</div>
+          <div class="muted">@{{ u.username }}</div>
+        </div>
+      </a>
+      <button class="btn btn-danger btn-sm" onclick="toggleCF({{ u.id }}, 'remove')">Ondoa</button>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty" style="padding:20px">Bado hujaongeza mtu</div>
+  {% endif %}
+
+  <div class="section-title">Unaowafollow</div>
+  {% if candidates %}
+    {% for u in candidates %}
+    <div class="card row">
+      <a class="user-link" href="{{ url_for('profile', username=u.username) }}">
+        <img class="avatar" src="{{ u.profile_pic|avatar(u.full_name or u.username) }}" onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/default-avatar.png.jfif') }}';" alt="">
+        <div class="user-meta">
+          <div class="user-name"><span>{{ u.full_name or u.username }}</span>{% if u.is_verified == 1 %}<svg class="verified-badge-custom" viewBox="0 0 24 24" title="Verified Account"><path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="#8A2BE2"/><path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#FFFFFF"/></svg>{% endif %}</div>
+          <div class="muted">@{{ u.username }}</div>
+        </div>
+      </a>
+      {% if u.is_cf %}
+        <button class="btn btn-ghost btn-sm" onclick="toggleCF({{ u.id }}, 'remove')">Ipo ✓</button>
+      {% else %}
+        <button class="btn btn-primary btn-sm" onclick="toggleCF({{ u.id }}, 'add')">Ongeza</button>
+      {% endif %}
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty">Follow watu kwanza ili uwaongeze</div>
+  {% endif %}
+</main>
+<script>
+async function toggleCF(friendId, action) {
+  try {
+    const r = await fetch('/close-friends', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+      body: JSON.stringify({ friend_id: friendId, action: action })
+    });
+    const d = await r.json();
+    if (d.success) location.reload();
+    else alert(d.message || 'Imeshindikana');
+  } catch (e) { alert('Hitilafu ya mtandao'); }
+}
+</script>
+
+
+</body>
+</html>

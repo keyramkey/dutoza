@@ -1,0 +1,1885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Community — Coming Soon</title>
+
+  <!-- GOOGLE FONT -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* =====================================================
+       RESET
+    ===================================================== */
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #03030a;
+      --purple: #7c3cff;
+      --blue: #00e5ff;
+      --pink: #ff2bd6;
+      --white: #ffffff;
+      --muted: #9696aa;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+    }
+
+    body {
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--white);
+      font-family: "Inter", sans-serif;
+    }
+
+
+    /* =====================================================
+       BACKGROUND
+    ===================================================== */
+
+    .background {
+      position: fixed;
+      inset: 0;
+      z-index: -10;
+      overflow: hidden;
+
+      background:
+        radial-gradient(
+          circle at 15% 20%,
+          rgba(124, 60, 255, .20),
+          transparent 30%
+        ),
+
+        radial-gradient(
+          circle at 85% 75%,
+          rgba(0, 229, 255, .15),
+          transparent 30%
+        ),
+
+        radial-gradient(
+          circle at 50% 110%,
+          rgba(255, 43, 214, .13),
+          transparent 35%
+        ),
+
+        #03030a;
+    }
+
+
+    /* =====================================================
+       ANIMATED GRID
+    ===================================================== */
+
+    .grid {
+      position: absolute;
+
+      width: 200%;
+      height: 200%;
+
+      left: -50%;
+      top: -50%;
+
+      background-image:
+        linear-gradient(
+          rgba(255,255,255,.035) 1px,
+          transparent 1px
+        ),
+
+        linear-gradient(
+          90deg,
+          rgba(255,255,255,.035) 1px,
+          transparent 1px
+        );
+
+      background-size: 55px 55px;
+
+      transform:
+        perspective(650px)
+        rotateX(62deg)
+        translateY(-80px);
+
+      animation: gridMove 12s linear infinite;
+    }
+
+    @keyframes gridMove {
+
+      from {
+        transform:
+          perspective(650px)
+          rotateX(62deg)
+          translateY(-80px);
+      }
+
+      to {
+        transform:
+          perspective(650px)
+          rotateX(62deg)
+          translateY(55px);
+      }
+
+    }
+
+
+    /* =====================================================
+       GLOW ORBS
+    ===================================================== */
+
+    .orb {
+      position: absolute;
+
+      border-radius: 50%;
+
+      filter: blur(90px);
+
+      opacity: .35;
+
+      animation:
+        floating 8s ease-in-out infinite alternate;
+    }
+
+    .orb-1 {
+      width: 320px;
+      height: 320px;
+
+      left: -130px;
+      top: -120px;
+
+      background: var(--purple);
+    }
+
+    .orb-2 {
+      width: 380px;
+      height: 380px;
+
+      right: -160px;
+      bottom: -130px;
+
+      background: var(--blue);
+
+      animation-delay: -3s;
+    }
+
+    .orb-3 {
+      width: 230px;
+      height: 230px;
+
+      left: 50%;
+      top: 45%;
+
+      background: var(--pink);
+
+      animation-delay: -5s;
+    }
+
+    @keyframes floating {
+
+      0% {
+        transform:
+          translate(0, 0)
+          scale(1);
+      }
+
+      100% {
+        transform:
+          translate(60px, -50px)
+          scale(1.2);
+      }
+
+    }
+
+
+    /* =====================================================
+       PARTICLES
+    ===================================================== */
+
+    #particles {
+      position: fixed;
+      inset: 0;
+
+      z-index: -2;
+
+      pointer-events: none;
+    }
+
+
+    /* =====================================================
+       MAIN CONTAINER
+    ===================================================== */
+
+    .container {
+      width: 100%;
+      min-height: 100vh;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      padding: 25px;
+
+      text-align: center;
+    }
+
+    .content {
+      width: min(950px, 100%);
+
+      animation: pageReveal 1.5s ease forwards;
+    }
+
+    @keyframes pageReveal {
+
+      from {
+        opacity: 0;
+        transform:
+          translateY(40px)
+          scale(.96);
+      }
+
+      to {
+        opacity: 1;
+        transform:
+          translateY(0)
+          scale(1);
+      }
+
+    }
+
+
+    /* =====================================================
+       STATUS BADGE
+    ===================================================== */
+
+    .badge {
+      display: inline-flex;
+
+      align-items: center;
+      gap: 10px;
+
+      padding: 10px 19px;
+
+      border: 1px solid
+        rgba(255,255,255,.12);
+
+      border-radius: 50px;
+
+      background:
+        rgba(255,255,255,.045);
+
+      backdrop-filter: blur(15px);
+
+      box-shadow:
+        0 0 30px
+        rgba(124,60,255,.12),
+
+        inset 0 0 20px
+        rgba(255,255,255,.02);
+
+      color: #d8d8e5;
+
+      font-size: 11px;
+
+      font-weight: 700;
+
+      letter-spacing: 3px;
+
+      text-transform: uppercase;
+
+      margin-bottom: 28px;
+    }
+
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+
+      border-radius: 50%;
+
+      background: #00ffae;
+
+      box-shadow:
+        0 0 10px #00ffae,
+        0 0 20px #00ffae;
+
+      animation: blink 1.2s infinite;
+    }
+
+    @keyframes blink {
+
+      50% {
+        opacity: .25;
+        transform: scale(.7);
+      }
+
+    }
+
+
+    /* =====================================================
+       SMALL TITLE
+    ===================================================== */
+
+    .small-title {
+      font-family: "Orbitron", sans-serif;
+
+      font-size:
+        clamp(12px, 2vw, 18px);
+
+      letter-spacing: 8px;
+
+      color: #aaaabd;
+
+      margin-bottom: 13px;
+
+      text-transform: uppercase;
+    }
+
+
+    /* =====================================================
+       MAIN HEADING
+    ===================================================== */
+
+    h1 {
+      font-family: "Orbitron", sans-serif;
+
+      font-size:
+        clamp(42px, 8vw, 100px);
+
+      line-height: .95;
+
+      font-weight: 900;
+
+      letter-spacing: -4px;
+
+      text-transform: uppercase;
+
+      background:
+        linear-gradient(
+          90deg,
+          #ffffff,
+          #bba8ff,
+          #00e5ff,
+          #ffffff
+        );
+
+      background-size: 300% auto;
+
+      -webkit-background-clip: text;
+      background-clip: text;
+
+      color: transparent;
+
+      animation:
+        gradientMove 5s linear infinite,
+        titleGlow 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes gradientMove {
+
+      to {
+        background-position: 300% center;
+      }
+
+    }
+
+    @keyframes titleGlow {
+
+      from {
+        filter:
+          drop-shadow(
+            0 0 5px
+            rgba(124,60,255,.2)
+          );
+      }
+
+      to {
+        filter:
+          drop-shadow(
+            0 0 18px
+            rgba(124,60,255,.55)
+          )
+
+          drop-shadow(
+            0 0 35px
+            rgba(0,229,255,.15)
+          );
+      }
+
+    }
+
+
+    .highlight {
+      display: block;
+
+      font-size:
+        clamp(43px, 9vw, 110px);
+
+      margin-top: 5px;
+    }
+
+
+    /* =====================================================
+       DESCRIPTION
+    ===================================================== */
+
+    .description {
+      max-width: 650px;
+
+      margin:
+        28px auto 32px;
+
+      color: var(--muted);
+
+      font-size: 15px;
+
+      line-height: 1.8;
+    }
+
+    .description strong {
+      color: #ffffff;
+    }
+
+
+    /* =====================================================
+       COUNTDOWN
+    ===================================================== */
+
+    .countdown {
+      display: flex;
+
+      align-items: center;
+      justify-content: center;
+
+      gap: 12px;
+
+      flex-wrap: wrap;
+
+      margin: 25px 0;
+    }
+
+
+    .time-box {
+      position: relative;
+
+      min-width: 105px;
+
+      padding: 18px 15px;
+
+      border:
+        1px solid
+        rgba(255,255,255,.10);
+
+      border-radius: 18px;
+
+      background:
+        rgba(255,255,255,.035);
+
+      backdrop-filter: blur(18px);
+
+      overflow: hidden;
+
+      box-shadow:
+        inset 0 0 20px
+        rgba(255,255,255,.015),
+
+        0 10px 40px
+        rgba(0,0,0,.15);
+
+      transition:
+        transform .3s ease,
+        border-color .3s ease;
+    }
+
+    .time-box:hover {
+      transform:
+        translateY(-5px);
+
+      border-color:
+        rgba(0,229,255,.3);
+    }
+
+
+    .time-box::before {
+
+      content: "";
+
+      position: absolute;
+
+      inset: 0;
+
+      background:
+        linear-gradient(
+          135deg,
+          rgba(124,60,255,.09),
+          transparent,
+          rgba(0,229,255,.06)
+        );
+
+      pointer-events: none;
+    }
+
+
+    .number {
+      position: relative;
+
+      display: block;
+
+      font-family: "Orbitron", sans-serif;
+
+      font-size: 30px;
+
+      font-weight: 800;
+
+      color: #ffffff;
+
+      text-shadow:
+        0 0 15px
+        rgba(124,60,255,.35);
+    }
+
+
+    .label {
+      position: relative;
+
+      display: block;
+
+      margin-top: 7px;
+
+      font-size: 9px;
+
+      letter-spacing: 2px;
+
+      color: #77778c;
+
+      text-transform: uppercase;
+    }
+
+
+    /* =====================================================
+       PROGRESS AREA
+    ===================================================== */
+
+    .progress-wrapper {
+      width: min(560px, 100%);
+
+      margin:
+        32px auto 30px;
+    }
+
+
+    .progress-info {
+      display: flex;
+
+      align-items: center;
+      justify-content: space-between;
+
+      margin-bottom: 10px;
+
+      font-size: 10px;
+
+      letter-spacing: 2px;
+
+      text-transform: uppercase;
+
+      color: #77778c;
+    }
+
+
+    #percentage {
+      color: #ffffff;
+
+      font-family: "Orbitron", sans-serif;
+
+      font-weight: 700;
+
+      text-shadow:
+        0 0 10px
+        rgba(0,229,255,.5);
+    }
+
+
+    .progress {
+      position: relative;
+
+      width: 100%;
+
+      height: 7px;
+
+      border-radius: 50px;
+
+      background:
+        rgba(255,255,255,.07);
+
+      overflow: visible;
+    }
+
+
+    .progress-bar {
+      position: relative;
+
+      width: 0%;
+
+      height: 100%;
+
+      border-radius: inherit;
+
+      background:
+        linear-gradient(
+          90deg,
+          var(--purple),
+          var(--blue),
+          var(--pink)
+        );
+
+      background-size: 200% 100%;
+
+      box-shadow:
+        0 0 10px
+        rgba(124,60,255,.8),
+
+        0 0 25px
+        rgba(0,229,255,.45);
+
+      transition:
+        width 1s linear;
+
+      animation:
+        progressGlow 3s linear infinite;
+    }
+
+
+    .progress-bar::after {
+      content: "";
+
+      position: absolute;
+
+      right: -3px;
+
+      top: 50%;
+
+      transform:
+        translateY(-50%);
+
+      width: 13px;
+      height: 13px;
+
+      border-radius: 50%;
+
+      background: #ffffff;
+
+      box-shadow:
+        0 0 8px #ffffff,
+        0 0 18px var(--blue),
+        0 0 30px var(--blue);
+    }
+
+
+    @keyframes progressGlow {
+
+      0% {
+        background-position: 0% 50%;
+      }
+
+      100% {
+        background-position: 200% 50%;
+      }
+
+    }
+
+
+    /* =====================================================
+       LAUNCH TEXT
+    ===================================================== */
+
+    .launch-text {
+      margin-top: 13px;
+
+      font-size: 10px;
+
+      letter-spacing: 3px;
+
+      color: #555568;
+
+      text-transform: uppercase;
+    }
+
+
+    /* =====================================================
+       BUTTON
+    ===================================================== */
+
+    .notify {
+      position: relative;
+
+      display: inline-flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      gap: 10px;
+
+      padding:
+        15px 27px;
+
+      border-radius: 50px;
+
+      border:
+        1px solid
+        rgba(255,255,255,.16);
+
+      background:
+        linear-gradient(
+          135deg,
+          rgba(124,60,255,.8),
+          rgba(0,229,255,.45)
+        );
+
+      color: #ffffff;
+
+      font-size: 13px;
+
+      font-weight: 700;
+
+      text-decoration: none;
+
+      cursor: pointer;
+
+      overflow: hidden;
+
+      box-shadow:
+        0 10px 35px
+        rgba(124,60,255,.25),
+
+        inset 0 1px 1px
+        rgba(255,255,255,.25);
+
+      transition:
+        .3s ease;
+    }
+
+
+    .notify::before {
+
+      content: "";
+
+      position: absolute;
+
+      width: 100px;
+      height: 200%;
+
+      background:
+        rgba(255,255,255,.15);
+
+      transform:
+        rotate(25deg)
+        translateX(-150px);
+
+      transition:
+        transform .6s ease;
+    }
+
+
+    .notify:hover::before {
+      transform:
+        rotate(25deg)
+        translateX(250px);
+    }
+
+
+    .notify:hover {
+      transform:
+        translateY(-4px)
+        scale(1.03);
+
+      box-shadow:
+        0 15px 45px
+        rgba(124,60,255,.4),
+
+        0 0 30px
+        rgba(0,229,255,.15);
+    }
+
+
+    .notify span {
+      position: relative;
+      z-index: 2;
+    }
+
+
+    /* =====================================================
+       FOOTER
+    ===================================================== */
+
+    footer {
+      margin-top: 30px;
+
+      color: #555568;
+
+      font-size: 9px;
+
+      letter-spacing: 2px;
+
+      text-transform: uppercase;
+    }
+
+
+    /* =====================================================
+       LAUNCH SCREEN
+    ===================================================== */
+
+    .launch-screen {
+
+      position: fixed;
+
+      inset: 0;
+
+      z-index: 100;
+
+      display: flex;
+
+      align-items: center;
+      justify-content: center;
+
+      background: #03030a;
+
+      opacity: 0;
+
+      visibility: hidden;
+
+      transition:
+        opacity 1s ease,
+        visibility 1s ease;
+    }
+
+
+    .launch-screen.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+
+    .launch-message {
+
+      text-align: center;
+
+      font-family: "Orbitron", sans-serif;
+
+      animation:
+        launchPulse 1s infinite alternate;
+    }
+
+
+    .launch-message h2 {
+
+      font-size:
+        clamp(35px, 8vw, 90px);
+
+      background:
+        linear-gradient(
+          90deg,
+          #ffffff,
+          #00e5ff,
+          #ff2bd6,
+          #ffffff
+        );
+
+      background-size: 300%;
+
+      -webkit-background-clip: text;
+      background-clip: text;
+
+      color: transparent;
+
+      animation:
+        gradientMove 2s linear infinite;
+    }
+
+
+    .launch-message p {
+
+      margin-top: 15px;
+
+      color: #888899;
+
+      font-family: "Inter", sans-serif;
+
+      letter-spacing: 4px;
+
+      text-transform: uppercase;
+    }
+
+
+    @keyframes launchPulse {
+
+      from {
+        transform:
+          scale(.98);
+
+        filter:
+          drop-shadow(
+            0 0 10px
+            rgba(0,229,255,.2)
+          );
+      }
+
+      to {
+        transform:
+          scale(1.02);
+
+        filter:
+          drop-shadow(
+            0 0 35px
+            rgba(124,60,255,.6)
+          );
+      }
+
+    }
+
+
+    /* =====================================================
+       MOBILE
+    ===================================================== */
+
+    @media (max-width: 600px) {
+
+      body {
+        overflow-y: auto;
+      }
+
+      .container {
+        min-height: 100vh;
+
+        padding:
+          35px 18px;
+      }
+
+
+      .badge {
+        font-size: 8px;
+
+        letter-spacing: 2px;
+
+        padding:
+          9px 15px;
+      }
+
+
+      .small-title {
+        font-size: 10px;
+
+        letter-spacing: 5px;
+      }
+
+
+      h1 {
+        letter-spacing: -2px;
+      }
+
+
+      .description {
+        font-size: 13px;
+
+        line-height: 1.7;
+
+        margin:
+          22px auto 25px;
+      }
+
+
+      .countdown {
+        gap: 7px;
+      }
+
+
+      .time-box {
+        min-width: 72px;
+
+        padding:
+          13px 9px;
+
+        border-radius: 14px;
+      }
+
+
+      .number {
+        font-size: 21px;
+      }
+
+
+      .label {
+        font-size: 7px;
+
+        letter-spacing: 1px;
+      }
+
+
+      .progress-wrapper {
+        margin:
+          25px auto;
+      }
+
+
+      footer {
+        margin-top: 25px;
+      }
+
+    }
+
+
+    .back-btn {
+    position: fixed;
+    top: 25px;
+    left: 25px;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+
+    padding: 11px 18px;
+
+    border: 1px solid rgba(0, 255, 136, .18);
+    border-radius: 50px;
+
+    background: rgba(255, 255, 255, .04);
+    backdrop-filter: blur(15px);
+
+    color: #ffffff;
+    text-decoration: none;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    box-shadow:
+        0 0 20px rgba(0, 255, 136, .06),
+        inset 0 0 15px rgba(255, 255, 255, .02);
+
+    transition: all .3s ease;
+
+    z-index: 50;
+}
+
+.back-btn i {
+    color: #00ff88;
+    transition: transform .3s ease;
+}
+
+.back-btn:hover {
+    transform: translateX(-3px);
+
+    border-color: rgba(0, 255, 136, .5);
+
+    box-shadow:
+        0 0 25px rgba(0, 255, 136, .18);
+}
+
+.back-btn:hover i {
+    transform: translateX(-4px);
+}
+
+  </style>
+</head>
+
+
+<body>
+
+
+  <!-- =====================================================
+       BACKGROUND
+  ====================================================== -->
+
+  <div class="background">
+
+    <div class="grid"></div>
+
+    <div class="orb orb-1"></div>
+
+    <div class="orb orb-2"></div>
+
+    <div class="orb orb-3"></div>
+
+  </div>
+
+
+  <!-- PARTICLES -->
+
+  <canvas id="particles"></canvas>
+
+
+  <!-- =====================================================
+       MAIN CONTENT
+  ====================================================== -->
+
+  <main class="container">
+
+      <a href="javascript:history.back()" class="back-btn">
+    <i class="fa-solid fa-arrow-left"></i>
+    Back
+      </a>
+
+    <section class="content">
+
+
+      <!-- STATUS -->
+
+      <div class="badge">
+
+        <span class="status-dot"></span>
+
+        Something Big Is Coming
+
+      </div>
+
+
+      <!-- SMALL TITLE -->
+
+      <div class="small-title">
+
+        The Future Of Connection
+
+      </div>
+
+
+      <!-- MAIN TITLE -->
+
+      <h1>
+
+        Community
+
+        <span class="highlight">
+          Is Coming Soon
+        </span>
+
+      </h1>
+
+
+      <!-- DESCRIPTION -->
+
+      <p class="description">
+
+        We're building a
+        <strong>next-generation community</strong>
+        designed to connect people, ideas and opportunities.
+
+        <br>
+
+        Something powerful is loading behind the scenes.
+
+      </p>
+
+
+      <!-- =================================================
+           COUNTDOWN
+      ================================================== -->
+
+      <div class="countdown">
+
+
+        <div class="time-box">
+
+          <span
+            class="number"
+            id="days"
+          >
+            10
+          </span>
+
+          <span class="label">
+            Days
+          </span>
+
+        </div>
+
+
+        <div class="time-box">
+
+          <span
+            class="number"
+            id="hours"
+          >
+            00
+          </span>
+
+          <span class="label">
+            Hours
+          </span>
+
+        </div>
+
+
+        <div class="time-box">
+
+          <span
+            class="number"
+            id="minutes"
+          >
+            00
+          </span>
+
+          <span class="label">
+            Minutes
+          </span>
+
+        </div>
+
+
+        <div class="time-box">
+
+          <span
+            class="number"
+            id="seconds"
+          >
+            00
+          </span>
+
+          <span class="label">
+            Seconds
+          </span>
+
+        </div>
+
+
+      </div>
+
+
+      <!-- =================================================
+           PROGRESS BAR
+      ================================================== -->
+
+      <div class="progress-wrapper">
+
+
+        <div class="progress-info">
+
+          <span>
+            Community Launch Progress
+          </span>
+
+          <span id="percentage">
+            0%
+          </span>
+
+        </div>
+
+
+        <div class="progress">
+
+          <div
+            class="progress-bar"
+            id="progressBar">
+          </div>
+
+        </div>
+
+
+        <div class="launch-text">
+          Preparing something extraordinary...
+        </div>
+
+      </div>
+
+
+      <!-- BUTTON -->
+
+      <a
+        href="#"
+        class="notify"
+        onclick="notifyMe(event)"
+      >
+
+        <span>✦</span>
+
+        <span id="buttonText">
+          Keep Me Posted
+        </span>
+
+      </a>
+
+
+      <!-- FOOTER -->
+
+      <footer>
+
+        © 2026 Community
+        — The wait will be worth it.
+
+      </footer>
+
+
+    </section>
+
+  </main>
+
+
+  <!-- =====================================================
+       LAUNCH SCREEN
+  ====================================================== -->
+
+  <div
+    class="launch-screen"
+    id="launchScreen"
+  >
+
+    <div class="launch-message">
+
+      <h2>
+        WE ARE LIVE 🚀
+      </h2>
+
+      <p>
+        Welcome to the community
+      </p>
+
+    </div>
+
+  </div>
+
+
+  <!-- =====================================================
+       JAVASCRIPT
+  ====================================================== -->
+
+  <script>
+
+
+    /* =====================================================
+       10 DAY COUNTDOWN
+    ===================================================== */
+
+    const TOTAL_TIME =
+      10 * 24 * 60 * 60 * 1000;
+
+
+    /*
+      Tunahifadhi muda ambao countdown
+      ilianza kwenye browser.
+
+      Hii inamaanisha refresh haitaanzisha
+      siku 10 upya.
+    */
+
+    let startTime =
+      localStorage.getItem(
+        "communityStartTime"
+      );
+
+
+    /*
+      Kama mtu anafungua page kwa mara
+      ya kwanza, countdown inaanza.
+    */
+
+    if (!startTime) {
+
+      startTime = Date.now();
+
+      localStorage.setItem(
+        "communityStartTime",
+        startTime
+      );
+
+    }
+
+
+    startTime =
+      Number(startTime);
+
+
+    const launchTime =
+      startTime + TOTAL_TIME;
+
+
+
+    /* =====================================================
+       COUNTDOWN FUNCTION
+    ===================================================== */
+
+    function updateCountdown() {
+
+
+      const now =
+        Date.now();
+
+
+      let remaining =
+        launchTime - now;
+
+
+
+      /* ================================================
+         IF COUNTDOWN IS FINISHED
+      ================================================= */
+
+      if (remaining <= 0) {
+
+        remaining = 0;
+
+
+        document.getElementById(
+          "days"
+        ).textContent = "00";
+
+
+        document.getElementById(
+          "hours"
+        ).textContent = "00";
+
+
+        document.getElementById(
+          "minutes"
+        ).textContent = "00";
+
+
+        document.getElementById(
+          "seconds"
+        ).textContent = "00";
+
+
+        document.getElementById(
+          "percentage"
+        ).textContent = "100%";
+
+
+        document.getElementById(
+          "progressBar"
+        ).style.width = "100%";
+
+
+        /*
+          Launch screen
+        */
+
+        document
+          .getElementById("launchScreen")
+          .classList.add("active");
+
+
+        return;
+
+      }
+
+
+
+      /* =================================================
+         CALCULATE TIME
+      ================================================= */
+
+
+      const days =
+        Math.floor(
+          remaining /
+          (1000 * 60 * 60 * 24)
+        );
+
+
+      const hours =
+        Math.floor(
+          (
+            remaining %
+            (1000 * 60 * 60 * 24)
+          ) /
+          (1000 * 60 * 60)
+        );
+
+
+      const minutes =
+        Math.floor(
+          (
+            remaining %
+            (1000 * 60 * 60)
+          ) /
+          (1000 * 60)
+        );
+
+
+      const seconds =
+        Math.floor(
+          (
+            remaining %
+            (1000 * 60)
+          ) /
+          1000
+        );
+
+
+
+      /* =================================================
+         DISPLAY
+      ================================================= */
+
+
+      document.getElementById(
+        "days"
+      ).textContent =
+        String(days).padStart(2, "0");
+
+
+      document.getElementById(
+        "hours"
+      ).textContent =
+        String(hours).padStart(2, "0");
+
+
+      document.getElementById(
+        "minutes"
+      ).textContent =
+        String(minutes).padStart(2, "0");
+
+
+      document.getElementById(
+        "seconds"
+      ).textContent =
+        String(seconds).padStart(2, "0");
+
+
+
+      /* =================================================
+         PROGRESS
+
+         Start = 0%
+         Day 9  = 10%
+         Day 5  = 50%
+         Day 1  = 90%
+         Finish = 100%
+      ================================================= */
+
+
+      const elapsed =
+        TOTAL_TIME - remaining;
+
+
+      let percentage =
+        (
+          elapsed /
+          TOTAL_TIME
+        ) * 100;
+
+
+      percentage =
+        Math.min(
+          100,
+          Math.max(
+            0,
+            percentage
+          )
+        );
+
+
+
+      /* =================================================
+         UPDATE PERCENTAGE
+      ================================================= */
+
+
+      document.getElementById(
+        "percentage"
+      ).textContent =
+        percentage.toFixed(2) + "%";
+
+
+
+      /* =================================================
+         UPDATE PROGRESS BAR
+      ================================================= */
+
+
+      document.getElementById(
+        "progressBar"
+      ).style.width =
+        percentage + "%";
+
+    }
+
+
+
+    /*
+      Run immediately
+    */
+
+    updateCountdown();
+
+
+    /*
+      Update every second
+    */
+
+    setInterval(
+      updateCountdown,
+      1000
+    );
+
+
+
+    /* =====================================================
+       PARTICLES SYSTEM
+    ===================================================== */
+
+    const canvas =
+      document.getElementById(
+        "particles"
+      );
+
+
+    const ctx =
+      canvas.getContext("2d");
+
+
+    let particles = [];
+
+
+
+    /* =====================================================
+       RESIZE CANVAS
+    ===================================================== */
+
+    function resizeCanvas() {
+
+      canvas.width =
+        window.innerWidth;
+
+      canvas.height =
+        window.innerHeight;
+
+    }
+
+
+    window.addEventListener(
+      "resize",
+      () => {
+
+        resizeCanvas();
+
+        initParticles();
+
+      }
+    );
+
+
+    resizeCanvas();
+
+
+
+    /* =====================================================
+       PARTICLE CLASS
+    ===================================================== */
+
+    class Particle {
+
+      constructor() {
+
+        this.x =
+          Math.random() *
+          canvas.width;
+
+
+        this.y =
+          Math.random() *
+          canvas.height;
+
+
+        this.size =
+          Math.random() * 1.7 +
+          .3;
+
+
+        this.speedX =
+          (
+            Math.random() - .5
+          ) * .35;
+
+
+        this.speedY =
+          (
+            Math.random() - .5
+          ) * .35;
+
+
+        this.alpha =
+          Math.random() * .6 +
+          .1;
+
+      }
+
+
+      update() {
+
+        this.x +=
+          this.speedX;
+
+        this.y +=
+          this.speedY;
+
+
+        if (
+          this.x < 0 ||
+          this.x > canvas.width
+        ) {
+
+          this.speedX *= -1;
+
+        }
+
+
+        if (
+          this.y < 0 ||
+          this.y > canvas.height
+        ) {
+
+          this.speedY *= -1;
+
+        }
+
+      }
+
+
+      draw() {
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+          this.x,
+          this.y,
+          this.size,
+          0,
+          Math.PI * 2
+        );
+
+
+        ctx.fillStyle =
+          `rgba(
+            150,
+            180,
+            255,
+            ${this.alpha}
+          )`;
+
+
+        ctx.fill();
+
+      }
+
+    }
+
+
+
+    /* =====================================================
+       CREATE PARTICLES
+    ===================================================== */
+
+    function initParticles() {
+
+      particles = [];
+
+
+      const amount =
+        Math.min(
+          140,
+          Math.floor(
+            (
+              canvas.width *
+              canvas.height
+            ) / 10000
+          )
+        );
+
+
+      for (
+        let i = 0;
+        i < amount;
+        i++
+      ) {
+
+        particles.push(
+          new Particle()
+        );
+
+      }
+
+    }
+
+
+    /* =====================================================
+       ANIMATE PARTICLES
+    ===================================================== */
+
+    function animateParticles() {
+
+      ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+
+      particles.forEach(
+        particle => {
+
+          particle.update();
+
+          particle.draw();
+
+        }
+      );
+
+
+      requestAnimationFrame(
+        animateParticles
+      );
+
+    }
+
+
+    initParticles();
+
+    animateParticles();
+
+
+
+    /* =====================================================
+       BUTTON EFFECT
+    ===================================================== */
+
+    function notifyMe(event) {
+
+      event.preventDefault();
+
+
+      const buttonText =
+        document.getElementById(
+          "buttonText"
+        );
+
+
+      buttonText.textContent =
+        "You're On The List ✓";
+
+
+      setTimeout(
+        () => {
+
+          buttonText.textContent =
+            "Keep Me Posted";
+
+        },
+        3000
+      );
+
+    }
+
+  </script>
+
+</body>
+</html>

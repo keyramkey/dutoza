@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pakia Kijiji - Kijiji Tanzania</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f0f2f5; color: #333; min-height: 100vh; }
+        header {
+            background: #ffffff; padding: 15px 20px; display: flex; align-items: center;
+            border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 100;
+        }
+        header a { color: #1EB53A; font-size: 20px; text-decoration: none; margin-right: 15px; }
+        header h1 { font-size: 18px; color: #1EB53A; font-weight: 600; }
+        .container { max-width: 480px; margin: 24px auto; padding: 0 15px 40px; }
+        .upload-card {
+            background: #ffffff; border-radius: 16px; padding: 28px 22px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block; font-size: 14px; font-weight: 600; color: #050505; margin-bottom: 8px;
+        }
+        .form-group input[type="file"],
+        .form-group textarea {
+            width: 100%; padding: 12px 14px; border: 1.5px solid #ccd0d5; border-radius: 10px;
+            font-size: 15px; outline: none; background: #f8f9fa; font-family: inherit;
+        }
+        .form-group textarea { resize: vertical; min-height: 100px; }
+        .form-group input[type="file"]:focus,
+        .form-group textarea:focus {
+            border-color: #1EB53A; background: #fff;
+        }
+        .btn-upload {
+            width: 100%; background: #1EB53A; color: white; border: none; padding: 14px;
+            border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer;
+        }
+        .btn-upload:hover { background: #189c32; }
+        .btn-cancel {
+            display: block; text-align: center; margin-top: 14px; color: #65676b;
+            text-decoration: none; font-size: 14px;
+        }
+        .flash-msg {
+            background: #e7f3ff; color: #1EB53A; padding: 12px; border-radius: 8px;
+            margin-bottom: 16px; text-align: center; font-size: 14px; border: 1px solid #b6d4fe;
+        }
+        .note {
+            font-size: 13px; color: #65676b; margin-top: 6px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="{{ url_for('kijiji_feed') }}"><i class="fa-solid fa-arrow-left"></i></a>
+        <h1>Pakia Kijiji</h1>
+    </header>
+
+    <div class="container">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="flash-msg">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="upload-card">
+            <form action="{{ url_for('upload_kijiji') }}" method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="video">Chagua Video</label>
+                    <input type="file" name="video" id="video" accept="video/mp4,video/webm,video/quicktime" required>
+                    <p class="note">Inaruhusiwa: MP4, WebM, MOV (max 50MB inapendekezwa)</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="caption">Caption (si lazima)</label>
+                    <textarea name="caption" id="caption" placeholder="Andika maelezo mafupi..."></textarea>
+                </div>
+
+                <button type="submit" class="btn-upload">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Pakia Kijiji
+                </button>
+            </form>
+
+            <a href="{{ url_for('kijiji_feed') }}" class="btn-cancel">Ghairi</a>
+        </div>
+    </div>
+</body>
+</html>

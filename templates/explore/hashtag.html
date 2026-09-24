@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hashtag · Kijiji</title>
+<style>
+
+:root {
+  --bg: #0f1419;
+  --bg2: #1a2332;
+  --bg3: #243044;
+  --card: #1e293b;
+  --border: #334155;
+  --text: #f1f5f9;
+  --muted: #94a3b8;
+  --accent: #22c55e;
+  --accent2: #16a34a;
+  --danger: #ef4444;
+  --warn: #f59e0b;
+  --blue: #3b82f6;
+  --radius: 14px;
+  --shadow: 0 8px 24px rgba(0,0,0,.35);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.45;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(15,20,25,.92);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  display: flex; align-items: center; gap: 12px;
+}
+.topbar h1 { font-size: 1.15rem; font-weight: 700; flex: 1; }
+.topbar .back {
+  color: var(--text); font-size: 1.2rem; padding: 6px 10px;
+  border-radius: 10px; background: var(--bg3);
+}
+.wrap { max-width: 720px; margin: 0 auto; padding: 16px; }
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+}
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  border: none; cursor: pointer; border-radius: 10px;
+  padding: 10px 14px; font-weight: 600; font-size: .92rem;
+  transition: .15s ease;
+}
+.btn-primary { background: var(--accent); color: #052e16; }
+.btn-primary:hover { background: var(--accent2); }
+.btn-ghost { background: var(--bg3); color: var(--text); }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-sm { padding: 6px 10px; font-size: .82rem; }
+.muted { color: var(--muted); font-size: .88rem; }
+.row { display: flex; align-items: center; gap: 12px; }
+.avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  object-fit: cover; background: var(--bg3); flex-shrink: 0;
+}
+.tag {
+  display: inline-block; background: var(--bg3); color: var(--accent);
+  padding: 4px 10px; border-radius: 999px; font-size: .85rem; font-weight: 600;
+  margin: 4px;
+}
+.stats {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+}
+.stat {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px; text-align: center;
+}
+.stat b { display: block; font-size: 1.35rem; color: var(--accent); }
+.stat span { font-size: .78rem; color: var(--muted); }
+.empty {
+  text-align: center; padding: 40px 16px; color: var(--muted);
+}
+.input, textarea, select {
+  width: 100%; background: var(--bg2); border: 1px solid var(--border);
+  color: var(--text); border-radius: 10px; padding: 10px 12px; font-size: .95rem;
+}
+textarea { min-height: 90px; resize: vertical; }
+.flash-ok { background: #14532d; color: #bbf7d0; padding: 10px 12px; border-radius: 10px; margin-bottom: 12px; }
+.flash-err { background: #7f1d1d; color: #fecaca; padding: 10px 12px; border-radius: 10px; margin-bottom: 12px; }
+.badge {
+  font-size: .72rem; padding: 2px 8px; border-radius: 999px;
+  background: var(--bg3); color: var(--muted);
+}
+.badge.pending { background: #78350f; color: #fde68a; }
+.badge.resolved { background: #14532d; color: #bbf7d0; }
+.badge.dismissed { background: #3f3f46; color: #d4d4d8; }
+.media {
+  width: 100%; max-height: 320px; object-fit: cover;
+  border-radius: 12px; margin-top: 8px; background: #000;
+}
+.post-text { white-space: pre-wrap; margin-top: 6px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.section-title {
+  font-size: .8rem; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--muted); margin: 18px 0 8px;
+}
+
+
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back" href="{{ url_for('explore') }}">←</a>
+  <h1>#{{ tag }}</h1>
+</header>
+<main class="wrap">
+  <div class="card" style="text-align:center">
+    <div style="font-size:1.6rem;font-weight:800;color:var(--accent)">#{{ tag }}</div>
+    <div class="muted">{{ use_count or 0 }} matumizi</div>
+  </div>
+  {% if posts_data %}
+    {% for p in posts_data %}
+    <article class="card">
+      <div class="row">
+        <img class="avatar" src="{% if p.profile_pic %}{{ url_for('static', filename='uploads/' + p.profile_pic) }}{% else %}{{ url_for('static', filename='images/default-avatar.png') }}{% endif %}" alt="">
+        <div>
+          <a href="{{ url_for('profile', username=p.username) }}"><b>@{{ p.username }}</b></a>
+          <div class="muted">{{ p.created_at }}</div>
+        </div>
+      </div>
+      {% if p.content %}<div class="post-text">{{ p.content }}</div>{% endif %}
+      {% if p.file_path %}
+        {% if p.media_type == 'video' %}
+          <video class="media" controls src="{{ url_for('static', filename='uploads/' + p.file_path) }}"></video>
+        {% else %}
+          <img class="media" src="{{ url_for('static', filename='uploads/' + p.file_path) }}" alt="">
+        {% endif %}
+      {% endif %}
+      <div class="actions muted">
+        <span>❤️ {{ p.likes_count or 0 }}</span>
+        <span>💬 {{ p.comments_count or 0 }}</span>
+        <a href="{{ url_for('post_detail', post_id=p.id) }}">Fungua</a>
+      </div>
+    </article>
+    {% endfor %}
+  {% else %}
+    <div class="empty">Hakuna post za #{{ tag }} bado</div>
+  {% endif %}
+</main>
+
+
+</body>
+</html>

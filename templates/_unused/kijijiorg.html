@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kijiji</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #000;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            overflow-x: hidden;
+            height: 100vh;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .kijiji-container {
+            height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .kijiji-item {
+            height: 100vh;
+            width: 100%;
+            position: relative;
+            scroll-snap-align: start;
+            background: #000;
+            overflow: hidden;
+        }
+
+        .kijiji-item video,
+        .kijiji-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .play-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 72px;
+            height: 72px;
+            background: rgba(0,0,0,0.45);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: #fff;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+            z-index: 8;
+            backdrop-filter: blur(4px);
+        }
+        .kijiji-item.paused .play-overlay {
+            opacity: 1;
+        }
+
+        .overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 30px 16px 120px;
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 50%, transparent 100%);
+            z-index: 10;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .user-info img {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2.5px solid #1EB53A;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+
+        .username {
+            font-weight: 700;
+            font-size: 15.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+        }
+
+        .caption {
+            font-size: 14.5px;
+            line-height: 1.45;
+            max-width: 78%;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.7);
+        }
+
+        .side-actions {
+            position: absolute;
+            right: 10px;
+            bottom: 160px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            align-items: center;
+            z-index: 20;
+        }
+
+        .side-actions button {
+            background: none;
+            border: none;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.15s ease;
+        }
+
+        .side-actions button:active {
+            transform: scale(0.88);
+        }
+
+        .side-actions .icon-circle {
+            width: 48px;
+            height: 48px;
+            background: rgba(0,0,0,0.35);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            backdrop-filter: blur(6px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.2s ease;
+        }
+
+        .side-actions button:active .icon-circle {
+            background: rgba(0,0,0,0.55);
+        }
+
+        .side-actions span {
+            font-size: 12px;
+            margin-top: 5px;
+            font-weight: 600;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+        }
+
+        .liked .icon-circle { color: #ff2d55; }
+        .liked .icon-circle i { font-weight: 900; }
+        .saved .icon-circle { color: #1EB53A; }
+        .reposted .icon-circle { color: #1EB53A; }
+
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 14px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 50;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.65), transparent);
+        }
+        .top-bar h1 {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+        .top-bar a {
+            color: #fff;
+            font-size: 22px;
+            text-decoration: none;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.3);
+            border-radius: 50%;
+            backdrop-filter: blur(4px);
+        }
+
+        .empty-state {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: #aaa;
+            padding: 30px;
+        }
+        .empty-state i {
+            font-size: 60px;
+            margin-bottom: 18px;
+            color: #1EB53A;
+        }
+
+        .comments-modal {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 70vh;
+            background: #111;
+            border-radius: 20px 20px 0 0;
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .comments-modal.active {
+            display: flex;
+            transform: translateY(0);
+        }
+        .comments-header {
+            padding: 16px 18px;
+            border-bottom: 1px solid #2a2a2a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            font-size: 16px;
+        }
+        .comments-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+        .comment-item {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 18px;
+            position: relative;
+        }
+        .comment-item img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .comment-body strong {
+            color: #1EB53A;
+            font-size: 13.5px;
+        }
+        .comment-body p {
+            font-size: 14.5px;
+            margin: 4px 0;
+            line-height: 1.4;
+        }
+        .comment-body small {
+            color: #777;
+            font-size: 11px;
+        }
+        .delete-comment {
+            position: absolute;
+            right: 0;
+            top: 2px;
+            background: none;
+            border: none;
+            color: #ff4444;
+            font-size: 14px;
+            padding: 4px;
+        }
+        .comment-input-area {
+            padding: 12px 16px;
+            border-top: 1px solid #2a2a2a;
+            display: flex;
+            gap: 10px;
+            background: #0a0a0a;
+        }
+        .comment-input-area input {
+            flex: 1;
+            background: #1c1c1c;
+            border: none;
+            border-radius: 25px;
+            padding: 13px 18px;
+            color: #fff;
+            font-size: 15px;
+        }
+        .comment-input-area button {
+            background: #1EB53A;
+            border: none;
+            color: white;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            font-size: 17px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-modal {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #1a1a1a;
+            border-radius: 20px 20px 0 0;
+            z-index: 110;
+            padding: 10px 0 24px;
+            display: none;
+        }
+        .action-modal.active { display: block; }
+        .action-modal button {
+            width: 100%;
+            padding: 17px 20px;
+            background: none;
+            border: none;
+            color: #fff;
+            text-align: left;
+            font-size: 16.5px;
+            border-bottom: 1px solid #2a2a2a;
+        }
+        .action-modal button.danger { color: #ff3b30; }
+        .action-modal button.cancel {
+            color: #aaa;
+            text-align: center;
+            border: none;
+            margin-top: 6px;
+            font-weight: 600;
+        }
+
+        .overlay-bg {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 90;
+            display: none;
+        }
+        .overlay-bg.active { display: block; }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <a href="{{ url_for('home') }}"><i class="fa-solid fa-arrow-left"></i></a>
+        <h1>Kijiji</h1>
+        <div style="width: 40px;"></div>
+    </div>
+
+    <div class="kijiji-container">
+        {% if kijiji_list %}
+            {% for item in kijiji_list %}
+            <div class="kijiji-item" data-post-id="{{ item.id }}" data-user-id="{{ item.user_id }}">
+
+                {% if item.media_type == 'video' %}
+                    <video
+                        src="{{ url_for('static', filename='uploads/' + item.media_path) }}"
+                        loop
+                        playsinline
+                        preload="auto"
+                    ></video>
+                    <div class="play-overlay">
+                        <i class="fa-solid fa-play"></i>
+                    </div>
+                {% else %}
+                    <img src="{{ url_for('static', filename='uploads/' + item.media_path) }}" alt="Kijiji">
+                {% endif %}
+
+                <div class="overlay">
+                    <div class="user-info">
+                        <img src="{% if item.profile_pic %}{{ url_for('static', filename='uploads/' + item.profile_pic) }}{% else %}{{ url_for('static', filename='images/default.png') }}{% endif %}"
+                             onerror="this.src='{{ url_for('static', filename='images/default.png') }}'">
+                        <div class="username">
+                            @{{ item.username }}
+                            {% if item.is_verified %}
+                                <i class="fa-solid fa-circle-check" style="color:#1EB53A; font-size:14px;"></i>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if item.caption %}
+                        <p class="caption">{{ item.caption }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="side-actions">
+                    <button class="like-btn {% if item.user_liked %}liked{% endif %}" data-id="{{ item.id }}">
+                        <div class="icon-circle">
+                            <i class="fa-{% if item.user_liked %}solid{% else %}regular{% endif %} fa-heart"></i>
+                        </div>
+                        <span class="likes-count">{{ item.likes_count }}</span>
+                    </button>
+
+                    <button class="comment-btn" data-id="{{ item.id }}">
+                        <div class="icon-circle">
+                            <i class="fa-regular fa-comment"></i>
+                        </div>
+                        <span class="comments-count">{{ item.comments_count }}</span>
+                    </button>
+
+                    <button class="repost-btn" data-id="{{ item.id }}">
+                        <div class="icon-circle">
+                            <i class="fa-solid fa-retweet"></i>
+                        </div>
+                        <span>Repost</span>
+                    </button>
+
+                    <button class="share-btn" data-id="{{ item.id }}">
+                        <div class="icon-circle">
+                            <i class="fa-solid fa-share"></i>
+                        </div>
+                        <span class="shares-count">{{ item.shares }}</span>
+                    </button>
+
+                    <button class="save-btn {% if item.user_saved %}saved{% endif %}" data-id="{{ item.id }}">
+                        <div class="icon-circle">
+                            <i class="fa-{% if item.user_saved %}solid{% else %}regular{% endif %} fa-bookmark"></i>
+                        </div>
+                    </button>
+
+                    <button class="more-btn" data-id="{{ item.id }}" data-user="{{ item.user_id }}">
+                        <div class="icon-circle">
+                            <i class="fa-solid fa-ellipsis"></i>
+                        </div>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <i class="fa-solid fa-video"></i>
+                <h3>Hakuna Kijiji bado</h3>
+                <p>Video na picha zitaonekana hapa</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="overlay-bg" id="overlayBg"></div>
+
+    <!-- Comments Modal -->
+    <div class="comments-modal" id="commentsModal">
+        <div class="comments-header">
+            <span>Comments</span>
+            <button onclick="closeComments()" style="background:none;border:none;color:#fff;font-size:24px;">&times;</button>
+        </div>
+        <div class="comments-list" id="commentsList"></div>
+        <div class="comment-input-area">
+            <input type="text" id="commentInput" placeholder="Andika comment..." maxlength="500">
+            <button onclick="sendComment()"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <!-- Action Modal -->
+    <div class="action-modal" id="actionModal">
+        <button onclick="reportPost()">Report Kijiji</button>
+        <button class="danger" onclick="blockUser()">Block User</button>
+        <button class="cancel" onclick="closeActionModal()">Cancel</button>
+    </div>
+
+    <script>
+        let currentPostId = null;
+        let currentUserId = null;
+
+        // ================= VIDEO CONTROL (bila muted) =================
+        const items = document.querySelectorAll('.kijiji-item');
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const video = entry.target.querySelector('video');
+                if (!video) return;
+
+                if (entry.isIntersecting) {
+                    const playPromise = video.play();
+                    if (playPromise !== undefined) {
+                        playPromise.then(() => {
+                            entry.target.classList.remove('paused');
+                        }).catch(() => {
+                            entry.target.classList.add('paused');
+                        });
+                    }
+
+                    fetch(`/kijiji/view/${entry.target.dataset.postId}`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({watch_seconds: 2})
+                    });
+                } else {
+                    video.pause();
+                    video.currentTime = 0;
+                    entry.target.classList.add('paused');
+                }
+            });
+        }, { threshold: 0.65 });
+
+        items.forEach(item => {
+            observer.observe(item);
+
+            const video = item.querySelector('video');
+            if (video) {
+                item.classList.add('paused');
+
+                item.addEventListener('click', (e) => {
+                    if (e.target.closest('button')) return;
+
+                    if (video.paused) {
+                        video.play();
+                        item.classList.remove('paused');
+                    } else {
+                        video.pause();
+                        item.classList.add('paused');
+                    }
+                });
+            }
+        });
+
+        // ================= LIKE =================
+        document.querySelectorAll('.like-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const id = btn.dataset.id;
+                const res = await fetch(`/kijiji/like/${id}`, { method: 'POST' });
+                const data = await res.json();
+                const icon = btn.querySelector('i');
+                const count = btn.querySelector('.likes-count');
+
+                if (data.status === 'liked') {
+                    btn.classList.add('liked');
+                    icon.classList.replace('fa-regular', 'fa-solid');
+                } else {
+                    btn.classList.remove('liked');
+                    icon.classList.replace('fa-solid', 'fa-regular');
+                }
+                count.textContent = data.likes_count;
+            });
+        });
+
+        // ================= SAVE =================
+        document.querySelectorAll('.save-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const id = btn.dataset.id;
+                const res = await fetch(`/kijiji/save/${id}`, { method: 'POST' });
+                const data = await res.json();
+                const icon = btn.querySelector('i');
+
+                if (data.status === 'saved') {
+                    btn.classList.add('saved');
+                    icon.classList.replace('fa-regular', 'fa-solid');
+                } else {
+                    btn.classList.remove('saved');
+                    icon.classList.replace('fa-solid', 'fa-regular');
+                }
+            });
+        });
+
+        // ================= SHARE =================
+        document.querySelectorAll('.share-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const id = btn.dataset.id;
+                const res = await fetch(`/kijiji/share/${id}`, { method: 'POST' });
+                const data = await res.json();
+                btn.querySelector('.shares-count').textContent = data.shares;
+                navigator.clipboard.writeText(window.location.origin + '/kijiji');
+                alert('Link imenakiliwa!');
+            });
+        });
+
+        // ================= REPOST =================
+        document.querySelectorAll('.repost-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const id = btn.dataset.id;
+                const res = await fetch(`/kijiji/repost/${id}`, { method: 'POST' });
+                const data = await res.json();
+                if (data.status === 'reposted') {
+                    btn.classList.add('reposted');
+                    alert('Umerepost!');
+                } else {
+                    btn.classList.remove('reposted');
+                }
+            });
+        });
+
+        // ================= COMMENTS =================
+        document.querySelectorAll('.comment-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                currentPostId = btn.dataset.id;
+                openComments(currentPostId);
+            });
+        });
+
+        async function openComments(postId) {
+            document.getElementById('overlayBg').classList.add('active');
+            document.getElementById('commentsModal').classList.add('active');
+            document.getElementById('commentsList').innerHTML = '<p style="text-align:center;color:#888;margin-top:40px;">Inapakia...</p>';
+
+            try {
+                const res = await fetch(`/kijiji/comments/${postId}`);
+
+                if (!res.ok) {
+                    throw new Error(`Status: ${res.status}`);
+                }
+
+                const comments = await res.json();
+                renderComments(comments);
+            } catch (err) {
+                console.error(err);
+                document.getElementById('commentsList').innerHTML = `
+                    <p style="text-align:center;color:#ff4444;margin-top:40px;">
+                        Hitilafu: ${err.message}<br>
+                        <small>Hakikisha umeingia na route ya comments ipo</small>
+                    </p>`;
+            }
+        }
+
+        function renderComments(comments) {
+            const list = document.getElementById('commentsList');
+            if (!comments || comments.length === 0) {
+                list.innerHTML = '<p style="text-align:center;color:#888;margin-top:50px;">Hakuna comments bado</p>';
+                return;
+            }
+            list.innerHTML = comments.map(c => `
+                <div class="comment-item">
+                    <img src="/static/uploads/${c.profile_pic || ''}" onerror="this.src='/static/images/default.png'">
+                    <div class="comment-body">
+                        <strong>@${c.username}</strong>
+                        <p>${c.content}</p>
+                        <small>${c.created_at}</small>
+                    </div>
+                    <button class="delete-comment" onclick="deleteComment(${c.id})">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        async function sendComment() {
+            const input = document.getElementById('commentInput');
+            const content = input.value.trim();
+            if (!content) return;
+
+            const res = await fetch(`/kijiji/comment/${currentPostId}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ content })
+            });
+            const data = await res.json();
+            if (data.id) {
+                input.value = '';
+                openComments(currentPostId);
+                const btn = document.querySelector(`.comment-btn[data-id="${currentPostId}"] .comments-count`);
+                if (btn) btn.textContent = parseInt(btn.textContent || 0) + 1;
+            }
+        }
+
+        async function deleteComment(commentId) {
+            if (!confirm('Futa comment hii?')) return;
+            const res = await fetch(`/kijiji/comment/delete/${commentId}`, { method: 'POST' });
+            const data = await res.json();
+            if (data.status === 'deleted') {
+                openComments(currentPostId);
+                const btn = document.querySelector(`.comment-btn[data-id="${currentPostId}"] .comments-count`);
+                if (btn) btn.textContent = Math.max(0, parseInt(btn.textContent || 0) - 1);
+            }
+        }
+
+        function closeComments() {
+            document.getElementById('commentsModal').classList.remove('active');
+            document.getElementById('overlayBg').classList.remove('active');
+        }
+
+        // ================= MORE (Report / Block) =================
+        document.querySelectorAll('.more-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                currentPostId = btn.dataset.id;
+                currentUserId = btn.dataset.user;
+                document.getElementById('actionModal').classList.add('active');
+                document.getElementById('overlayBg').classList.add('active');
+            });
+        });
+
+        function closeActionModal() {
+            document.getElementById('actionModal').classList.remove('active');
+            document.getElementById('overlayBg').classList.remove('active');
+        }
+
+        async function reportPost() {
+            const reason = prompt('Andika sababu ya kuripoti:');
+            if (!reason) return;
+            const res = await fetch(`/kijiji/report/${currentPostId}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ reason })
+            });
+            const data = await res.json();
+            alert(data.status === 'reported' ? 'Asante! Imeripotiwa.' : (data.error || 'Imeshindikana'));
+            closeActionModal();
+        }
+
+        async function blockUser() {
+            if (!confirm('Unataka kumzuia user huyu?')) return;
+            const res = await fetch(`/kijiji/block/${currentUserId}`, { method: 'POST' });
+            const data = await res.json();
+            if (data.status === 'blocked') {
+                alert('User amezuiliwa');
+                location.reload();
+            }
+            closeActionModal();
+        }
+
+        // Close modals
+        document.getElementById('overlayBg').addEventListener('click', () => {
+            closeComments();
+            closeActionModal();
+        });
+
+        document.getElementById('commentInput').addEventListener('keypress', e => {
+            if (e.key === 'Enter') sendComment();
+        });
+    </script>
+</body>
+</html>

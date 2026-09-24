@@ -1,0 +1,2340 @@
+<!DOCTYPE html>
+<html lang="{{ current_language }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ t('settings', 'Settings & Privacy') }} - Kijiji Tanzania</title>
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            color: #333;
+            padding-bottom: 70px;
+        }
+
+        header {
+            background: #ffffff;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        header a,
+        header button {
+            color: #1EB53A;
+            font-size: 20px;
+            text-decoration: none;
+            margin-right: 15px;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        header h1 {
+            font-size: 20px;
+            color: #1EB53A;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 0 10px;
+        }
+
+        .flash {
+            background: #e8f5e9;
+            color: #1EB53A;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            text-align: center;
+            border: 1px solid #a5d6a7;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+            padding: 20px;
+        }
+
+        .card h3 {
+            font-size: 16px;
+            color: #1EB53A;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            color: #65676b;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="password"],
+        input[type="text"],
+        input[type="email"],
+        select {
+            width: 100%;
+            padding: 10px 40px 10px 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #1EB53A;
+        }
+
+        .btn-action {
+            background: #1EB53A;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 5px;
+            width: 100%;
+        }
+
+        .btn-action:hover {
+            background: #189c32;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 14px 10px;
+            margin: 0 -10px;
+            border-radius: 10px;
+            border-bottom: 1px solid #f0f2f5;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            font-family: inherit;
+            text-decoration: none;
+            text-align: left;
+            color: inherit;
+            background: none;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+            appearance: none;
+            -webkit-appearance: none;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        button.menu-item:focus-visible {
+            outline: 2px solid #1EB53A;
+            outline-offset: 2px;
+        }
+
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .menu-item:hover {
+            color: #1EB53A;
+            background: #f5faf6;
+            transform: translateX(2px);
+        }
+
+        .menu-item i.left {
+            width: 24px;
+            color: #1EB53A;
+            transition: transform 0.2s ease;
+        }
+
+        .menu-item:hover i.left {
+            transform: scale(1.12);
+        }
+
+        .menu-item i.right {
+            color: #65676b;
+            font-size: 13px;
+            transition: transform 0.2s ease;
+        }
+
+        .menu-item:hover i.right {
+            transform: translateX(2px);
+        }
+
+        /* =========================
+           CHANGE LANGUAGE
+           ========================= */
+
+        .language-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 0;
+            border-bottom: 1px solid #f0f2f5;
+            text-decoration: none;
+            color: #333;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .language-menu-item:hover {
+            background: linear-gradient(
+                90deg,
+                rgba(30,181,58,0.08),
+                rgba(0,0,0,0.03),
+                rgba(0,174,239,0.08)
+            );
+            color: #1EB53A;
+        }
+
+        .language-icon {
+            width: 42px;
+            height: 42px;
+            min-width: 42px;
+            border-radius: 12px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-size: 21px;
+
+            /* Tanzania flag colours */
+            background:
+                linear-gradient(
+                    145deg,
+                    #1EB53A 0%,
+                    #1EB53A 38%,
+                    #111111 38%,
+                    #111111 45%,
+                    #FCD116 45%,
+                    #FCD116 54%,
+                    #00AEEF 54%,
+                    #00AEEF 100%
+                );
+
+            box-shadow:
+                0 3px 8px rgba(0,0,0,0.14);
+        }
+
+        .language-text {
+            flex: 1;
+        }
+
+        .language-title {
+            display: block;
+            color: #222;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .language-subtitle {
+            display: block;
+            margin-top: 3px;
+            color: #777;
+            font-size: 12px;
+            font-weight: 400;
+        }
+
+        /* =========================
+           KIJIJI MODE
+           ========================= */
+
+        .kijiji-mode-item {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 12px;
+            margin: 6px 0;
+            border-radius: 14px;
+            text-decoration: none;
+            color: #17331d;
+            font-size: 15px;
+            font-weight: 600;
+            background: linear-gradient(
+                90deg,
+                rgba(30,181,58,0.07),
+                rgba(0,174,239,0.06)
+            );
+            border: 1px solid rgba(30,181,58,0.18);
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        .kijiji-mode-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(30,181,58,0.2);
+            border-color: rgba(30,181,58,0.4);
+        }
+
+        .kijiji-icon-wrap {
+            position: relative;
+            width: 42px;
+            height: 42px;
+            min-width: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .kijiji-icon-wrap .ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 2px solid #1EB53A;
+            transform: translate(-50%, -50%) scale(0.9);
+            opacity: 0.55;
+            animation: kijiji-pulse 2.6s ease-out infinite;
+        }
+
+        .kijiji-icon-wrap .ring.ring-2 {
+            animation-delay: 0.9s;
+            border-color: #00AEEF;
+        }
+
+        @keyframes kijiji-pulse {
+            0%   { transform: translate(-50%, -50%) scale(0.85); opacity: 0.55; }
+            70%  { transform: translate(-50%, -50%) scale(1.9); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1.9); opacity: 0; }
+        }
+
+        .kijiji-icon-core {
+            position: relative;
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #ffffff;
+            background: linear-gradient(145deg, #1EB53A 0%, #189c32 100%);
+            box-shadow: 0 3px 8px rgba(30,181,58,0.35);
+            z-index: 1;
+        }
+
+        .kijiji-text {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .kijiji-title {
+            display: block;
+            color: #17331d;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .kijiji-subtitle {
+            display: block;
+            margin-top: 2px;
+            color: #4c6b52;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .kijiji-mode-item .right {
+            color: #65676b;
+            font-size: 13px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .kijiji-icon-wrap .ring {
+                animation: none;
+                opacity: 0.3;
+            }
+        }
+
+        /* =========================
+           SETTINGS GROUP LABELS
+           ========================= */
+
+        .settings-group-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 22px 4px 10px;
+            font-size: 12.5px;
+            font-weight: 800;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+            color: #189c32;
+        }
+
+        .settings-group-label:first-of-type {
+            margin-top: 4px;
+        }
+
+        .settings-group-label i {
+            font-size: 12px;
+            width: 18px;
+            height: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            color: #ffffff;
+            background: linear-gradient(145deg, #1EB53A 0%, #189c32 100%);
+            box-shadow: 0 2px 5px rgba(30,181,58,0.35);
+        }
+
+        .settings-group-label-danger {
+            color: #b71c1c;
+        }
+
+        .settings-group-label-danger i {
+            background: linear-gradient(145deg, #e53935 0%, #b71c1c 100%);
+            box-shadow: 0 2px 5px rgba(183,28,28,0.3);
+        }
+
+        /* =========================
+           ADMIN
+           ========================= */
+
+        .admin-item {
+            background: #e8f5e9;
+            border-radius: 8px;
+            padding: 14px 12px !important;
+            margin-top: 8px;
+            border: 1px solid #a5d6a7 !important;
+        }
+
+        .admin-item i.left {
+            color: #1EB53A;
+        }
+
+        /* =========================
+           PASSWORD
+           ========================= */
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        .password-wrapper input {
+            padding-right: 40px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #65676b;
+            font-size: 15px;
+            padding: 4px;
+        }
+
+        .toggle-password:hover {
+            color: #1EB53A;
+        }
+
+        /* =========================
+           FULL SECTIONS
+           ========================= */
+
+        .full-section {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #f0f2f5;
+            z-index: 2000;
+            overflow-y: auto;
+        }
+
+        .full-section.active {
+            display: block;
+        }
+
+        .section-header {
+            background: #ffffff;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .section-header button {
+            background: none;
+            border: none;
+            color: #1EB53A;
+            font-size: 20px;
+            margin-right: 15px;
+            cursor: pointer;
+        }
+
+        .section-header h2 {
+            font-size: 18px;
+            color: #1EB53A;
+        }
+
+        .section-body {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+
+        /* =========================
+           HELP
+           ========================= */
+
+        .help-link-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .help-link-box p {
+            font-size: 14px;
+            color: #65676b;
+        }
+
+        .btn-help {
+            background: #e8f5e9;
+            color: #1EB53A;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* =========================
+           BLOCKED USERS
+           ========================= */
+
+        .blocked-user {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f2f5;
+        }
+
+        .btn-unblock {
+            background: #e4e6eb;
+            color: #050505;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* =========================
+           CONFIRM MODAL (LOGOUT)
+           ========================= */
+
+        .confirm-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 26, 18, 0.55);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: overlay-fade 0.18s ease;
+        }
+
+        .confirm-modal-overlay.active {
+            display: flex;
+        }
+
+        @keyframes overlay-fade {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .confirm-modal {
+            width: 100%;
+            max-width: 340px;
+            background: #ffffff;
+            border-radius: 18px;
+            padding: 26px 22px 22px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.28);
+            animation: modal-pop 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes modal-pop {
+            from { opacity: 0; transform: scale(0.9) translateY(8px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .confirm-modal-icon {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 14px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: #ffffff;
+            background: linear-gradient(145deg, #1EB53A 0%, #189c32 100%);
+            box-shadow: 0 6px 16px rgba(30,181,58,0.35);
+        }
+
+        .confirm-modal-title {
+            font-size: 17px;
+            font-weight: 800;
+            color: #17331d;
+            margin-bottom: 8px;
+        }
+
+        .confirm-modal-text {
+            font-size: 13.5px;
+            color: #65676b;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .confirm-modal-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .confirm-btn {
+            flex: 1;
+            padding: 12px 10px;
+            border-radius: 10px;
+            border: none;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.15s ease, opacity 0.15s ease;
+        }
+
+        .confirm-btn:active {
+            transform: scale(0.96);
+        }
+
+        .confirm-btn-no {
+            background: #e4e6eb;
+            color: #050505;
+        }
+
+        .confirm-btn-no:hover {
+            background: #d8dade;
+        }
+
+        .confirm-btn-yes {
+            background: linear-gradient(145deg, #e53935 0%, #c62828 100%);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(198,40,40,0.3);
+        }
+
+        .confirm-btn-yes:hover {
+            opacity: 0.92;
+        }
+
+        /* =========================
+           BOTTOM NAV
+           ========================= */
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #ffffff;
+            border-top: 1px solid #ddd;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            z-index: 1000;
+        }
+
+        .bottom-nav a {
+            color: #65676b;
+            text-align: center;
+            font-size: 20px;
+            text-decoration: none;
+        }
+
+        .bottom-nav a.active {
+            color: #1EB53A;
+        }
+
+        /* =========================
+           VOLUME CONTROLS
+           ========================= */
+
+        .volume-row {
+            margin-bottom: 18px;
+        }
+
+        .volume-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .volume-label-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .volume-label-row label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .volume-label-row label i {
+            color: #1EB53A;
+        }
+
+        .volume-value {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1EB53A;
+            min-width: 40px;
+            text-align: right;
+        }
+
+        input[type="range"].volume-slider {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: #e4e6eb;
+            border-radius: 6px;
+            outline: none;
+            padding: 0;
+            border: none;
+        }
+
+        input[type="range"].volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #1EB53A;
+            cursor: pointer;
+            border: 2px solid #fff;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+        }
+
+        input[type="range"].volume-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #1EB53A;
+            cursor: pointer;
+            border: 2px solid #fff;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+        }
+
+        .volume-hint {
+            font-size: 12px;
+            color: #65676b;
+            margin-top: 6px;
+            line-height: 1.4;
+        }
+
+        .username-preview {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            background: #f0f7f1;
+            border: 1px solid #d7ebda;
+        }
+        .username-preview .up-at {
+            font-weight: 700;
+            color: #0f1a12;
+            font-size: 15px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .username-preview .up-edit-btn {
+            flex-shrink: 0;
+            border: none;
+            background: none;
+            color: #1EB53A;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            padding: 4px 6px;
+        }
+        .username-preview .up-edit-btn:active { opacity: 0.6; }
+        #usernameEditBox.hidden { display: none; }
+
+        #username-status.ok { color: #059669; }
+        #username-status.bad { color: #dc2626; }
+        #username-status.wait { color: #64748b; font-weight: 500; }
+        #new_username.user-ok { border-color: #10b981; background: #ecfdf5; }
+        #new_username.user-bad { border-color: #ef4444; background: #fef2f2; }
+        .sug-btn {
+            display: inline-block;
+            margin: 3px 5px 3px 0;
+            padding: 6px 12px;
+            background: #ecfdf5;
+            border: 1px solid #1EB53A;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #065f46;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .sug-btn:hover { background: #1EB53A; color: white; }
+    </style>
+</head>
+
+<body>
+
+    <div id="mainSettings">
+
+        <header>
+            <a href="{{ url_for('profile', username=user.username) }}">
+                <i class="fa-solid fa-arrow-left"></i>
+            </a>
+
+            <h1>{{ t('settings', 'Settings & Privacy') }}</h1>
+        </header>
+
+        <div class="container">
+
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="flash">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+
+            <!-- =========================
+                 GROUP: AKAUNTI YANGU
+                 ========================= -->
+
+            <div class="settings-group-label">
+                <i class="fa-solid fa-user-gear"></i>
+                {{ t('group_account', 'Akaunti Yangu') }}
+            </div>
+
+            <div class="card">
+
+                <button type="button" class="menu-item"
+                     onclick="openSection('infoSection')">
+
+                    <span>
+                        <i class="fa-solid fa-user-pen left"></i>
+                        {{ t('change_info', 'Badilisha Taarifa Zako') }}
+                    </span>
+
+                    <i class="fa-solid fa-chevron-right right"></i>
+                </button>
+
+
+                <button type="button" class="menu-item"
+                     onclick="openSection('passwordSection')">
+
+                    <span>
+                        <i class="fa-solid fa-lock left"></i>
+                        {{ t('change_password', 'Badilisha Password') }}
+                    </span>
+
+                    <i class="fa-solid fa-chevron-right right"></i>
+                </button>
+
+
+                <a href="/settings/sessions" class="menu-item">
+                    <span>
+                        <i class="fa-solid fa-mobile-screen left"></i>
+                        Sessions (Vifaa)
+                    </span>
+                    <i class="fa-solid fa-chevron-right right"></i>
+                </a>
+
+            </div>
+
+
+            <!-- =========================
+                 GROUP: FARAGHA NA USALAMA
+                 ========================= -->
+
+            <div class="settings-group-label">
+                <i class="fa-solid fa-shield-halved"></i>
+                {{ t('group_privacy', 'Faragha na Usalama') }}
+            </div>
+
+            <div class="card">
+
+                <button type="button" class="menu-item"
+                     onclick="openSection('preferencesSection')">
+
+                    <span>
+                        <i class="fa-solid fa-sliders left"></i>
+                        {{ t('post_preferences', 'Mapendeleo ya Machapisho') }}
+                    </span>
+
+                    <i class="fa-solid fa-chevron-right right"></i>
+                </button>
+
+
+                <button type="button" class="menu-item"
+                     onclick="openSection('blockedSection')">
+
+                    <span>
+                        <i class="fa-solid fa-user-lock left"></i>
+                        {{ t('blocked_accounts', 'Akaunti Ulizofungia') }}
+                    </span>
+
+                    <i class="fa-solid fa-chevron-right right"></i>
+                </button>
+
+
+                <a href="/muted" class="menu-item">
+                    <span>
+                        <i class="fa-solid fa-volume-xmark left"></i>
+                        Walio mute
+                    </span>
+                    <i class="fa-solid fa-chevron-right right"></i>
+                </a>
+
+                <a href="/close-friends" class="menu-item">
+                    <span>
+                        <i class="fa-solid fa-user-group left"></i>
+                        Close Friends
+                    </span>
+                    <i class="fa-solid fa-chevron-right right"></i>
+                </a>
+
+            </div>
+
+
+            <!-- =========================
+                 GROUP: UZOEFU WA MATUMIZI
+                 ========================= -->
+
+            <div class="settings-group-label">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                {{ t('group_experience', 'Uzoefu wa Matumizi') }}
+            </div>
+
+            <div class="card">
+
+                <a href="/settings/kijiji-mode" class="kijiji-mode-item">
+
+                    <span class="kijiji-icon-wrap">
+                        <span class="ring"></span>
+                        <span class="ring ring-2"></span>
+                        <span class="kijiji-icon-core">
+                            <i class="fa-solid fa-tower-broadcast"></i>
+                        </span>
+                    </span>
+
+                    <span class="kijiji-text">
+                        <span class="kijiji-title">Kijiji Mode</span>
+                        <span class="kijiji-subtitle">Hali maalum ya matumizi</span>
+                    </span>
+
+                    <i class="fa-solid fa-chevron-right right"></i>
+                </a>
+
+                <button type="button" class="menu-item"
+                     onclick="openSection('volumeSection')">
+
+                    <span>
+                        <i class="fa-solid fa-volume-high left"></i>
+                        {{ t('sound_settings', 'Sauti (Background & Ringtone)') }}
+                    </span>
+
+                    <i class="fa-solid fa-chevron-right right"></i>
+                </button>
+
+
+                <!-- =========================
+                     CHANGE LANGUAGE
+                     HAKUNA >
+                     ========================= -->
+
+                <a href="{{ url_for('change_language') }}"
+                   class="language-menu-item">
+
+                    <span class="language-icon">
+                        🌐
+                    </span>
+
+                    <span class="language-text">
+
+                        <span class="language-title">
+                            {{ t('change_language', 'Change Language') }}
+                        </span>
+
+                        <span class="language-subtitle">
+                            {% set lang_info = languages.get(current_language) %}
+                            {% if lang_info is mapping %}
+                                {{ lang_info.get('name', 'Kiswahili') }}
+                            {% else %}
+                                {{ lang_info or 'Kiswahili' }}
+                            {% endif %}
+                        </span>
+
+                    </span>
+
+                </a>
+
+            </div>
+
+
+            <!-- =========================
+                 GROUP: MAUDHUI YANGU
+                 ========================= -->
+
+            <div class="settings-group-label">
+                <i class="fa-solid fa-layer-group"></i>
+                {{ t('group_content', 'Maudhui Yangu') }}
+            </div>
+
+            <div class="card">
+
+                <a href="/insights" class="menu-item">
+                    <span>
+                        <i class="fa-solid fa-chart-simple left"></i>
+                        Insights
+                    </span>
+                    <i class="fa-solid fa-chevron-right right"></i>
+                </a>
+
+                <a href="/drafts" class="menu-item">
+                    <span>
+                        <i class="fa-solid fa-file-lines left"></i>
+                        Drafts
+                    </span>
+                    <i class="fa-solid fa-chevron-right right"></i>
+                </a>
+
+            </div>
+
+
+            {% if session.get('is_admin') %}
+            <!-- =========================
+                 GROUP: ADMIN
+                 ========================= -->
+
+            <div class="settings-group-label">
+                <i class="fa-solid fa-shield-halved"></i>
+                {{ t('group_admin', 'Admin') }}
+            </div>
+
+            <div class="card">
+
+                <a href="/admin"
+                   class="menu-item admin-item">
+
+                    <span>
+                        <i class="fa-solid fa-shield-halved left"></i>
+                        {{ t('admin_panel', 'Admin Panel') }}
+                    </span>
+
+                    <i class="fa-solid fa-chevron-right right"></i>
+
+                </a>
+
+            </div>
+            {% endif %}
+
+
+            <!-- =========================
+                 GROUP: ENEO HATARI
+                 ========================= -->
+
+            <div class="settings-group-label settings-group-label-danger">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                {{ t('group_danger', 'Eneo Hatari') }}
+            </div>
+
+            <div class="card">
+
+                <button type="button" class="menu-item" onclick="confirmLogout()">
+                    <span>
+                        <i class="fa-solid fa-right-from-bracket left"></i>
+                        {{ t('logout', 'Toka (Logout)') }}
+                    </span>
+                    <i class="fa-solid fa-chevron-right right"></i>
+                </button>
+
+                <a href="{{ url_for('deactivate') }}"
+                   class="menu-item"
+                   style="color:#c62828; align-items: flex-start;">
+
+                    <span style="display:flex;flex-direction:column;gap:3px;min-width:0;">
+                        <span style="display:flex;align-items:center;">
+                            <i class="fa-solid fa-user-slash left" style="color:#c62828;"></i>
+                            {{ t('deactivate_account', 'Zima akaunti') }}
+                        </span>
+                        {% if is_google %}
+                        <small style="color:#1a73e8;font-size:11.5px;font-weight:700;padding-left:28px;line-height:1.35;">
+                            <i class="fa-brands fa-google"></i> Akaunti ya Google<br>
+                            <span style="font-weight:600;">Hatua: fungua → andika ndiyo → Zima (hakuna nenosiri)</span>
+                        </small>
+                        {% else %}
+                        <small style="color:#666;font-size:11px;font-weight:500;padding-left:28px;">
+                            Hatua: nenosiri + andika ndiyo · unaweza kurejesha baadaye
+                        </small>
+                        {% endif %}
+                    </span>
+
+                    <i class="fa-solid fa-chevron-right right" style="margin-top:4px;"></i>
+                </a>
+
+                <a href="{{ url_for('delete_account') }}"
+                   class="menu-item"
+                   style="color:#b71c1c; align-items: flex-start;">
+
+                    <span style="display:flex;flex-direction:column;gap:3px;min-width:0;">
+                        <span style="display:flex;align-items:center;">
+                            <i class="fa-solid fa-trash left" style="color:#b71c1c;"></i>
+                            {{ t('delete_account', 'Futa akaunti kabisa') }}
+                        </span>
+                        <small style="color:#999;font-size:11px;font-weight:500;padding-left:28px;line-height:1.35;">
+                            Haiwezi kurejeshwa · posts, chat na data zote zitaondolewa
+                        </small>
+                    </span>
+
+                    <i class="fa-solid fa-chevron-right right" style="margin-top:4px;"></i>
+                </a>
+
+            </div>
+
+
+            <!-- =========================
+                 HELP CENTER
+                 ========================= -->
+
+            <div class="card">
+
+                <h3>
+                    <i class="fa-solid fa-circle-question"></i>
+                    {{ t('help_services', 'Msaada na Huduma') }}
+                </h3>
+
+                <div class="help-link-box">
+
+                    <p>
+                        {{ t('need_help', 'Unahitaji msaada au kuongea na Admin?') }}
+                    </p>
+
+                    <a href="{{ url_for('help_center') }}"
+                       class="btn-help">
+
+                        <i class="fa-solid fa-headset"></i>
+                        {{ t('help_center', 'Help Center') }}
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- =========================
+         CHANGE INFORMATION
+         ========================= -->
+
+    <div id="infoSection" class="full-section {% if pending_email_change %}active{% endif %}">
+
+        <div class="section-header">
+            <button onclick="closeSection('infoSection')">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <h2>{{ t('change_info', 'Badilisha Taarifa Zako') }}</h2>
+        </div>
+
+        <div class="section-body">
+
+            {% if pending_email_change %}
+            <div class="card">
+                <h3 style="margin-bottom:12px; color:#1EB53A;">
+                    <i class="fa-solid fa-envelope-circle-check"></i>
+                    Thibitisha Mabadiliko ya Email
+                </h3>
+                <p style="font-size:14px; color:#65676b; margin-bottom:14px; line-height:1.5;">
+                    Tumekutumia OTP kwenye email yako inayoishia na
+                    <strong>
+                        {% set oe = pending_email_change.old_email or '' %}
+                        {% if oe and '@' in oe %}
+                            {{ oe[:2] }}***@{{ oe.split('@')[1] }}
+                        {% else %}
+                            ****
+                        {% endif %}
+                    </strong>.
+                    Ingiza OTP ili kukamilisha mabadiliko
+                    (email mpya: <strong>{{ pending_email_change.new_email }}</strong>,
+                    username: <strong>@{{ pending_email_change.new_username }}</strong>).
+                </p>
+                <form action="{{ url_for('settings') }}" method="POST">
+                    <input type="hidden" name="action" value="verify_email_otp">
+                    <div class="form-group">
+                        <label>OTP (herufi 6):</label>
+                        <input type="text" name="otp" inputmode="numeric" pattern="[0-9]{6}"
+                               maxlength="6" placeholder="000000" required autocomplete="one-time-code"
+                               style="letter-spacing:6px; font-size:18px; text-align:center; font-weight:700;">
+                    </div>
+                    <button type="submit" class="btn-action">{{ t('verify_otp', 'Thibitisha OTP') }}</button>
+                </form>
+                <form action="{{ url_for('settings') }}" method="POST" style="margin-top:10px;">
+                    <input type="hidden" name="action" value="resend_email_otp">
+                    <button type="submit" class="btn-action" style="background:#e4e6eb; color:#050505;">
+                        {{ t('resend_otp', 'Tuma OTP tena') }}
+                    </button>
+                </form>
+                <form action="{{ url_for('settings') }}" method="POST" style="margin-top:8px;">
+                    <input type="hidden" name="action" value="cancel_email_change">
+                    <button type="submit" class="btn-action" style="background:#fee2e2; color:#b91c1c;">
+                        {{ t('cancel', 'Ghairi mabadiliko') }}
+                    </button>
+                </form>
+            </div>
+            {% else %}
+            <div class="card">
+                <form action="{{ url_for('settings') }}" method="POST" id="changeInfoForm"
+                      onsubmit="return onChangeInfoSubmit()">
+                    <input type="hidden" name="action" value="change_info">
+                    <div class="form-group">
+                        <label>{{ t('username', 'Username') }}:</label>
+
+                        <div class="username-preview" id="usernamePreview">
+                            <span class="up-at" id="usernamePreviewText">@{{ user.username }}</span>
+                            <button type="button" class="up-edit-btn" onclick="showUsernameEdit()">
+                                <i class="fa-solid fa-pen"></i> {{ t('change', 'Badilisha') }}
+                            </button>
+                        </div>
+
+                        <div id="usernameEditBox" class="hidden">
+                            <input type="text" id="new_username" name="new_username"
+                                   value="{{ user.username }}" required minlength="3" maxlength="30"
+                                   pattern="[A-Za-z0-9_]+" title="Herufi, namba na underscore (_) tu"
+                                   autocomplete="username">
+                            <div id="username-status" class="wait"
+                                 style="min-height:18px; margin-top:6px; font-size:12px; font-weight:600;"></div>
+                            <div class="suggestions" id="suggestions-box" style="display:none; margin-top:8px;">
+                                <div style="font-size:12px; color:#475569; margin-bottom:6px; font-weight:600;">
+                                    {{ t('suggestions', 'Mapendekezo:') }}
+                                </div>
+                                <div id="suggestions-list"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>{{ t('email', 'Email') }}:</label>
+                        <input type="email" id="new_email" name="new_email"
+                               value="{{ user.email }}" required autocomplete="email">
+                        <p style="font-size:12px; color:#65676b; margin-top:6px; line-height:1.4;">
+                            Ukibadilisha email, OTP itatumwa kwenye email yako YA SASA ili kuthibitisha.
+                        </p>
+                    </div>
+                    <button type="submit" class="btn-action">{{ t('save_changes', 'Hifadhi Mabadiliko') }}</button>
+                </form>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+
+    <!-- =========================
+         CHANGE PASSWORD
+         ========================= -->
+
+    <div id="passwordSection" class="full-section">
+        <div class="section-header">
+            <button onclick="closeSection('passwordSection')">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <h2>{{ t('change_password', 'Badilisha Password') }}</h2>
+        </div>
+        <div class="section-body">
+            <div class="card">
+                <form action="{{ url_for('settings') }}" method="POST">
+                    <input type="hidden" name="action" value="change_password">
+                    <div class="form-group">
+                        <label>{{ t('current_password', 'Nenosiri la Sasa') }}:</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="current_password" name="current_password"
+                                   required autocomplete="current-password">
+                            <button type="button" class="toggle-password"
+                                    onclick="togglePassword('current_password', 'eye1')">
+                                <i class="fa-solid fa-eye" id="eye1"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>{{ t('new_password', 'Nenosiri Jipya') }}:</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="new_password" name="new_password"
+                                   required minlength="6" autocomplete="new-password">
+                            <button type="button" class="toggle-password"
+                                    onclick="togglePassword('new_password', 'eye2')">
+                                <i class="fa-solid fa-eye" id="eye2"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-action">
+                        {{ t('change_password', 'Badilisha Password') }}
+                    </button>
+                </form>
+                <div style="text-align:center; margin-top:16px; padding-top:12px; border-top:1px solid #f0f2f5;">
+                    <a href="{{ url_for('forgot_password') }}"
+                       style="color:#1EB53A; font-size:14px; font-weight:600; text-decoration:none;">
+                        <i class="fa-solid fa-key"></i>
+                        {{ t('forgot_password', 'Umesahau nenosiri?') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- =========================
+         POST PREFERENCES
+         ========================= -->
+
+    <div id="preferencesSection"
+         class="full-section">
+
+        <div class="section-header">
+
+            <button onclick="closeSection('preferencesSection')">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+
+            <h2>{{ t('post_preferences', 'Mapendeleo ya Machapisho') }}</h2>
+
+        </div>
+
+        <div class="section-body">
+
+            <div class="card">
+
+                <form action="{{ url_for('settings') }}"
+                      method="POST">
+
+                    <input type="hidden"
+                           name="action"
+                           value="update_preferences">
+
+
+                    <div class="form-group">
+
+                        <label>
+                            {{ t('who_sees_posts', 'Nani anaweza kuona machapisho yako?') }}
+                        </label>
+
+                        <select name="post_visibility">
+
+                            <option value="public"
+                                {% if user.post_visibility == 'public' %}
+                                    selected
+                                {% endif %}>
+                                {{ t('visibility_public', 'Kila Mtu (Public)') }}
+                            </option>
+
+                            <option value="followers"
+                                {% if user.post_visibility == 'followers' %}
+                                    selected
+                                {% endif %}>
+                                {{ t('visibility_followers', 'Wafuasi Wangu Tu (Followers Only)') }}
+                            </option>
+
+                            <option value="private"
+                                {% if user.post_visibility == 'private' %}
+                                    selected
+                                {% endif %}>
+                                {{ t('visibility_private', 'Mimi Mwenyewe Tu (Private)') }}
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <button type="submit"
+                            class="btn-action">
+
+                        {{ t('save_preferences', 'Hifadhi Mapendeleo') }}
+
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         BLOCKED USERS
+         ========================= -->
+
+    <div id="blockedSection"
+         class="full-section">
+
+        <div class="section-header">
+
+            <button onclick="closeSection('blockedSection')">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+
+            <h2>{{ t('blocked_accounts', 'Akaunti Zilizoblockiwa') }}</h2>
+
+        </div>
+
+        <div class="section-body">
+
+            <div class="card">
+
+                {% if blocked_users and blocked_users|length > 0 %}
+
+                    {% for blocked in blocked_users %}
+
+                        <div class="blocked-user">
+
+                            <div>
+
+                                <strong>
+                                    {{ blocked.username }}
+                                </strong>
+
+                                <div style="font-size: 12px; color: #65676b;">
+                                    {{ blocked.email }}
+                                </div>
+
+                            </div>
+
+
+                            <form action="{{ url_for('unblock_user', user_id=blocked.id) }}"
+                                  method="POST"
+                                  style="margin: 0;">
+
+                                <button type="submit"
+                                        class="btn-unblock">
+
+                                    {{ t('unblock', 'Unblock') }}
+
+                                </button>
+
+                            </form>
+
+                        </div>
+
+                    {% endfor %}
+
+                {% else %}
+
+                    <p style="text-align: center; color: #65676b; padding: 20px 0;">
+
+                        {{ t('no_blocked', 'Hakuna akaunti ulizoblock.') }}
+
+                    </p>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         VOLUME SETTINGS
+         ========================= -->
+
+    <div id="volumeSection"
+         class="full-section">
+
+        <div class="section-header">
+
+            <button onclick="closeSection('volumeSection')">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+
+            <h2>{{ t('sound_settings', 'Sauti (Background & Ringtone)') }}</h2>
+
+        </div>
+
+        <div class="section-body">
+
+            <div class="card">
+
+
+                <div class="volume-row">
+
+                    <div class="volume-label-row">
+
+                        <label for="bgVolumeSlider">
+
+                            <i class="fa-solid fa-music"></i>
+
+                            {{ t('background_music', 'Background Music') }}
+
+                        </label>
+
+                        <span class="volume-value"
+                              id="bgVolumeValue">
+
+                            20%
+
+                        </span>
+
+                    </div>
+
+
+                    <input type="range"
+                           class="volume-slider"
+                           id="bgVolumeSlider"
+                           min="0"
+                           max="100"
+                           step="1"
+                           value="20">
+
+
+                    <p class="volume-hint">
+
+                        {{ t('bg_volume_hint', 'Sauti ya muziki wa background (login, register, chat). Default: 20%') }}
+
+                    </p>
+
+                </div>
+
+
+                <div class="volume-row">
+
+                    <div class="volume-label-row">
+
+                        <label for="ringtoneVolumeSlider">
+
+                            <i class="fa-solid fa-bell"></i>
+
+                            {{ t('ringtone', 'Ringtone') }}
+
+                        </label>
+
+                        <span class="volume-value"
+                              id="ringtoneVolumeValue">
+
+                            30%
+
+                        </span>
+
+                    </div>
+
+
+                    <input type="range"
+                           class="volume-slider"
+                           id="ringtoneVolumeSlider"
+                           min="0"
+                           max="100"
+                           step="1"
+                           value="30">
+
+
+                    <p class="volume-hint">
+
+                        {{ t('ringtone_hint', 'Sauti ya ringtone wakati wa simu (voice/video call). Default: 30%') }}
+
+                    </p>
+
+                </div>
+
+
+                <button type="button"
+                        class="btn-action"
+                        onclick="saveVolumeSettings()">
+
+                    {{ t('save_sound', 'Hifadhi Sauti') }}
+
+                </button>
+
+
+                <button type="button"
+                        class="btn-action"
+                        onclick="resetVolumeSettings()"
+                        style="background:#e4e6eb; color:#050505; margin-top:10px;">
+
+                    {{ t('reset_default_volume', 'Rudisha Default (20% / 30%)') }}
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         LOGOUT CONFIRM MODAL
+         ========================= -->
+
+    <div id="logoutModalOverlay" class="confirm-modal-overlay" onclick="if(event.target===this) closeLogoutModal()">
+
+        <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="logoutModalTitle">
+
+            <div class="confirm-modal-icon">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </div>
+
+            <h3 id="logoutModalTitle" class="confirm-modal-title">
+                {{ t('logout_confirm_title', 'Unataka kutoka nje?') }}
+            </h3>
+
+            <p class="confirm-modal-text">
+                {{ t('logout_confirm_text', 'Utahitaji kuingia tena ili uendelee kutumia akaunti yako.') }}
+            </p>
+
+            <div class="confirm-modal-actions">
+
+                <button type="button" class="confirm-btn confirm-btn-no" onclick="closeLogoutModal()">
+                    {{ t('no', 'Hapana') }}
+                </button>
+
+                <a href="{{ url_for('logout') }}" class="confirm-btn confirm-btn-yes">
+                    {{ t('yes', 'Ndiyo') }}
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         BOTTOM NAVIGATION
+         ========================= -->
+
+    <div class="bottom-nav">
+
+        <a href="{{ url_for('home') }}">
+            <i class="fa-solid fa-house"></i>
+        </a>
+
+        <a href="{{ url_for('search') }}">
+            <i class="fa-solid fa-magnifying-glass"></i>
+        </a>
+
+        <a href="{{ url_for('notifications') }}">
+            <i class="fa-solid fa-bell"></i>
+        </a>
+
+        <a href="{{ url_for('profile', username=user.username) }}">
+            <i class="fa-solid fa-user"></i>
+        </a>
+
+    </div>
+
+
+    <script>
+
+        /* =========================
+           SECTION NAVIGATION
+           ========================= */
+
+        function openSection(sectionId) {
+
+            document
+                .getElementById(sectionId)
+                .classList
+                .add('active');
+
+            document
+                .getElementById('mainSettings')
+                .style
+                .display = 'none';
+        }
+
+
+        function closeSection(sectionId) {
+
+            document
+                .getElementById(sectionId)
+                .classList
+                .remove('active');
+
+            document
+                .getElementById('mainSettings')
+                .style
+                .display = 'block';
+        }
+
+
+        /* =========================
+           LOGOUT CONFIRM MODAL
+           ========================= */
+
+        function confirmLogout() {
+            const overlay = document.getElementById('logoutModalOverlay');
+            if (overlay) overlay.classList.add('active');
+        }
+
+        function closeLogoutModal() {
+            const overlay = document.getElementById('logoutModalOverlay');
+            if (overlay) overlay.classList.remove('active');
+        }
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeLogoutModal();
+        });
+
+
+        /* =========================
+           PASSWORD VISIBILITY
+           ========================= */
+
+        function togglePassword(inputId, eyeId) {
+
+            const input =
+                document.getElementById(inputId);
+
+            const eye =
+                document.getElementById(eyeId);
+
+
+            if (input.type === 'password') {
+
+                input.type = 'text';
+
+                eye.classList.remove('fa-eye');
+
+                eye.classList.add('fa-eye-slash');
+
+            } else {
+
+                input.type = 'password';
+
+                eye.classList.remove('fa-eye-slash');
+
+                eye.classList.add('fa-eye');
+
+            }
+        }
+
+
+        /* =========================
+           VOLUME SETTINGS
+           ========================= */
+
+        const BG_VOL_KEY =
+            'kijiji_bg_volume';
+
+        const RING_VOL_KEY =
+            'kijiji_ringtone_volume';
+
+        const DEFAULT_BG_VOL = 20;
+
+        const DEFAULT_RING_VOL = 30;
+
+
+        function getStoredVolume(
+            key,
+            defaultPercent
+        ) {
+
+            const raw =
+                localStorage.getItem(key);
+
+            if (
+                raw === null ||
+                raw === ''
+            ) {
+                return defaultPercent;
+            }
+
+
+            const n =
+                parseInt(raw, 10);
+
+
+            if (
+                isNaN(n) ||
+                n < 0 ||
+                n > 100
+            ) {
+                return defaultPercent;
+            }
+
+
+            return n;
+        }
+
+
+        function initVolumeSliders() {
+
+            const bg =
+                getStoredVolume(
+                    BG_VOL_KEY,
+                    DEFAULT_BG_VOL
+                );
+
+
+            const ring =
+                getStoredVolume(
+                    RING_VOL_KEY,
+                    DEFAULT_RING_VOL
+                );
+
+
+            const bgSlider =
+                document.getElementById(
+                    'bgVolumeSlider'
+                );
+
+
+            const ringSlider =
+                document.getElementById(
+                    'ringtoneVolumeSlider'
+                );
+
+
+            const bgVal =
+                document.getElementById(
+                    'bgVolumeValue'
+                );
+
+
+            const ringVal =
+                document.getElementById(
+                    'ringtoneVolumeValue'
+                );
+
+
+            if (bgSlider) {
+
+                bgSlider.value = bg;
+
+                if (bgVal) {
+                    bgVal.textContent =
+                        bg + '%';
+                }
+
+
+                bgSlider.addEventListener(
+                    'input',
+                    function () {
+
+                        if (bgVal) {
+                            bgVal.textContent =
+                                this.value + '%';
+                        }
+
+                    }
+                );
+            }
+
+
+            if (ringSlider) {
+
+                ringSlider.value = ring;
+
+                if (ringVal) {
+                    ringVal.textContent =
+                        ring + '%';
+                }
+
+
+                ringSlider.addEventListener(
+                    'input',
+                    function () {
+
+                        if (ringVal) {
+                            ringVal.textContent =
+                                this.value + '%';
+                        }
+
+                    }
+                );
+            }
+        }
+
+
+        function saveVolumeSettings() {
+
+            const bgSlider =
+                document.getElementById(
+                    'bgVolumeSlider'
+                );
+
+
+            const ringSlider =
+                document.getElementById(
+                    'ringtoneVolumeSlider'
+                );
+
+
+            const bg =
+                bgSlider
+                    ? parseInt(
+                        bgSlider.value,
+                        10
+                    )
+                    : DEFAULT_BG_VOL;
+
+
+            const ring =
+                ringSlider
+                    ? parseInt(
+                        ringSlider.value,
+                        10
+                    )
+                    : DEFAULT_RING_VOL;
+
+
+            localStorage.setItem(
+                BG_VOL_KEY,
+                String(bg)
+            );
+
+
+            localStorage.setItem(
+                RING_VOL_KEY,
+                String(ring)
+            );
+
+
+            const bgMusic =
+                document.getElementById(
+                    'bg-music'
+                );
+
+
+            if (bgMusic) {
+                bgMusic.volume =
+                    bg / 100;
+            }
+
+
+            const ringtone =
+                document.getElementById(
+                    'ringtone'
+                );
+
+
+            if (ringtone) {
+                ringtone.volume =
+                    ring / 100;
+            }
+
+
+            const card =
+                bgSlider &&
+                bgSlider.closest('.card');
+
+
+            if (card) {
+
+                let flash =
+                    card.querySelector(
+                        '.volume-saved-flash'
+                    );
+
+
+                if (!flash) {
+
+                    flash =
+                        document.createElement(
+                            'div'
+                        );
+
+                    flash.className =
+                        'flash volume-saved-flash';
+
+                    flash.style.marginTop =
+                        '12px';
+
+                    card.appendChild(
+                        flash
+                    );
+                }
+
+
+                flash.textContent =
+                    'Sauti zimehifadhiwa! Background: '
+                    + bg
+                    + '%, Ringtone: '
+                    + ring
+                    + '%';
+
+
+                setTimeout(
+                    function () {
+
+                        if (
+                            flash &&
+                            flash.parentNode
+                        ) {
+
+                            flash.parentNode
+                                .removeChild(
+                                    flash
+                                );
+
+                        }
+
+                    },
+                    2500
+                );
+            }
+        }
+
+
+        function resetVolumeSettings() {
+
+            const bgSlider =
+                document.getElementById(
+                    'bgVolumeSlider'
+                );
+
+
+            const ringSlider =
+                document.getElementById(
+                    'ringtoneVolumeSlider'
+                );
+
+
+            const bgVal =
+                document.getElementById(
+                    'bgVolumeValue'
+                );
+
+
+            const ringVal =
+                document.getElementById(
+                    'ringtoneVolumeValue'
+                );
+
+
+            if (bgSlider) {
+
+                bgSlider.value =
+                    DEFAULT_BG_VOL;
+
+                if (bgVal) {
+
+                    bgVal.textContent =
+                        DEFAULT_BG_VOL + '%';
+
+                }
+            }
+
+
+            if (ringSlider) {
+
+                ringSlider.value =
+                    DEFAULT_RING_VOL;
+
+                if (ringVal) {
+
+                    ringVal.textContent =
+                        DEFAULT_RING_VOL + '%';
+
+                }
+            }
+
+
+            localStorage.setItem(
+                BG_VOL_KEY,
+                String(DEFAULT_BG_VOL)
+            );
+
+
+            localStorage.setItem(
+                RING_VOL_KEY,
+                String(DEFAULT_RING_VOL)
+            );
+
+
+            const bgMusic =
+                document.getElementById(
+                    'bg-music'
+                );
+
+
+            if (bgMusic) {
+
+                bgMusic.volume =
+                    DEFAULT_BG_VOL / 100;
+
+            }
+
+
+            const ringtone =
+                document.getElementById(
+                    'ringtone'
+                );
+
+
+            if (ringtone) {
+
+                ringtone.volume =
+                    DEFAULT_RING_VOL / 100;
+
+            }
+
+
+            const card =
+                bgSlider &&
+                bgSlider.closest('.card');
+
+
+            if (card) {
+
+                let flash =
+                    card.querySelector(
+                        '.volume-saved-flash'
+                    );
+
+
+                if (!flash) {
+
+                    flash =
+                        document.createElement(
+                            'div'
+                        );
+
+                    flash.className =
+                        'flash volume-saved-flash';
+
+                    flash.style.marginTop =
+                        '12px';
+
+                    card.appendChild(
+                        flash
+                    );
+                }
+
+
+                flash.textContent =
+                    'Sauti zimerudishwa default! Background: 20%, Ringtone: 30%';
+
+
+                setTimeout(
+                    function () {
+
+                        if (
+                            flash &&
+                            flash.parentNode
+                        ) {
+
+                            flash.parentNode
+                                .removeChild(
+                                    flash
+                                );
+
+                        }
+
+                    },
+                    2500
+                );
+            }
+        }
+
+
+        document.addEventListener('DOMContentLoaded', function () {
+            initVolumeSliders();
+            initUsernameCheck();
+            {% if pending_email_change %}
+            var main = document.getElementById('mainSettings');
+            if (main) main.style.display = 'none';
+            {% endif %}
+        });
+
+        let usernameDebounce = null;
+        let usernameAvailable = null;
+
+        function showUsernameEdit() {
+            const preview = document.getElementById('usernamePreview');
+            const editBox = document.getElementById('usernameEditBox');
+            if (preview) preview.style.display = 'none';
+            if (editBox) {
+                editBox.classList.remove('hidden');
+                const input = document.getElementById('new_username');
+                if (input) { input.focus(); input.select(); }
+            }
+        }
+
+        function initUsernameCheck() {
+            const input = document.getElementById('new_username');
+            const statusEl = document.getElementById('username-status');
+            const previewText = document.getElementById('usernamePreviewText');
+            if (!input || !statusEl) return;
+            input.addEventListener('input', function () {
+                usernameAvailable = null;
+                if (previewText) previewText.textContent = '@' + this.value.trim();
+                scheduleUsernameCheck();
+            });
+            if (input.value.trim()) scheduleUsernameCheck();
+        }
+
+        function scheduleUsernameCheck() {
+            clearTimeout(usernameDebounce);
+            const input = document.getElementById('new_username');
+            const statusEl = document.getElementById('username-status');
+            const sugBox = document.getElementById('suggestions-box');
+            if (!input || !statusEl) return;
+            const u = (input.value || '').trim();
+            if (!u) {
+                statusEl.textContent = '';
+                statusEl.className = 'wait';
+                input.classList.remove('user-ok', 'user-bad');
+                if (sugBox) sugBox.style.display = 'none';
+                usernameAvailable = null;
+                return;
+            }
+            if (u.length < 3) {
+                statusEl.textContent = 'Username iwe angalau herufi 3.';
+                statusEl.className = 'bad';
+                input.classList.add('user-bad');
+                input.classList.remove('user-ok');
+                usernameAvailable = false;
+                return;
+            }
+            statusEl.textContent = 'Inaangalia…';
+            statusEl.className = 'wait';
+            usernameDebounce = setTimeout(checkUsernameSettings, 400);
+        }
+
+        function checkUsernameSettings() {
+            const input = document.getElementById('new_username');
+            const statusEl = document.getElementById('username-status');
+            const sugBox = document.getElementById('suggestions-box');
+            const sugList = document.getElementById('suggestions-list');
+            if (!input || !statusEl) return;
+            const u = (input.value || '').trim();
+            if (!u) return;
+            fetch('/api/check-username?username=' + encodeURIComponent(u), {
+                headers: { 'Accept': 'application/json' }
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                statusEl.textContent = data.message || '';
+                if (data.available) {
+                    usernameAvailable = true;
+                    statusEl.className = 'ok';
+                    input.classList.add('user-ok');
+                    input.classList.remove('user-bad');
+                    if (sugBox) sugBox.style.display = 'none';
+                    if (sugList) sugList.innerHTML = '';
+                } else {
+                    usernameAvailable = false;
+                    statusEl.className = 'bad';
+                    input.classList.add('user-bad');
+                    input.classList.remove('user-ok');
+                    if (data.suggestions && data.suggestions.length && sugList && sugBox) {
+                        sugList.innerHTML = data.suggestions.map(function (s) {
+                            return '<button type="button" class="sug-btn" data-u="' + s + '">@' + s + '</button>';
+                        }).join('');
+                        sugBox.style.display = 'block';
+                        sugList.querySelectorAll('.sug-btn').forEach(function (btn) {
+                            btn.onclick = function () {
+                                input.value = btn.getAttribute('data-u');
+                                usernameAvailable = null;
+                                scheduleUsernameCheck();
+                            };
+                        });
+                    } else if (sugBox) {
+                        sugBox.style.display = 'none';
+                    }
+                }
+            })
+            .catch(function () {
+                statusEl.textContent = 'Imeshindwa kuangalia. Jaribu tena.';
+                statusEl.className = 'bad';
+                usernameAvailable = null;
+            });
+        }
+
+        function onChangeInfoSubmit() {
+            const input = document.getElementById('new_username');
+            if (!input) return true;
+            if (input.classList.contains('user-bad') || usernameAvailable === false) {
+                const statusEl = document.getElementById('username-status');
+                if (statusEl) {
+                    statusEl.textContent = 'Chagua username nyingine — hii imeshatumika.';
+                    statusEl.className = 'bad';
+                }
+                input.focus();
+                return false;
+            }
+            return true;
+        }
+
+    </script>
+
+</body>
+</html>

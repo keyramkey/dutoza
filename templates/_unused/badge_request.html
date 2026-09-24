@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omba Badge - Kijiji Tanzania</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #00A3DD 0%, #0056b3 100%);
+            --accent-gradient: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%);
+            --gold-gradient: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            --input-focus-gradient: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+            --bg-glass: rgba(255, 255, 255, 0.95);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        /* Batani ya kufungua Modal - Promax Style */
+        .btn-badge-request {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 10px 25px rgba(0, 163, 221, 0.4);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: pulseGlow 2s infinite;
+        }
+
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 0 0 rgba(0, 163, 221, 0.6); }
+            70% { box-shadow: 0 0 0 15px rgba(0, 163, 221, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 163, 221, 0); }
+        }
+
+        .btn-badge-request:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 15px 30px rgba(0, 163, 221, 0.6);
+        }
+
+        .btn-badge-request:active {
+            transform: scale(0.95);
+        }
+
+        /* Background Dimmer ya Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        /* Sanduku la Modal - Glassmorphic & Mobile Optimized */
+        .modal-box {
+            background: var(--bg-glass);
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.2);
+            animation: zoomIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            overflow-y: auto;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        @keyframes zoomIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 12px;
+            overflow: hidden;
+        }
+
+        /* Sliding Text Animation */
+        .modal-header h3 {
+            font-size: 18px;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+            animation: slideInText 0.8s ease-out;
+        }
+
+        @keyframes slideInText {
+            0% { transform: translateX(-100%); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+
+        .modal-header .close-btn {
+            background: #f1f5f9;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 20px;
+            color: #64748b;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .modal-header .close-btn:hover {
+            background: #ef4444;
+            color: white;
+            transform: rotate(90deg);
+        }
+
+        /* Merging and Fading Animation Text */
+        .modal-body p.intro-text {
+            font-size: 13px;
+            color: #475569;
+            margin-bottom: 15px;
+            line-height: 1.5;
+            animation: mergeAndFade 4s ease-in-out infinite alternate;
+        }
+
+        @keyframes mergeAndFade {
+            0% { opacity: 0.4; filter: blur(1px); letter-spacing: 0px; }
+            100% { opacity: 1; filter: blur(0px); letter-spacing: 0.3px; }
+        }
+
+        /* Section Title Styles - Vibrant Gradients */
+        .form-section-title {
+            font-size: 14px;
+            font-weight: 800;
+            background: linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-top: 20px;
+            margin-bottom: 12px;
+            border-bottom: 2px dashed #cbd5e1;
+            padding-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Form Group Styles */
+        .form-group {
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .form-group label span.required-star {
+            color: #ef4444;
+            font-size: 14px;
+        }
+
+        .form-group label span.optional-text {
+            color: #64748b;
+            font-weight: normal;
+            font-size: 11px;
+        }
+
+        /* Dynamic Typing Colors & Input Focus Effects */
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            outline: none;
+            font-size: 14px;
+            background: #f8fafc;
+            color: #0f172a;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        /* Typing Effect - Changes Colors dynamically while typing/focusing */
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            background: #ffffff;
+            border-color: #8b5cf6;
+            color: #0f172a;
+            font-weight: 600;
+            box-shadow: 0 0 12px rgba(139, 92, 246, 0.35);
+            animation: typingGlow 1.5s infinite alternate;
+        }
+
+        @keyframes typingGlow {
+            0% { border-color: #3b82f6; box-shadow: 0 0 8px rgba(59, 130, 246, 0.4); }
+            50% { border-color: #ec4899; box-shadow: 0 0 12px rgba(236, 72, 153, 0.4); }
+            100% { border-color: #10b981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.4); }
+        }
+
+        .form-group textarea {
+            resize: vertical;
+        }
+
+        .form-group small.help-text {
+            font-size: 11px;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        /* Footer & Buttons */
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 2px solid #e2e8f0;
+        }
+
+        .btn-cancel {
+            background: #f1f5f9;
+            color: #475569;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-cancel:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        .btn-submit {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 163, 221, 0.3);
+            transition: all 0.2s;
+        }
+
+        .btn-submit:hover {
+            background: linear-gradient(135deg, #0088b8 0%, #003d82 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 163, 221, 0.4);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Mobile Screen Adjustments */
+        @media (max-width: 480px) {
+            .modal-box {
+                padding: 16px;
+                border-radius: 16px;
+            }
+
+            .modal-header h3 {
+                font-size: 16px;
+            }
+
+            .btn-badge-request {
+                width: 100%;
+                justify-content: center;
+                padding: 14px 18px;
+            }
+
+            .modal-footer {
+                flex-direction: column-reverse;
+            }
+
+            .btn-cancel, .btn-submit {
+                width: 100%;
+                padding: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. Batani ya Kufungulia Ombi la Badge -->
+    <button class="btn-badge-request" onclick="openBadgeModal()">
+        <i class="fa-solid fa-certificate"></i> Omba Verified Badge
+    </button>
+
+    <!-- 2. Modal/Pop-up ya Fomu ya Ombi -->
+    <div class="modal-overlay" id="badgeModalOverlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-shield-halved" style="color: #00A3DD;"></i> Uthibitisho wa Akaunti (Badge)</h3>
+                <button class="close-btn" onclick="closeBadgeModal()">&times;</button>
+            </div>
+
+            <form id="badgeForm" onsubmit="sendBadgeRequest(event)" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <p class="intro-text">Tafadhali jaza taarifa zote kwa usahihi ili kufanyiwa tathmini ya kupatiwa Verified Badge.</p>
+
+                    <!-- SEHEMU YA 1: UTAMBULISHO WA AKAUNTI -->
+                    <div class="form-section-title"><i class="fa-solid fa-user"></i> 1. Taarifa za Utambulisho</div>
+
+                    <!-- Aina ya Akaunti -->
+                    <div class="form-group">
+                        <label for="account_type">Aina ya Akaunti <span class="required-star">*</span></label>
+                        <select id="account_type" name="account_type" required>
+                            <option value="">-- Chagua Aina ya Akaunti --</option>
+                            <option value="Mtu Binafsi">Mtu Binafsi (Individual / Public Figure)</option>
+                            <option value="Biashara / Kampuni">Biashara / Kampuni (Business / Company)</option>
+                            <option value="Shirika / Taasisi">Shirika / Taasisi (Organization / NGO)</option>
+                            <option value="Mzalishaji wa Maudhui / Msanii">Mzalishaji wa Maudhui / Msanii (Creator / Artist)</option>
+                        </select>
+                    </div>
+
+                    <!-- Jina Kamili -->
+                    <div class="form-group">
+                        <label for="full_name">Jina Kamili / Jina la Biashara la Kisheria <span class="required-star">*</span></label>
+                        <input type="text" id="full_name" name="full_name" placeholder="Mf. John Joseph Doe au Kijiji Tech Ltd" required>
+                    </div>
+
+                    <!-- Jina la Utani / Brand Name -->
+                    <div class="form-group">
+                        <label for="alias_name">Jina la Utani / Brand Name <span class="optional-text">(Kama linatofautiana na Jina la Kisheria)</span></label>
+                        <input type="text" id="alias_name" name="alias_name" placeholder="Mf. Johnny Creator">
+                    </div>
+
+                    <!-- Barua Pepe -->
+                    <div class="form-group">
+                        <label for="email">Barua Pepe (Email) <span class="required-star">*</span></label>
+                        <input type="email" id="email" name="email" placeholder="mfano@domain.com" required>
+                    </div>
+
+                    <!-- Nambari ya Simu -->
+                    <div class="form-group">
+                        <label for="phone">Nambari ya Simu <span class="required-star">*</span></label>
+                        <input type="tel" id="phone" name="phone" placeholder="+255 7XX XXX XXX" required>
+                    </div>
+
+                    <!-- Kategori / Sekta -->
+                    <div class="form-group">
+                        <label for="category">Kategori au Sekta Unayowakilisha <span class="required-star">*</span></label>
+                        <select id="category" name="category" required>
+                            <option value="">-- Chagua Kategori --</option>
+                            <option value="Teknolojia & Ubunifu">Teknolojia & Ubunifu (Tech & Innovation)</option>
+                            <option value="Sanaa, Muziki & Burudani">Sanaa, Muziki & Burudani (Arts & Entertainment)</option>
+                            <option value="Biashara & Ujasiriamali">Biashara & Ujasiriamali (Business & Entrepreneurship)</option>
+                            <option value="Michezo">Michezo (Sports)</option>
+                            <option value="Habari & Vyombo vya Habari">Habari & Vyombo vya Habari (News & Media)</option>
+                            <option value="Kiongozi wa Umma">Kiongozi wa Umma / Public Figure</option>
+                            <option value="Nyingine">Nyinginezo</option>
+                        </select>
+                    </div>
+
+
+                    <!-- SEHEMU YA 2: UTHIBITISHO WA UTAMBULISHO -->
+                    <div class="form-section-title"><i class="fa-solid fa-id-card"></i> 2. Uthibitisho wa Utambulisho</div>
+
+                    <!-- Aina ya Kitambulisho -->
+                    <div class="form-group">
+                        <label for="id_type">Aina ya Hati / Kitambulisho <span class="required-star">*</span></label>
+                        <select id="id_type" name="id_type" required>
+                            <option value="">-- Chagua Hati --</option>
+                            <option value="NIDA">Kitambulisho cha Taifa (NIDA)</option>
+                            <option value="Pasipoti">Pasipoti (Passport)</option>
+                            <option value="Leseni ya Udereva">Leseni ya Udereva (Driver's License)</option>
+                            <option value="Usajili wa Biashara / BRELA">Hati ya Usajili wa Biashara / BRELA</option>
+                        </select>
+                    </div>
+
+                    <!-- Namba ya Kitambulisho -->
+                    <div class="form-group">
+                        <label for="id_number">Namba ya Kitambulisho / Usajili <span class="required-star">*</span></label>
+                        <input type="text" id="id_number" name="id_number" placeholder="Mf. 19900101-XXXXX-XXXXX-XX" required>
+                    </div>
+
+                    <!-- Upload Kitambulisho -->
+                    <div class="form-group">
+                        <label for="id_document">Pakia Picha au Nakala ya Hati <span class="required-star">*</span></label>
+                        <input type="file" id="id_document" name="id_document" accept="image/*,.pdf" required>
+                        <small class="help-text">Hakikisha taarifa na picha iliyo kwenye kitambulisho zinasomeka vizuri (JPG, PNG au PDF, Max 5MB).</small>
+                    </div>
+
+
+                    <!-- SEHEMU YA 3: USHAHIDI NA MITANDAO -->
+                    <div class="form-section-title"><i class="fa-solid fa-globe"></i> 3. Ushahidi wa Vyombo vya Habari & Mitandao</div>
+
+                    <!-- Link ya Tovuti -->
+                    <div class="form-group">
+                        <label for="website_link">Tovuti Rasmi au Portfolio <span class="optional-text">(Si lazima)</span></label>
+                        <input type="url" id="website_link" name="website_link" placeholder="https://www.mfano.com">
+                    </div>
+
+                    <!-- Viungo vya Vyombo vya Habari -->
+                    <div class="form-group">
+                        <label for="media_links">Viungo vya Vyombo vya Habari / Makala <span class="optional-text">(Si lazima)</span></label>
+                        <textarea id="media_links" name="media_links" rows="2" placeholder="Weka link za makala, blogs au taarifa zinazokutaja (tenganisha kwa mkato au mstari mpya)..."></textarea>
+                    </div>
+
+                    <!-- Akaunti Zingine za Mitandao -->
+                    <div class="form-group">
+                        <label for="other_socials">Akaunti Zingine za Mitandao ya Kijamii <span class="optional-text">(Si lazima)</span></label>
+                        <input type="text" id="other_socials" name="other_socials" placeholder="Mf. Instagram: @username, X: @username">
+                    </div>
+
+                    <!-- Sababu ya Ombi -->
+                    <div class="form-group">
+                        <label for="reason">Kwa Nini Unahitaji Verification Badge? <span class="required-star">*</span></label>
+                        <textarea id="reason" name="reason" rows="3" placeholder="Eleza kwa ufupi jinsi akaunti yako inavyowafaidisha watumiaji wengine au iwapo unakabiliwa na akaunti bandia (impersonation)..." required></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="closeBadgeModal()">Ghairi</button>
+                    <button type="submit" class="btn-submit" id="submitBadgeBtn">Tuma Ombi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3. JavaScript ya Kutuma Ombi -->
+    <script>
+        function openBadgeModal() {
+            document.getElementById('badgeModalOverlay').style.display = 'flex';
+        }
+
+        function closeBadgeModal() {
+            document.getElementById('badgeModalOverlay').style.display = 'none';
+        }
+
+        // Funga modal ukibonyeza nje ya sanduku
+        document.getElementById('badgeModalOverlay').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeBadgeModal();
+            }
+        });
+
+        function sendBadgeRequest(event) {
+            event.preventDefault();
+            const form = event.target;
+            const submitBtn = document.getElementById('submitBadgeBtn');
+            const formData = new FormData(form);
+
+            // Check file size (max 5MB)
+            const fileInput = document.getElementById('id_document');
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('Faili ni kubwa sana. Tafadhali pakia faili isiyozidi 5MB.');
+                    return;
+                }
+            }
+
+            // Disable button + loading text
+            submitBtn.disabled = true;
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Inatumwa...';
+
+            fetch('/request_badge', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message);
+                if (data.success) {
+                    closeBadgeModal();
+                    form.reset();
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Kuna hitilafu imetokea. Tafadhali jaribu tena.");
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            });
+        }
+    </script>
+
+</body>
+</html>

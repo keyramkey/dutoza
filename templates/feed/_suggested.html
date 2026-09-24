@@ -1,0 +1,108 @@
+<!-- ===== WATU WA KUFOLLOW ===== -->
+{% if suggested_users %}
+<div class="suggest-follow-wrap" style="margin:0 0 12px;">
+
+    <!-- HEADER -->
+    <div style="display:flex;align-items:center;gap:8px;padding:4px 2px 8px;">
+        <i class="fa-solid fa-user-plus" style="color:#1EB53A;"></i>
+        <strong style="font-size:14px;color:#1c1e21;">
+            Watu wa kufollow
+        </strong>
+    </div>
+
+    <!-- HORIZONTAL SCROLL -->
+    <div class="suggest-follow-scroll"
+         style="display:flex;gap:10px;overflow-x:auto;padding:2px 2px 8px;-webkit-overflow-scrolling:touch;">
+
+        {% for u in suggested_users %}
+
+        <!-- SUGGESTION CARD -->
+        <div class="suggest-card"
+             style="flex:0 0 130px;background:#fff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:14px 10px 12px;text-align:center;">
+
+            <!-- PROFILE LINK -->
+            <a href="/profile/{{ u.username }}"
+               style="text-decoration:none;color:inherit;display:block;">
+
+                <!-- PROFILE PICTURE -->
+                <div style="position:relative;width:64px;height:64px;margin:0 auto 8px;">
+
+                    <img src="{{ u.profile_pic|avatar(u.full_name or u.username) }}"
+                         alt=""
+                         style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2.5px solid #1EB53A;background:#e4e6eb;"
+                         onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ (u.full_name or u.username)|urlencode }}&background=random&color=fff&size=128&bold=true';">
+
+                </div>
+
+                <!-- NAME + VERIFIED BADGE -->
+                <div style="font-size:13px;font-weight:700;color:#1c1e21;line-height:1.25;display:flex;align-items:center;justify-content:center;gap:3px;flex-wrap:wrap;">
+
+                    <span style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+
+                        {% if u.full_name %}
+                            {{ u.full_name }}
+                        {% else %}
+                            {{ u.username }}
+                        {% endif %}
+
+                    </span>
+
+                    {% if u.is_verified == 1 %}
+
+                    <svg class="verified-badge-custom"
+                         viewBox="0 0 24 24"
+                         title="Verified"
+                         style="width:15px;height:15px;flex-shrink:0;">
+
+                        <path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z"
+                              fill="#8A2BE2"/>
+
+                        <path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z"
+                              fill="#FFFFFF"/>
+
+                    </svg>
+
+                    {% endif %}
+
+                </div>
+
+                <!-- USERNAME -->
+                <div style="font-size:11px;color:#65676b;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+
+                    @{{ u.username }}
+
+                </div>
+
+            </a>
+
+            <!-- FOLLOW BUTTON -->
+            <button type="button"
+                    onclick="followUser('{{ u.username }}', this)"
+                    style="margin-top:10px;width:100%;border:none;border-radius:20px;padding:8px 0;font-weight:700;font-size:13px;color:#fff;cursor:pointer;background:linear-gradient(90deg,#00A3DD,#1EB53A);">
+
+                {% if u.is_following %}
+
+                    Following
+
+                {% elif u.follows_me %}
+
+                    Follow Back
+
+                {% else %}
+
+                    Follow
+
+                {% endif %}
+
+            </button>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+{% endif %}
+<!-- ===== MWISHO WA WATU WA KUFOLLOW ===== -->
+

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ujumbe wa Watumiaji - Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background: #f0f2f5; padding-bottom: 40px; }
+        .topbar {
+            background: #1EB53A; color: white; padding: 14px 18px;
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .topbar h1 { font-size: 17px; display: flex; align-items: center; gap: 8px; }
+        .topbar a { color: white; text-decoration: none; font-size: 13px; background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 6px; }
+        .container { max-width: 800px; margin: 16px auto; padding: 0 12px; }
+        .flash-msg { background: #e7f3ff; color: #1EB53A; padding: 10px; border-radius: 8px; margin-bottom: 14px; text-align: center; font-size: 14px; border: 1px solid #b6d4fe; }
+        .sub-tabs { display: flex; gap: 8px; margin-bottom: 14px; overflow-x: auto; }
+        .sub-tab {
+            background: #f0f2f5; border: none; padding: 8px 16px; border-radius: 20px;
+            font-size: 13px; font-weight: bold; color: #65676b; cursor: pointer; white-space: nowrap;
+        }
+        .sub-tab.active { background: #1EB53A; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .item-row {
+            background: #fff; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+        }
+        .item-info strong { font-size: 15px; color: #333; }
+        .item-info span { display: block; font-size: 12px; color: #777; margin-top: 2px; }
+        .reason-box {
+            background: #f8f9fa; border-left: 3px solid #1EB53A; padding: 8px 12px;
+            margin-top: 8px; font-size: 13px; color: #444; border-radius: 0 6px 6px 0;
+        }
+        textarea {
+            width: 100%; border: 1px solid #ccd0d5; border-radius: 8px; padding: 10px;
+            resize: none; outline: none; margin-top: 10px; font-size: 14px;
+        }
+        .btn-primary {
+            background: #1EB53A; color: white; border: none; padding: 8px 16px;
+            border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 8px; font-size: 13px;
+        }
+        .empty { color: #777; font-size: 14px; padding: 20px 0; text-align: center; }
+    </style>
+</head>
+<body>
+<div class="topbar">
+    <h1><i class="fa-solid fa-envelope"></i> Ujumbe kutoka kwa Watumiaji</h1>
+    <a href="{{ url_for('admin_dashboard') }}"><i class="fa-solid fa-arrow-left"></i> Dashboard</a>
+</div>
+
+<div class="container">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="flash-msg">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="sub-tabs">
+        <button class="sub-tab active" onclick="switchTab('pending', this)">
+            <i class="fa-solid fa-clock"></i> Ambao Bado
+        </button>
+        <button class="sub-tab" onclick="switchTab('replied', this)">
+            <i class="fa-solid fa-check-double"></i> Waliojibiwa
+        </button>
+    </div>
+
+    <div id="tab-pending" class="tab-content active">
+        {% set has_pending = false %}
+        {% if admin_messages %}
+            {% for msg in admin_messages %}
+                {% if not msg.admin_reply and msg.status != 'replied' %}
+                    {% set has_pending = true %}
+                    <div class="item-row">
+                        <div class="item-info">
+                            <strong>{{ msg.name }} ({{ msg.email }})</strong>
+                            <span>Tarehe: {{ msg.created_at }} · <span style="color:orange;font-weight:bold;">HAUJAJIBIWA</span></span>
+                            <div class="reason-box"><strong>Ujumbe:</strong> {{ msg.message }}</div>
+                        </div>
+                        <form action="{{ url_for('reply_message', message_id=msg.id) }}" method="POST">
+                            <textarea name="reply" rows="2" placeholder="Andika jibu hapa..." required></textarea>
+                            <button type="submit" class="btn-primary"><i class="fa-solid fa-reply"></i> Tuma Jibu</button>
+                        </form>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+        {% if not has_pending %}
+            <p class="empty">Hakuna ujumbe mpya unaosubiri kujibiwa.</p>
+        {% endif %}
+    </div>
+
+    <div id="tab-replied" class="tab-content">
+        {% set has_replied = false %}
+        {% if admin_messages %}
+            {% for msg in admin_messages %}
+                {% if msg.admin_reply or msg.status == 'replied' %}
+                    {% set has_replied = true %}
+                    <div class="item-row">
+                        <div class="item-info">
+                            <strong>{{ msg.name }} ({{ msg.email }})</strong>
+                            <span>Tarehe: {{ msg.created_at }} · <span style="color:green;font-weight:bold;">UMEJIBIWA</span></span>
+                            <div class="reason-box"><strong>Ujumbe:</strong> {{ msg.message }}</div>
+                            <div class="reason-box" style="border-left-color:green;background:#e6f4ea;">
+                                <strong>Jibu Lako:</strong> {{ msg.admin_reply }}
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+        {% if not has_replied %}
+            <p class="empty">Hakuna ujumbe uliokwisha kujibiwa.</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function switchTab(name, btn) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.sub-tab').forEach(el => el.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    btn.classList.add('active');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="{{ current_language or 'sw' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{ t('search') }} - Kijiji Tanzania</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; }
+        body { background: #f0f2f5; color: #1c1e21; padding-bottom: 72px; }
+
+        header {
+            background: #fff;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #e5e7eb;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+        }
+        header a {
+            color: #1EB53A;
+            font-size: 20px;
+            text-decoration: none;
+            width: 36px; height: 36px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 10px;
+        }
+        header a:hover { background: #ecfdf5; }
+        header h1 { font-size: 18px; font-weight: 700; color: #0f172a; }
+
+        .container { max-width: 620px; margin: 0 auto; padding: 12px; }
+
+        .search-box {
+            background: #fff;
+            border-radius: 14px;
+            padding: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 12px;
+        }
+        .search-form { display: flex; gap: 8px; }
+        .search-form input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 24px;
+            outline: none;
+            font-size: 15px;
+            background: #f8fafc;
+        }
+        .search-form input:focus {
+            border-color: #1EB53A;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(30,181,58,0.12);
+        }
+        .search-form button {
+            background: linear-gradient(135deg, #1EB53A, #15803d);
+            color: #fff;
+            border: none;
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            flex-shrink: 0;
+            box-shadow: 0 3px 10px rgba(30,181,58,0.25);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 6px;
+            background: #fff;
+            padding: 6px;
+            border-radius: 14px;
+            margin-bottom: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .tabs::-webkit-scrollbar { height: 0; }
+        .tabs button {
+            flex: 1;
+            min-width: max-content;
+            border: none;
+            background: transparent;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #64748b;
+            cursor: pointer;
+            white-space: nowrap;
+            font-family: inherit;
+        }
+        .tabs button.active {
+            background: linear-gradient(135deg, #1EB53A, #15803d);
+            color: #fff;
+            box-shadow: 0 3px 10px rgba(30,181,58,0.25);
+        }
+        .tabs button .count { font-size: 11px; opacity: 0.85; margin-left: 4px; }
+
+        .section-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin: 8px 4px 10px;
+        }
+
+        .result-card {
+            background: #fff;
+            border-radius: 14px;
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid #f1f5f9;
+        }
+        .result-avatar {
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        .result-info { flex: 1; min-width: 0; }
+        .result-info a { text-decoration: none; color: inherit; }
+        .result-info strong {
+            font-size: 14px;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .result-info span {
+            display: block;
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .result-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        .btn-follow {
+            background: linear-gradient(135deg, #1EB53A, #15803d);
+            color: #fff;
+            border: none;
+            padding: 7px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            min-width: 78px;
+            text-align: center;
+        }
+        .btn-follow.following {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+        .btn-follow.friends {
+            background: linear-gradient(135deg, #1EB53A, #00A3DD);
+            color: #fff;
+        }
+        .btn-follow.follow-back {
+            background: linear-gradient(135deg, #00A3DD, #0284c7);
+            color: #fff;
+        }
+        .btn-chat {
+            background: linear-gradient(135deg, #00A3DD, #0284c7);
+            color: #fff;
+            text-decoration: none;
+            padding: 7px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            text-align: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            min-width: 78px;
+        }
+
+        .post-card {
+            background: #fff;
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            border: 1px solid #f1f5f9;
+        }
+        .post-card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .post-card-header img {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #e2e8f0;
+        }
+        .post-card-header strong { font-size: 14px; color: #0f172a; }
+        .post-card-header span { font-size: 12px; color: #64748b; }
+        .post-card-body {
+            font-size: 14px;
+            color: #334155;
+            line-height: 1.45;
+            margin-bottom: 8px;
+            word-break: break-word;
+        }
+        .post-card-body .hashtag-link {
+            color: #1a73e8;
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .post-card-media {
+            width: 100%;
+            max-height: 200px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            background: #0a0a0a;
+        }
+        .post-card-footer {
+            display: flex;
+            gap: 14px;
+            font-size: 12px;
+            color: #64748b;
+            font-weight: 500;
+        }
+        .post-card a.full-link { text-decoration: none; color: inherit; }
+
+        .hashtag-card {
+            background: #fff;
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            border: 1px solid #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: inherit;
+        }
+        .hashtag-card:hover { background: #f0f9ff; }
+        .hashtag-icon {
+            width: 42px; height: 42px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #ecfdf5, #e0f2fe);
+            color: #1EB53A;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+        .hashtag-card strong { font-size: 15px; color: #0f172a; }
+        .hashtag-card span { display: block; font-size: 12px; color: #64748b; margin-top: 2px; }
+
+        .empty-msg {
+            text-align: center;
+            color: #64748b;
+            padding: 36px 16px;
+            font-size: 14px;
+            background: #fff;
+            border-radius: 14px;
+            margin-bottom: 12px;
+        }
+        .empty-msg strong { color: #0f172a; }
+
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        .load-more-wrap {
+            text-align: center;
+            padding: 12px;
+        }
+        .load-more-wrap button {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            color: #1EB53A;
+            font-weight: 700;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-family: inherit;
+        }
+        .load-more-wrap .spinner {
+            display: none;
+            color: #64748b;
+            font-size: 13px;
+            padding: 10px;
+        }
+        .load-more-wrap.loading button { display: none; }
+        .load-more-wrap.loading .spinner { display: block; }
+
+        .verified-badge-custom {
+            width: 16px;
+            height: 16px;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 3px;
+            flex-shrink: 0;
+        }
+        .verified-badge-custom.small {
+            width: 14px;
+            height: 14px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 84px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 12px;
+            font-size: 13px;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.25s;
+            pointer-events: none;
+        }
+        .toast.show { opacity: 1; }
+        .toast.success { background: #15803d; }
+        .toast.error { background: #dc2626; }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0; left: 0; width: 100%;
+            background: #fff;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0 12px;
+            z-index: 1000;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.04);
+        }
+        .bottom-nav a {
+            color: #94a3b8;
+            font-size: 21px;
+            text-decoration: none;
+            width: 48px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 12px;
+        }
+        .bottom-nav a.active { color: #1EB53A; background: #ecfdf5; }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="{{ url_for('home') }}" aria-label="Back"><i class="fa-solid fa-arrow-left"></i></a>
+        <h1>{{ t('search') }}</h1>
+    </header>
+
+    <div class="container">
+        <div class="search-box">
+            <form class="search-form" action="{{ url_for('search') }}" method="GET" role="search">
+                <input type="text" name="q" id="searchInput" value="{{ query or '' }}"
+                       placeholder="Tafuta mtu, post au #hashtag..."
+                       autofocus autocomplete="off">
+                <button type="submit" aria-label="Search"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </form>
+        </div>
+
+        {% set people = people if people is defined else (results if results is defined else []) %}
+        {% set posts = posts if posts is defined else [] %}
+        {% set tags = tags if tags is defined else [] %}
+        {% set people_n = people|length %}
+        {% set posts_n = posts|length %}
+        {% set tags_n = tags|length %}
+        {% set linkups_n = linkups|length if linkups is defined else 0 %}
+        {% set all_n = people_n + posts_n + tags_n + linkups_n %}
+
+
+        {% macro linkup_card(lu) %}
+        <div class="result-card" data-linkup-id="{{ lu.id }}">
+            <a href="{{ url_for('linkup_public', username=lu.username) }}">
+                <img class="result-avatar"
+                     src="{{ lu.profile_pic|avatar(lu.display_name or lu.username) }}"
+                     onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ (lu.display_name or lu.username or 'L')|urlencode }}&background=random&color=fff&size=128&bold=true';"
+                     alt="">
+            </a>
+            <div class="result-info">
+                <a href="{{ url_for('linkup_public', username=lu.username) }}">
+                    <strong>
+                        {{ lu.display_name or lu.username }}
+                        {% if lu.is_verified == 1 %}<svg class="verified-badge-custom small" viewBox="0 0 24 24" title="Verified Account"><path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="#8A2BE2"/><path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#FFFFFF"/></svg>{% endif %}
+                    </strong>
+                    <span>@{{ lu.username }} · {{ lu.category or 'general' }}</span>
+                </a>
+            </div>
+            <div class="result-actions">
+                <a class="btn-follow" href="{{ url_for('linkup_public', username=lu.username) }}">Fungua</a>
+            </div>
+        </div>
+        {% endmacro %}
+
+        <div class="tabs" role="tablist">
+            <button type="button" class="active" data-tab="all" onclick="switchSearchTab('all')">
+                All {% if query %}<span class="count">({{ all_n }})</span>{% endif %}
+            </button>
+            <button type="button" data-tab="people" onclick="switchSearchTab('people')">
+                Watu {% if query %}<span class="count" id="count-people">({{ people_n }})</span>{% endif %}
+            </button>
+            <button type="button" data-tab="posts" onclick="switchSearchTab('posts')">
+                Posts {% if query %}<span class="count">({{ posts_n }})</span>{% endif %}
+            </button>
+            <button type="button" data-tab="tags" onclick="switchSearchTab('tags')">
+                Hashtags {% if query %}<span class="count">({{ tags_n }})</span>{% endif %}
+            </button>
+            <button type="button" data-tab="linkup" onclick="switchSearchTab('linkup')">
+                Linkup {% if query %}<span class="count">({{ linkups_n }})</span>{% endif %}
+            </button>
+        </div>
+
+        <!-- ALL -->
+        <div class="tab-panel active" id="tab-all">
+            {% if not query %}
+                <p class="section-label">Watu</p>
+                <div id="all-people-list">
+                {% for user in people %}
+                    {{ person_card(user) if false }}
+                    <div class="result-card" data-user-id="{{ user.id }}">
+                        <a href="{{ url_for('profile', username=user.username) }}">
+                            <img class="result-avatar"
+                                 src="{{ user.profile_pic|avatar(user.full_name or user.username) }}"
+                                 onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ (user.full_name or user.username or 'U')|urlencode }}&background=random&color=fff&size=128&bold=true';"
+                                 alt="">
+                        </a>
+                        <div class="result-info">
+                            <a href="{{ url_for('profile', username=user.username) }}">
+                                <strong>
+                                    {% if user.full_name %}{{ user.full_name }}{% else %}{{ user.username }}{% endif %}
+                                    {% if user.is_verified == 1 %}<svg class="verified-badge-custom small" viewBox="0 0 24 24" title="Verified Account"><path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="#8A2BE2"/><path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#fff"/></svg>{% endif %}
+                                </strong>
+                                <span>@{{ user.username }}</span>
+                            </a>
+                        </div>
+                        <div class="result-actions">
+                            <button type="button" class="btn-follow {% if user.is_following %}following{% endif %}"
+                                    onclick="toggleFollow({{ user.id }}, this)">
+                                {% if user.is_following %}Following{% else %}Follow{% endif %}
+                            </button>
+                            <a class="btn-chat" href="{{ url_for('chat', username=user.username) }}">
+                                <i class="fa-solid fa-comment-dots"></i> Chat
+                            </a>
+                        </div>
+                    </div>
+                {% else %}
+                    <p class="empty-msg">Hakuna watumiaji bado.</p>
+                {% endfor %}
+                </div>
+                {% if has_more_people %}
+                <div class="load-more-wrap" id="load-people-all" data-kind="people" data-cursor="{{ people[-1].id if people else 0 }}">
+                    <button type="button" onclick="loadMore('people', 'all-people-list', 'load-people-all')">Pakia zaidi</button>
+                    <div class="spinner"><i class="fa-solid fa-spinner fa-spin"></i> Inapakia...</div>
+                </div>
+                {% endif %}
+            {% else %}
+                {% if all_n == 0 %}
+                    <p class="empty-msg">Hakuna matokeo kwa "<strong>{{ query }}</strong>"</p>
+                {% else %}
+                    {% if people %}
+                    <p class="section-label">Watu</p>
+                    {% for user in people %}
+                    <div class="result-card" data-user-id="{{ user.id }}">
+                        <a href="{{ url_for('profile', username=user.username) }}">
+                            <img class="result-avatar"
+                                 src="{{ user.profile_pic|avatar(user.full_name or user.username) }}"
+                                 onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ (user.full_name or user.username or 'U')|urlencode }}&background=random&color=fff&size=128&bold=true';"
+                                 alt="">
+                        </a>
+                        <div class="result-info">
+                            <a href="{{ url_for('profile', username=user.username) }}">
+                                <strong>
+                                    {% if user.full_name %}{{ user.full_name }}{% else %}{{ user.username }}{% endif %}
+                                    {% if user.is_verified == 1 %}<svg class="verified-badge-custom small" viewBox="0 0 24 24" title="Verified Account"><path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="#8A2BE2"/><path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#fff"/></svg>{% endif %}
+                                </strong>
+                                <span>@{{ user.username }}</span>
+                            </a>
+                        </div>
+                        <div class="result-actions">
+                            <button type="button" class="btn-follow {% if user.is_following %}following{% endif %}"
+                                    onclick="toggleFollow({{ user.id }}, this)">
+                                {% if user.is_following %}Following{% else %}Follow{% endif %}
+                            </button>
+                            <a class="btn-chat" href="{{ url_for('chat', username=user.username) }}">
+                                <i class="fa-solid fa-comment-dots"></i> Chat
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+
+                    {% if posts %}
+                    <p class="section-label">Posts</p>
+                    <div id="all-posts-list">
+                    {% for post in posts %}
+                    <div class="post-card" data-post-id="{{ post.id }}">
+                        <a class="full-link" href="{{ url_for('profile', username=post.username) }}">
+                            <div class="post-card-header">
+                                <img src="{{ post.profile_pic|avatar(post.full_name or post.username) }}"
+                                     onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ (post.full_name or post.username or 'U')|urlencode }}&background=random&color=fff&size=128&bold=true';" alt="">
+                                <div>
+                                    <strong>{% if post.full_name %}{{ post.full_name }}{% else %}{{ post.username }}{% endif %}</strong>
+                                    <span>@{{ post.username }}{% if post.created_at %} · {{ post.created_at }}{% endif %}</span>
+                                </div>
+                            </div>
+                        </a>
+                        <div class="post-card-body">{{ post.content }}</div>
+                        {% if post.file_path and post.media_type == 'image' %}
+                        <img class="post-card-media" src="{{ url_for('static', filename='uploads/' + post.file_path) }}" alt="">
+                        {% elif post.file_path and post.media_type == 'video' %}
+                        <video class="post-card-media" src="{{ url_for('static', filename='uploads/' + post.file_path) }}" muted playsinline></video>
+                        {% endif %}
+                        <div class="post-card-footer">
+                            <span><i class="fa-regular fa-thumbs-up"></i> {{ post.likes_count or 0 }}</span>
+                            <span><i class="fa-regular fa-comment"></i> {{ post.comments_count or 0 }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    </div>
+                    {% if has_more_posts %}
+                    <div class="load-more-wrap" id="load-posts-all" data-kind="posts" data-cursor="{{ posts[-1].id if posts else 0 }}">
+                        <button type="button" onclick="loadMore('posts', 'all-posts-list', 'load-posts-all')">Pakia zaidi</button>
+                        <div class="spinner"><i class="fa-solid fa-spinner fa-spin"></i> Inapakia...</div>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+
+                    {% if tags %}
+                    <p class="section-label">Hashtags</p>
+                    {% for tag in tags %}
+                    <a class="hashtag-card" href="/hashtag/{{ tag.tag }}">
+                        <div class="hashtag-icon">#</div>
+                        <div>
+                            <strong>#{{ tag.tag }}</strong>
+                            <span>{{ tag.use_count or 0 }} posts</span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                    {% endif %}
+
+                    {% if linkups %}
+                    <p class="section-label">Linkup</p>
+                    <div id="all-linkup-list">
+                    {% for lu in linkups %}
+                        {{ linkup_card(lu) }}
+                    {% endfor %}
+                    </div>
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+        </div>
+
+        <!-- PEOPLE -->
+        <div class="tab-panel" id="tab-people">
+            <div id="people-list">
+            {% if people %}
+                {% for user in people %}
+                <div class="result-card" data-user-id="{{ user.id }}">
+                    <a href="{{ url_for('profile', username=user.username) }}">
+                        <img class="result-avatar"
+                             src="{{ user.profile_pic|avatar(user.full_name or user.username) }}"
+                             onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ (user.full_name or user.username or 'U')|urlencode }}&background=random&color=fff&size=128&bold=true';"
+                             alt="">
+                    </a>
+                    <div class="result-info">
+                        <a href="{{ url_for('profile', username=user.username) }}">
+                            <strong>
+                                {% if user.full_name %}{{ user.full_name }}{% else %}{{ user.username }}{% endif %}
+                                {% if user.is_verified == 1 %}<svg class="verified-badge-custom small" viewBox="0 0 24 24" title="Verified Account"><path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="#8A2BE2"/><path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#fff"/></svg>{% endif %}
+                            </strong>
+                            <span>@{{ user.username }}</span>
+                        </a>
+                    </div>
+                    <div class="result-actions">
+                        <button type="button" class="btn-follow {% if user.is_following %}following{% endif %}"
+                                onclick="toggleFollow({{ user.id }}, this)">
+                            {% if user.is_following %}Following{% else %}Follow{% endif %}
+                        </button>
+                        <a class="btn-chat" href="{{ url_for('chat', username=user.username) }}">
+                            <i class="fa-solid fa-comment-dots"></i> Chat
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="empty-msg" id="people-empty">{% if query %}Hakuna mtu anayelingana na "<strong>{{ query }}</strong>"{% else %}Hakuna watumiaji.{% endif %}</p>
+            {% endif %}
+            </div>
+            {% if has_more_people %}
+            <div class="load-more-wrap" id="load-people" data-kind="people" data-cursor="{{ people[-1].id if people else 0 }}">
+                <button type="button" onclick="loadMore('people', 'people-list', 'load-people')">Pakia zaidi</button>
+                <div class="spinner"><i class="fa-solid fa-spinner fa-spin"></i> Inapakia...</div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- POSTS -->
+        <div class="tab-panel" id="tab-posts">
+            <div id="posts-list">
+            {% if posts %}
+                {% for post in posts %}
+                <div class="post-card" data-post-id="{{ post.id }}">
+                    <a class="full-link" href="{{ url_for('profile', username=post.username) }}">
+                        <div class="post-card-header">
+                            <img src="{{ post.profile_pic|avatar(post.full_name or post.username) }}"
+                                 onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ (post.full_name or post.username or 'U')|urlencode }}&background=random&color=fff&size=128&bold=true';" alt="">
+                            <div>
+                                <strong>{% if post.full_name %}{{ post.full_name }}{% else %}{{ post.username }}{% endif %}</strong>
+                                <span>@{{ post.username }}{% if post.created_at %} · {{ post.created_at }}{% endif %}</span>
+                            </div>
+                        </div>
+                    </a>
+                    <div class="post-card-body">{{ post.content }}</div>
+                    {% if post.file_path and post.media_type == 'image' %}
+                    <img class="post-card-media" src="{{ url_for('static', filename='uploads/' + post.file_path) }}" alt="">
+                    {% elif post.file_path and post.media_type == 'video' %}
+                    <video class="post-card-media" src="{{ url_for('static', filename='uploads/' + post.file_path) }}" muted playsinline></video>
+                    {% endif %}
+                    <div class="post-card-footer">
+                        <span><i class="fa-regular fa-thumbs-up"></i> {{ post.likes_count or 0 }}</span>
+                        <span><i class="fa-regular fa-comment"></i> {{ post.comments_count or 0 }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="empty-msg">{% if query %}Hakuna post inayolingana na "<strong>{{ query }}</strong>"{% else %}Andika maneno ili kutafuta posts.{% endif %}</p>
+            {% endif %}
+            </div>
+            {% if has_more_posts %}
+            <div class="load-more-wrap" id="load-posts" data-kind="posts" data-cursor="{{ posts[-1].id if posts else 0 }}">
+                <button type="button" onclick="loadMore('posts', 'posts-list', 'load-posts')">Pakia zaidi</button>
+                <div class="spinner"><i class="fa-solid fa-spinner fa-spin"></i> Inapakia...</div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- HASHTAGS -->
+        <div class="tab-panel" id="tab-tags">
+            {% if tags %}
+                {% for tag in tags %}
+                <a class="hashtag-card" href="/hashtag/{{ tag.tag }}">
+                    <div class="hashtag-icon">#</div>
+                    <div>
+                        <strong>#{{ tag.tag }}</strong>
+                        <span>{{ tag.use_count or 0 }} posts</span>
+                    </div>
+                </a>
+                {% endfor %}
+            {% else %}
+                <p class="empty-msg">{% if query %}Hakuna hashtag inayolingana na "<strong>{{ query }}</strong>"{% else %}Andika #tag ili kutafuta hashtags.{% endif %}</p>
+            {% endif %}
+        </div>
+
+        <!-- LINKUP -->
+        <div class="tab-panel" id="tab-linkup">
+            <div id="linkup-list">
+            {% if linkups %}
+                {% for lu in linkups %}
+                    {{ linkup_card(lu) }}
+                {% endfor %}
+            {% else %}
+                <p class="empty-msg" id="linkup-empty">{% if query %}Hakuna Linkup inayolingana na "<strong>{{ query }}</strong>"{% else %}Andika jina la Linkup unayotafuta.{% endif %}</p>
+            {% endif %}
+            </div>
+            {% if has_more_linkups %}
+            <div class="load-more-wrap" id="load-linkup" data-kind="linkup" data-cursor="{{ linkups[-1].id if linkups else 0 }}">
+                <button type="button" onclick="loadMore('linkup', 'linkup-list', 'load-linkup')">Pakia zaidi</button>
+                <div class="spinner"><i class="fa-solid fa-spinner fa-spin"></i> Inapakia...</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <a href="{{ url_for('home') }}"><i class="fa-solid fa-house"></i></a>
+        <a href="{{ url_for('search') }}" class="active"><i class="fa-solid fa-magnifying-glass"></i></a>
+        <a href="{{ url_for('notifications') }}"><i class="fa-solid fa-bell"></i></a>
+        {% if identity_is_linkup and identity_url %}
+        <a href="{{ identity_url }}" title="{{ identity_name }}"><i class="fa-solid fa-link"></i></a>
+        {% else %}
+        <a href="{{ url_for('profile', username=session.username) }}"><i class="fa-solid fa-user"></i></a>
+        {% endif %}
+    </div>
+
+    <script>
+        var SEARCH_Q = {{ (query or '')|tojson }};
+        var STATIC_UPLOADS = {{ url_for('static', filename='uploads/')|tojson }};
+        var DEFAULT_AVATAR = {{ url_for('static', filename='images/default-avatar.png.jfif')|tojson }};
+        var loadingMore = false;
+
+        function switchSearchTab(name) {
+            document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+            document.querySelectorAll('.tabs button').forEach(function(b) { b.classList.remove('active'); });
+            var panel = document.getElementById('tab-' + name);
+            if (panel) panel.classList.add('active');
+            var btn = document.querySelector('.tabs button[data-tab="' + name + '"]');
+            if (btn) btn.classList.add('active');
+        }
+
+        function showToast(msg, type) {
+            var t = document.createElement('div');
+            t.className = 'toast ' + (type || '');
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(function() { t.classList.add('show'); }, 10);
+            setTimeout(function() {
+                t.classList.remove('show');
+                setTimeout(function() { t.remove(); }, 250);
+            }, 2500);
+        }
+
+        function toggleFollow(userId, btn) {
+            if (!btn || btn.disabled) return;
+            var card = btn.closest('.result-card');
+            var username = '';
+            if (card) {
+                var link = card.querySelector('.result-info a[href*="/profile/"]');
+                if (link) {
+                    var m = link.getAttribute('href').match(/\/profile\/([^/?#]+)/);
+                    if (m) username = decodeURIComponent(m[1]);
+                }
+            }
+            if (!username) {
+                showToast('Imeshindikana', 'error');
+                return;
+            }
+            btn.disabled = true;
+            fetch('/follow/' + encodeURIComponent(username), {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.success) {
+                    showToast(data.message || 'Imeshindikana', 'error');
+                    return;
+                }
+                function applyFollowBtn(b, data) {
+                    b.classList.remove('following', 'friends', 'follow-back');
+                    if (data.friends) {
+                        b.classList.add('friends');
+                        b.textContent = 'Friends';
+                    } else if (data.following) {
+                        b.classList.add('following');
+                        b.textContent = 'Following';
+                    } else if (data.follows_you) {
+                        b.classList.add('follow-back');
+                        b.textContent = 'Follow back';
+                    } else {
+                        b.textContent = 'Follow';
+                    }
+                }
+                applyFollowBtn(btn, data);
+                showToast(data.message || 'OK', 'success');
+                document.querySelectorAll('.result-card[data-user-id="' + userId + '"] .btn-follow').forEach(function(b) {
+                    applyFollowBtn(b, data);
+                });
+            })
+            .catch(function() { showToast('Imeshindikana', 'error'); })
+            .finally(function() { btn.disabled = false; });
+        }
+
+        function avatarUrl(pic, name) {
+            if (pic) {
+                var s = String(pic).trim();
+                if (s.indexOf('http://') === 0 || s.indexOf('https://') === 0) return s;
+                return STATIC_UPLOADS + s;
+            }
+            var label = (name || 'U').toString().trim() || 'U';
+            return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(label) + '&background=random&color=fff&size=128&bold=true';
+        }
+
+        function personCardHtml(u) {
+            var name = u.full_name || u.username;
+            var verified = u.is_verified ? '<svg class="verified-badge-custom small" viewBox="0 0 24 24" title="Verified Account"><path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="#8A2BE2"/><path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#fff"/></svg>' : '';
+            var following = u.is_following;
+            return (
+                '<div class="result-card" data-user-id="' + u.id + '">' +
+                '<a href="/profile/' + encodeURIComponent(u.username) + '">' +
+                '<img class="result-avatar" src="' + avatarUrl(u.profile_pic, u.full_name || u.username) + '" onerror="this.onerror=null;this.src=\'' + DEFAULT_AVATAR + '\';" alt="">' +
+                '</a>' +
+                '<div class="result-info"><a href="/profile/' + encodeURIComponent(u.username) + '">' +
+                '<strong>' + name + ' ' + verified + '</strong>' +
+                '<span>@' + u.username + '</span></a></div>' +
+                '<div class="result-actions">' +
+                '<button type="button" class="btn-follow' + (following ? ' following' : '') + '" onclick="toggleFollow(' + u.id + ', this)">' +
+                (following ? 'Following' : 'Follow') + '</button>' +
+                '<a class="btn-chat" href="/chat/' + encodeURIComponent(u.username) + '"><i class="fa-solid fa-comment-dots"></i> Chat</a>' +
+                '</div></div>'
+            );
+        }
+
+        function postCardHtml(p) {
+            var name = p.full_name || p.username;
+            var media = '';
+            if (p.file_path && p.media_type === 'image') {
+                media = '<img class="post-card-media" src="' + STATIC_UPLOADS + p.file_path + '" alt="">';
+            } else if (p.file_path && p.media_type === 'video') {
+                media = '<video class="post-card-media" src="' + STATIC_UPLOADS + p.file_path + '" muted playsinline></video>';
+            }
+            var content = (p.content || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            content = content.replace(/#([A-Za-z0-9_]{1,60})/g, '<a class="hashtag-link" href="/hashtag/$1">#$1</a>');
+            return (
+                '<div class="post-card" data-post-id="' + p.id + '">' +
+                '<a class="full-link" href="/profile/' + encodeURIComponent(p.username) + '">' +
+                '<div class="post-card-header">' +
+                '<img src="' + avatarUrl(p.profile_pic, p.full_name || p.username) + '" onerror="this.onerror=null;this.src=\'' + DEFAULT_AVATAR + '\';" alt="">' +
+                '<div><strong>' + name + '</strong><span>@' + p.username + (p.created_at ? ' · ' + p.created_at : '') + '</span></div>' +
+                '</div></a>' +
+                '<div class="post-card-body">' + content + '</div>' + media +
+                '<div class="post-card-footer">' +
+                '<span><i class="fa-regular fa-thumbs-up"></i> ' + (p.likes_count || 0) + '</span>' +
+                '<span><i class="fa-regular fa-comment"></i> ' + (p.comments_count || 0) + '</span>' +
+                '</div></div>'
+            );
+        }
+
+        function linkupCardHtml(lu) {
+            var name = lu.display_name || lu.username;
+            var verified = lu.is_verified ? '<svg class="verified-badge-custom small" viewBox="0 0 24 24" title="Verified Account"><path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="#8A2BE2"/><path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#FFFFFF"/></svg>' : '';
+            var url = '/linkup/' + encodeURIComponent(lu.username);
+            return (
+                '<div class="result-card" data-linkup-id="' + lu.id + '">' +
+                '<a href="' + url + '">' +
+                '<img class="result-avatar" src="' + avatarUrl(lu.profile_pic, name) + '" onerror="this.onerror=null;this.src=\'' + DEFAULT_AVATAR + '\';" alt="">' +
+                '</a>' +
+                '<div class="result-info"><a href="' + url + '">' +
+                '<strong>' + name + ' ' + verified + '</strong>' +
+                '<span>@' + lu.username + ' · ' + (lu.category || 'general') + '</span></a></div>' +
+                '<div class="result-actions">' +
+                '<a class="btn-follow" href="' + url + '">Fungua</a>' +
+                '</div></div>'
+            );
+        }
+
+        function loadMore(kind, listId, wrapId) {
+            if (loadingMore) return;
+            var wrap = document.getElementById(wrapId);
+            var list = document.getElementById(listId);
+            if (!wrap || !list) return;
+            var cursor = parseInt(wrap.getAttribute('data-cursor') || '0', 10) || 0;
+            loadingMore = true;
+            wrap.classList.add('loading');
+
+            var url = '/api/search?kind=' + encodeURIComponent(kind) +
+                '&q=' + encodeURIComponent(SEARCH_Q || '') +
+                '&cursor=' + cursor + '&limit=20';
+
+            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.success || !data.items || !data.items.length) {
+                    wrap.style.display = 'none';
+                    return;
+                }
+                var empty = list.querySelector('.empty-msg');
+                if (empty) empty.remove();
+
+                data.items.forEach(function(item) {
+                    if (kind === 'people') {
+                        // skip duplicates
+                        if (list.querySelector('.result-card[data-user-id="' + item.id + '"]')) return;
+                        list.insertAdjacentHTML('beforeend', personCardHtml(item));
+                    } else if (kind === 'posts') {
+                        if (list.querySelector('.post-card[data-post-id="' + item.id + '"]')) return;
+                        list.insertAdjacentHTML('beforeend', postCardHtml(item));
+                    } else if (kind === 'linkup') {
+                        if (list.querySelector('.result-card[data-linkup-id="' + item.id + '"]')) return;
+                        list.insertAdjacentHTML('beforeend', linkupCardHtml(item));
+                    }
+                });
+
+                if (data.next_cursor) {
+                    wrap.setAttribute('data-cursor', data.next_cursor);
+                }
+                if (!data.has_more) {
+                    wrap.style.display = 'none';
+                }
+            })
+            .catch(function() { showToast('Imeshindikana kupakia', 'error'); })
+            .finally(function() {
+                loadingMore = false;
+                wrap.classList.remove('loading');
+            });
+        }
+
+        // Infinite scroll
+        window.addEventListener('scroll', function() {
+            if (loadingMore) return;
+            var nearBottom = (window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 200);
+            if (!nearBottom) return;
+            var active = document.querySelector('.tab-panel.active');
+            if (!active) return;
+            var wrap = active.querySelector('.load-more-wrap');
+            if (!wrap || wrap.style.display === 'none') return;
+            var kind = wrap.getAttribute('data-kind');
+            var listId;
+            if (kind === 'people') {
+                listId = (active.id === 'tab-all') ? 'all-people-list' : 'people-list';
+            } else if (kind === 'linkup') {
+                listId = (active.id === 'tab-all') ? 'all-linkup-list' : 'linkup-list';
+            } else {
+                listId = (active.id === 'tab-all') ? 'all-posts-list' : 'posts-list';
+            }
+            if (document.getElementById(listId)) {
+                loadMore(kind, listId, wrap.id);
+            }
+        }, { passive: true });
+
+        // Linkify hashtags in initial post bodies
+        document.querySelectorAll('.post-card-body').forEach(function(el) {
+            if (el.querySelector('a.hashtag-link')) return;
+            var raw = el.textContent || '';
+            if (raw.indexOf('#') === -1) return;
+            el.innerHTML = raw
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/#([A-Za-z0-9_]{1,60})/g, '<a class="hashtag-link" href="/hashtag/$1">#$1</a>');
+        });
+    </script>
+</body>
+</html>

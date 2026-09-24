@@ -1,0 +1,3097 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Insights · Kijiji Tanzania</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+:root{
+  --green:#1EB53A;
+  --green-dark:#15803d;
+  --green-soft:#ecfdf5;
+  --blue:#0284c7;
+  --blue-soft:#e0f2fe;
+  --orange:#f59e0b;
+  --orange-soft:#fffbeb;
+  --red:#dc2626;
+  --text:#0f172a;
+  --muted:#64748b;
+  --line:#e8edf2;
+  --bg:#f4f6f8;
+  --white:#fff;
+  --shadow:0 4px 18px rgba(15,23,42,.055);
+}
+
+html{
+  scroll-behavior:smooth;
+}
+
+body{
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  background:var(--bg);
+  color:#1c1e21;
+  min-height:100vh;
+  line-height:1.45;
+  padding-bottom:40px;
+}
+
+a{
+  color:inherit;
+  text-decoration:none;
+}
+
+.topbar{
+  position:sticky;
+  top:0;
+  z-index:50;
+  background:rgba(255,255,255,.94);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+  padding:12px 16px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  box-shadow:0 2px 12px rgba(0,0,0,.035);
+}
+
+.topbar h1{
+  font-size:1.08rem;
+  font-weight:800;
+  flex:1;
+  color:var(--text);
+  letter-spacing:-.01em;
+}
+
+.topbar h1 i{
+  color:var(--green);
+  margin-right:5px;
+}
+
+.topbar .back{
+  color:var(--green);
+  font-size:1rem;
+  width:38px;
+  height:38px;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:var(--green-soft);
+  transition:.2s ease;
+}
+
+.topbar .back:hover{
+  transform:translateX(-2px);
+}
+
+.wrap{
+  max-width:820px;
+  margin:0 auto;
+  padding:18px 14px 30px;
+}
+
+.card{
+  background:var(--white);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:16px;
+  margin-bottom:14px;
+  box-shadow:var(--shadow);
+}
+
+.section-title{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:.76rem;
+  text-transform:uppercase;
+  letter-spacing:.07em;
+  color:var(--muted);
+  margin:22px 2px 9px;
+  font-weight:800;
+}
+
+.section-title i{
+  font-size:.75rem;
+  color:var(--green);
+}
+
+.period-box{
+  position:relative;
+  margin-bottom:16px;
+}
+
+.period-select{
+  width:100%;
+  appearance:none;
+  -webkit-appearance:none;
+  border:1px solid var(--line);
+  background:#fff;
+  border-radius:16px;
+  min-height:52px;
+  padding:0 48px 0 16px;
+  font-family:inherit;
+  font-size:.92rem;
+  font-weight:700;
+  color:var(--text);
+  cursor:pointer;
+  outline:none;
+  box-shadow:0 3px 12px rgba(15,23,42,.035);
+}
+
+.period-select:focus{
+  border-color:var(--green);
+  box-shadow:0 0 0 3px rgba(30,181,58,.10);
+}
+
+.period-icon{
+  position:absolute;
+  right:16px;
+  top:50%;
+  transform:translateY(-50%);
+  pointer-events:none;
+  color:var(--green);
+}
+
+.period-current{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:7px;
+  color:var(--muted);
+  font-size:.74rem;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+}
+
+/* =========================
+   COLLAPSIBLE SECTIONS
+========================= */
+
+.fold{
+  overflow:hidden;
+}
+
+.fold-head{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:none;
+  border:0;
+  color:var(--text);
+  text-align:left;
+  cursor:pointer;
+  font-family:inherit;
+  padding:2px 0;
+}
+
+.fold-title{
+  flex:1;
+}
+
+.fold-title strong{
+  display:block;
+  font-size:.96rem;
+  font-weight:850;
+}
+
+.fold-title span{
+  display:block;
+  font-size:.73rem;
+  color:var(--muted);
+  margin-top:2px;
+}
+
+.fold-icon{
+  width:34px;
+  height:34px;
+  border-radius:10px;
+  background:#f1f5f9;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--muted);
+  transition:.2s ease;
+}
+
+.fold.open .fold-icon{
+  transform:rotate(180deg);
+  background:var(--green-soft);
+  color:var(--green);
+}
+
+.fold-body{
+  display:none;
+  padding-top:15px;
+}
+
+.fold.open .fold-body{
+  display:block;
+}
+
+/* =========================
+   SUMMARY SPECIAL STYLE
+========================= */
+
+.summary-fold{
+  margin-bottom:14px;
+}
+
+.summary-fold .fold-head{
+  padding:2px 0;
+}
+
+.summary-fold:not(.open){
+  padding-bottom:16px;
+}
+
+.summary-icon{
+  width:42px;
+  height:42px;
+  flex:0 0 42px;
+  border-radius:13px;
+  background:var(--green-soft);
+  color:var(--green);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1rem;
+}
+
+/* =========================
+   STATS
+========================= */
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-bottom:0;
+}
+
+.stat{
+  position:relative;
+  overflow:hidden;
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:14px 10px;
+  text-align:center;
+  min-height:92px;
+  box-shadow:0 3px 12px rgba(15,23,42,.035);
+}
+
+.stat:after{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  height:3px;
+  background:linear-gradient(90deg,transparent,var(--green),transparent);
+  opacity:.55;
+}
+
+.stat-icon{
+  width:28px;
+  height:28px;
+  border-radius:9px;
+  margin:0 auto 5px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:var(--green-soft);
+  color:var(--green-dark);
+  font-size:.75rem;
+}
+
+.stat b{
+  display:block;
+  font-size:1.2rem;
+  color:var(--text);
+  line-height:1.1;
+  font-weight:850;
+}
+
+.stat span{
+  display:block;
+  font-size:.7rem;
+  color:var(--muted);
+  margin-top:4px;
+}
+
+.stat .delta{
+  font-size:.68rem;
+  font-weight:800;
+  margin-top:4px;
+}
+
+.stat .delta.up{color:#16a34a}
+.stat .delta.down{color:#dc2626}
+.stat .delta.flat{color:#94a3b8}
+
+.muted{
+  color:var(--muted);
+  font-size:.86rem;
+}
+
+.empty{
+  text-align:center;
+  padding:38px 16px;
+  color:var(--muted);
+}
+
+.empty i{
+  display:block;
+  font-size:2rem;
+  margin-bottom:9px;
+  opacity:.35;
+}
+
+.btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  border:none;
+  cursor:pointer;
+  border-radius:11px;
+  padding:9px 14px;
+  font-weight:700;
+  font-size:.84rem;
+  font-family:inherit;
+  transition:.18s ease;
+}
+
+.btn:active{
+  transform:scale(.97);
+}
+
+.btn-primary{
+  background:var(--green);
+  color:#fff;
+}
+
+.btn-primary:hover{
+  background:var(--green-dark);
+}
+
+.btn-ghost{
+  background:#f1f5f9;
+  color:var(--text);
+}
+
+.btn-ghost:hover{
+  background:#e8edf2;
+}
+
+.actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:12px;
+}
+
+.big-metric{
+  display:flex;
+  flex-wrap:wrap;
+  gap:14px;
+  align-items:center;
+  justify-content:space-between;
+}
+
+.rate-wrap{
+  display:flex;
+  align-items:center;
+  gap:13px;
+}
+
+.rate-icon{
+  width:48px;
+  height:48px;
+  flex:0 0 48px;
+  border-radius:15px;
+  background:var(--green-soft);
+  color:var(--green);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.2rem;
+}
+
+.big-metric .rate{
+  font-size:2rem;
+  font-weight:900;
+  color:var(--text);
+  line-height:1;
+  margin-top:3px;
+}
+
+/* =========================
+   TIPS
+========================= */
+
+.tips-fold{
+  margin-bottom:14px;
+}
+
+.tip{
+  background:var(--orange-soft);
+  border:1px solid #fde68a;
+  border-radius:14px;
+  padding:11px 13px;
+  margin-bottom:8px;
+  font-size:.86rem;
+  color:#92400e;
+  display:flex;
+  gap:9px;
+  align-items:flex-start;
+}
+
+.tip:last-child{
+  margin-bottom:0;
+}
+
+.tip i{
+  color:var(--orange);
+  margin-top:2px;
+}
+
+/* =========================
+   DAILY ANALYTICS
+========================= */
+
+.analytics-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:12px;
+}
+
+.analytics-title{
+  font-size:.95rem;
+  font-weight:850;
+  color:var(--text);
+}
+
+.analytics-sub{
+  color:var(--muted);
+  font-size:.73rem;
+}
+
+.legend{
+  display:flex;
+  gap:10px;
+  font-size:.72rem;
+  color:var(--muted);
+  margin-top:8px;
+  flex-wrap:wrap;
+}
+
+.legend span{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+}
+
+.legend i{
+  display:inline-block;
+  width:9px;
+  height:9px;
+  border-radius:3px;
+}
+
+.legend .likes-dot{
+  background:var(--green);
+}
+
+.legend .views-dot{
+  background:var(--blue);
+}
+
+.chart-wrap{
+  margin-top:12px;
+  border:1px solid #edf1f4;
+  border-radius:15px;
+  padding:12px 8px 8px;
+  background:#fbfcfd;
+  overflow:hidden;
+}
+
+.chart-area{
+  height:160px;
+  max-height:220px;
+  display:flex;
+  align-items:flex-end;
+  gap:4px;
+  overflow-x:auto;
+  padding:8px 4px 0;
+}
+.daily-summary{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-bottom:10px;
+}
+.daily-summary .box{
+  background:#f8fafc;
+  border:1px solid #edf1f4;
+  border-radius:12px;
+  padding:10px 12px;
+  text-align:center;
+}
+.daily-summary .box b{
+  display:block;
+  font-size:1.15rem;
+  color:#0f172a;
+  font-weight:850;
+}
+.daily-summary .box span{
+  font-size:.68rem;
+  color:#64748b;
+}
+.daily-records{
+  max-height:220px;
+  overflow-y:auto;
+}
+
+.day-column{
+  min-width:24px;
+  flex:1;
+  height:100%;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  position:relative;
+}
+
+.day-bars{
+  width:100%;
+  height:100%;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  gap:2px;
+}
+
+.day-bar{
+  width:9px;
+  min-height:3px;
+  border-radius:5px 5px 2px 2px;
+  position:relative;
+  transition:.2s ease;
+}
+
+.day-bar:hover{
+  filter:brightness(.92);
+  transform:translateY(-2px);
+}
+
+.day-bar.likes{
+  background:linear-gradient(180deg,#4ade80,#1EB53A);
+}
+
+.day-bar.views{
+  background:linear-gradient(180deg,#7dd3fc,#0284c7);
+}
+
+.day-labels{
+  display:flex;
+  gap:5px;
+  padding:5px 4px 0;
+  overflow:hidden;
+}
+
+.day-labels span{
+  flex:1;
+  min-width:24px;
+  text-align:center;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:.59rem;
+  color:#94a3b8;
+}
+
+.daily-records{
+  margin-top:13px;
+  display:grid;
+  gap:7px;
+}
+
+.daily-record{
+  display:grid;
+  grid-template-columns:72px 1fr;
+  gap:10px;
+  align-items:center;
+  padding:9px 10px;
+  border:1px solid #edf1f4;
+  border-radius:12px;
+  background:#fff;
+}
+
+.daily-date{
+  font-size:.72rem;
+  color:var(--muted);
+  font-weight:700;
+}
+
+.daily-values{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:6px;
+}
+
+.metric-mini{
+  text-align:center;
+  padding:5px 3px;
+  border-radius:8px;
+  background:#f8fafc;
+}
+
+.metric-mini b{
+  display:block;
+  color:var(--text);
+  font-size:.8rem;
+}
+
+.metric-mini span{
+  display:block;
+  color:var(--muted);
+  font-size:.58rem;
+  margin-top:1px;
+}
+
+/* =========================
+   BEST HOURS
+========================= */
+
+.best-hour-summary{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:13px;
+}
+
+.best-hour-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  background:var(--green-soft);
+  color:var(--green-dark);
+  border:1px solid #bbf7d0;
+  padding:8px 10px;
+  border-radius:11px;
+  font-size:.76rem;
+  font-weight:800;
+}
+
+.hour-grid{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:6px;
+}
+
+.hour-cell{
+  background:#f8fafc;
+  border-radius:11px;
+  padding:9px 3px 8px;
+  text-align:center;
+  font-size:.7rem;
+  border:1px solid #edf1f4;
+  transition:.18s ease;
+}
+
+.hour-cell:hover{
+  transform:translateY(-2px);
+  border-color:#cbd5e1;
+}
+
+.hour-cell strong{
+  display:block;
+  color:var(--text);
+  font-size:.72rem;
+  margin-bottom:2px;
+}
+
+.hour-cell small{
+  color:var(--muted);
+  font-size:.6rem;
+}
+
+.hour-cell.best{
+  background:var(--green-soft);
+  border-color:#86efac;
+  color:var(--green-dark);
+  box-shadow:inset 0 -3px 0 rgba(30,181,58,.15);
+}
+
+.hour-cell.best strong{
+  color:var(--green-dark);
+}
+
+.hour-cell.best small{
+  color:var(--green-dark);
+}
+
+/* =========================
+   WEEKDAYS
+========================= */
+
+.weekday-row{
+  display:grid;
+  grid-template-columns:82px 1fr 48px;
+  align-items:center;
+  gap:9px;
+  margin:9px 0;
+}
+
+.weekday-name{
+  font-size:.78rem;
+  font-weight:700;
+}
+
+.weekday-track{
+  height:10px;
+  background:#e9eef2;
+  border-radius:999px;
+  overflow:hidden;
+}
+
+.weekday-track i{
+  display:block;
+  height:100%;
+  background:linear-gradient(90deg,#4ade80,#1EB53A);
+  border-radius:999px;
+}
+
+.weekday-value{
+  text-align:right;
+  color:var(--muted);
+  font-size:.74rem;
+  font-weight:700;
+}
+
+/* =========================
+   MEDIA
+========================= */
+
+.media-row,
+.category-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  padding:12px 0;
+  border-bottom:1px solid #f1f5f9;
+}
+
+.media-row:last-child,
+.category-row:last-child{
+  border-bottom:none;
+}
+
+.media-left{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.media-icon{
+  width:38px;
+  height:38px;
+  border-radius:11px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#f1f5f9;
+  color:var(--muted);
+}
+
+.media-name{
+  font-weight:800;
+  font-size:.86rem;
+  text-transform:capitalize;
+}
+
+.media-posts{
+  color:var(--muted);
+  font-size:.72rem;
+  margin-top:2px;
+}
+
+.media-stats{
+  color:var(--muted);
+  font-size:.75rem;
+  text-align:right;
+}
+
+/* =========================
+   TAGS
+========================= */
+
+.tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+}
+
+.tag{
+  display:inline-flex;
+  align-items:center;
+  background:var(--green-soft);
+  color:var(--green-dark);
+  padding:7px 11px;
+  border-radius:999px;
+  font-size:.76rem;
+  font-weight:700;
+  border:1px solid #d1fae5;
+}
+
+.tag.blue{
+  background:var(--blue-soft);
+  color:#0369a1;
+  border-color:#bae6fd;
+}
+
+/* =========================
+   GOALS
+========================= */
+
+.goal-box input{
+  width:100%;
+  padding:11px 12px;
+  border:1.5px solid #e2e8f0;
+  border-radius:11px;
+  font-size:.9rem;
+  margin-top:6px;
+  font-family:inherit;
+}
+
+.goal-box input:focus{
+  outline:none;
+  border-color:var(--green);
+  box-shadow:0 0 0 3px rgba(30,181,58,.08);
+}
+
+.progress{
+  height:10px;
+  background:#e2e8f0;
+  border-radius:999px;
+  overflow:hidden;
+  margin-top:10px;
+}
+
+.progress > i{
+  display:block;
+  height:100%;
+  background:linear-gradient(90deg,#1EB53A,#00A3DD);
+  border-radius:999px;
+  transition:width .35s ease;
+}
+
+/* =========================
+   POSTS
+========================= */
+
+.post-row{
+  display:block;
+  padding:14px 0;
+  border-bottom:1px solid #edf1f4;
+}
+
+.post-row:last-child{
+  border-bottom:none;
+}
+
+.post-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:8px;
+}
+
+.post-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  border-radius:999px;
+  padding:5px 9px;
+  font-size:.65rem;
+  font-weight:800;
+  background:#f1f5f9;
+  color:var(--muted);
+}
+
+.post-meta{
+  font-size:.68rem;
+  color:#94a3b8;
+  text-align:right;
+}
+
+.post-preview{
+  position:relative;
+  width:100%;
+  border-radius:15px;
+  overflow:hidden;
+  margin:8px 0 10px;
+  background:#eef2f5;
+  min-height:100px;
+}
+
+.post-preview img{
+  width:100%;
+  max-height:380px;
+  display:block;
+  object-fit:cover;
+}
+
+.post-preview video{
+  width:100%;
+  max-height:400px;
+  display:block;
+  background:#000;
+}
+
+.video-label{
+  position:absolute;
+  left:9px;
+  top:9px;
+  z-index:2;
+  background:rgba(0,0,0,.65);
+  color:#fff;
+  padding:5px 8px;
+  border-radius:8px;
+  font-size:.65rem;
+  font-weight:700;
+}
+
+.post-body{
+  font-size:.9rem;
+  color:var(--text);
+  word-break:break-word;
+  display:-webkit-box;
+  -webkit-line-clamp:4;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+
+.post-metrics{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:6px;
+  margin-top:10px;
+}
+
+.post-metric{
+  background:#f8fafc;
+  border-radius:9px;
+  padding:7px 4px;
+  text-align:center;
+}
+
+.post-metric b{
+  display:block;
+  color:var(--text);
+  font-size:.78rem;
+}
+
+.post-metric span{
+  display:block;
+  color:var(--muted);
+  font-size:.58rem;
+  margin-top:1px;
+}
+
+.engagement-score{
+  margin-top:8px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:8px 10px;
+  background:var(--green-soft);
+  border-radius:10px;
+  color:var(--green-dark);
+  font-size:.72rem;
+  font-weight:800;
+}
+
+.low-score{
+  background:#fff7ed;
+  color:#c2410c;
+}
+
+/* =========================
+   PEOPLE
+========================= */
+
+.person{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 0;
+  border-bottom:1px solid #f1f5f9;
+}
+
+.person:last-child{
+  border-bottom:none;
+}
+
+.person img{
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  object-fit:cover;
+  background:#e2e8f0;
+}
+
+.person-info{
+  flex:1;
+  min-width:0;
+}
+
+.person strong{
+  display:block;
+  font-size:.86rem;
+  color:var(--text);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.person span{
+  display:block;
+  font-size:.72rem;
+  color:var(--muted);
+}
+
+.person-score{
+  font-size:.73rem;
+  color:var(--green-dark);
+  font-weight:800;
+  white-space:nowrap;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media(max-width:600px){
+
+  .wrap{
+    padding:14px 10px 28px;
+  }
+
+  .card{
+    border-radius:16px;
+    padding:14px;
+  }
+
+  .stats{
+    grid-template-columns:repeat(2,1fr);
+    gap:8px;
+  }
+
+  .stat{
+    min-height:88px;
+    padding:12px 8px;
+  }
+
+  .stat b{
+    font-size:1.12rem;
+  }
+
+  .daily-record{
+    grid-template-columns:60px 1fr;
+  }
+
+  .daily-values{
+    grid-template-columns:repeat(3,1fr);
+  }
+
+  .hour-grid{
+    grid-template-columns:repeat(4,1fr);
+  }
+
+  .weekday-row{
+    grid-template-columns:72px 1fr 42px;
+  }
+
+  .big-metric{
+    align-items:flex-start;
+  }
+
+  .big-metric .btn{
+    width:100%;
+  }
+}
+
+@media(max-width:380px){
+
+  .hour-grid{
+    grid-template-columns:repeat(3,1fr);
+  }
+
+  .post-metrics{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .daily-values{
+    grid-template-columns:1fr;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header class="topbar">
+
+  <a class="back"
+     href="{{ url_for('profile', username=username) if username else url_for('home') }}"
+     aria-label="Back">
+
+    <i class="fa-solid fa-arrow-left"></i>
+
+  </a>
+
+  <h1>
+    <i class="fa-solid fa-chart-line"></i>
+    Insights
+  </h1>
+
+  <button type="button"
+          class="btn btn-ghost"
+          onclick="exportCSV()"
+          title="Export CSV">
+
+    <i class="fa-solid fa-download"></i>
+
+  </button>
+
+</header>
+
+
+<main class="wrap">
+
+{% set s = stats %}
+{% set p = period or s.period or '30' %}
+
+
+<!-- =========================
+     KIJIJI MODE: RECOMMENDABLE STATUS
+========================= -->
+
+<div class="card" style="margin-bottom:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;
+     {% if my_recommendable %}background:#ecfdf5;border:1px solid #bbf7d0;{% else %}background:#fef2f2;border:1px solid #fecaca;{% endif %}">
+  <div style="width:38px;height:38px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+       {% if my_recommendable %}background:#1EB53A;color:#fff;{% else %}background:#dc2626;color:#fff;{% endif %}">
+    <i class="fa-solid {% if my_recommendable %}fa-circle-check{% else %}fa-triangle-exclamation{% endif %}"></i>
+  </div>
+  <div>
+    {% if my_recommendable %}
+      <strong style="color:#15803d;font-size:.92rem;">Profile yako ni Recommendable</strong>
+      <p style="color:#166534;font-size:.75rem;margin-top:2px;">Hauna warning — unaweza kupendekezwa kwa watumiaji wengine kwenye Explore na Home.</p>
+    {% else %}
+      <strong style="color:#dc2626;font-size:.92rem;">Your profile is on risk</strong>
+      <p style="color:#991b1b;font-size:.75rem;margin-top:2px;">Profile yako ina warning — kwa sasa haiwezi kupendekezwa kwa watumiaji wengine mpaka warning iondolewe.</p>
+    {% endif %}
+  </div>
+</div>
+
+{% if s.new_followers_total %}
+<div class="card" style="margin-bottom:14px;padding:12px 16px;display:flex;align-items:center;gap:10px;">
+  <i class="fa-solid fa-user-plus" style="color:#00A3DD;"></i>
+  <span style="font-size:.82rem;color:#334155;"><strong>{{ s.new_followers_total }}</strong> followers wamekufuata moja kwa moja kupitia posts zako.</span>
+</div>
+{% endif %}
+
+
+<!-- =========================
+     PERIOD
+========================= -->
+
+<div class="period-box">
+
+  <div class="period-current">
+    <i class="fa-solid fa-calendar-days"></i>
+    Kipindi cha takwimu
+  </div>
+
+  <select class="period-select"
+          onchange="changePeriod(this.value)"
+          aria-label="Chagua kipindi">
+
+    <option value="1" {{ 'selected' if p=='1' else '' }}>
+      Leo
+    </option>
+
+    <option value="7" {{ 'selected' if p=='7' else '' }}>
+      Siku 7 zilizopita
+    </option>
+
+    <option value="30" {{ 'selected' if p=='30' else '' }}>
+      Siku 30
+    </option>
+
+    <option value="90" {{ 'selected' if p=='90' else '' }}>
+      Miezi 3
+    </option>
+
+    <option value="all" {{ 'selected' if p=='all' else '' }}>
+      Tangu mwanzo · Yote
+    </option>
+
+  </select>
+
+  <i class="fa-solid fa-chevron-down period-icon"></i>
+
+</div>
+
+
+<!-- =========================
+     MUHTASARI
+     CLOSED BY DEFAULT
+========================= -->
+
+<div class="section-title">
+  <i class="fa-solid fa-layer-group"></i>
+  Muhtasari wa akaunti
+</div>
+
+<div class="card fold summary-fold">
+
+  <button class="fold-head"
+          type="button"
+          onclick="toggleFold(this)">
+
+    <div class="summary-icon">
+      <i class="fa-solid fa-chart-pie"></i>
+    </div>
+
+    <div class="fold-title">
+
+      <strong>
+        Muhtasari wa takwimu
+      </strong>
+
+      <span>
+        Bonyeza hapa kuona Posts, Likes, Views, Followers na zaidi
+      </span>
+
+    </div>
+
+    <div class="fold-icon">
+      <i class="fa-solid fa-chevron-down"></i>
+    </div>
+
+  </button>
+
+
+  <div class="fold-body">
+
+    <div class="stats">
+
+      <div class="stat">
+
+        <div class="stat-icon">
+          <i class="fa-solid fa-paper-plane"></i>
+        </div>
+
+        <b>{{ s.posts_period if s.posts_period is defined else s.posts_count }}</b>
+
+        <span>Posts</span>
+
+        {% if s.posts_change is defined %}
+
+        <div class="delta {{ 'up' if s.posts_change>0 else ('down' if s.posts_change<0 else 'flat') }}">
+
+          {{ '%+.1f'|format(s.posts_change) }}%
+
+        </div>
+
+        {% endif %}
+
+      </div>
+
+
+      <div class="stat">
+
+        <div class="stat-icon">
+          <i class="fa-solid fa-heart"></i>
+        </div>
+
+        <b>{{ s.likes_period if s.likes_period is defined else s.likes_count }}</b>
+
+        <span>Likes</span>
+
+        {% if s.likes_change is defined %}
+
+        <div class="delta {{ 'up' if s.likes_change>0 else ('down' if s.likes_change<0 else 'flat') }}">
+
+          {{ '%+.1f'|format(s.likes_change) }}%
+
+        </div>
+
+        {% endif %}
+
+      </div>
+
+
+      <div class="stat">
+
+        <div class="stat-icon">
+          <i class="fa-solid fa-comment"></i>
+        </div>
+
+        <b>{{ s.comments_period if s.comments_period is defined else s.comments_count }}</b>
+
+        <span>Comments</span>
+
+      </div>
+
+
+      <div class="stat">
+
+        <div class="stat-icon">
+          <i class="fa-solid fa-eye"></i>
+        </div>
+
+        <b>{{ s.views_period if s.views_period is defined else s.views_count }}</b>
+
+        <span>Views</span>
+
+        {% if s.views_change is defined %}
+
+        <div class="delta {{ 'up' if s.views_change>0 else ('down' if s.views_change<0 else 'flat') }}">
+
+          {{ '%+.1f'|format(s.views_change) }}%
+
+        </div>
+
+        {% endif %}
+
+      </div>
+
+
+      <div class="stat">
+
+        <div class="stat-icon">
+          <i class="fa-solid fa-share-nodes"></i>
+        </div>
+
+        <b>{{ s.shares_period if s.shares_period is defined else s.shares_count }}</b>
+
+        <span>Shares</span>
+
+      </div>
+
+
+      <div class="stat">
+
+        <div class="stat-icon">
+          <i class="fa-solid fa-bookmark"></i>
+        </div>
+
+        <b>{{ s.saves_period if s.saves_period is defined else s.saves_count }}</b>
+
+        <span>Saves</span>
+
+      </div>
+
+
+      <div class="stat">
+
+        <div class="stat-icon">
+          <i class="fa-solid fa-user-plus"></i>
+        </div>
+
+        <b>{{ s.followers }}</b>
+
+        <span>Followers</span>
+
+      </div>
+
+
+      <div class="stat">
+
+        <div class="stat-icon">
+          <i class="fa-solid fa-user-group"></i>
+        </div>
+
+        <b>{{ s.following }}</b>
+
+        <span>Following</span>
+
+      </div>
+
+
+      <div class="stat">
+
+        <div class="stat-icon">
+          <i class="fa-solid fa-bullseye"></i>
+        </div>
+
+        <b>{{ s.views_count }}</b>
+
+        <span>Reach</span>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- =========================
+     ENGAGEMENT
+========================= -->
+
+<div class="section-title">
+  <i class="fa-solid fa-gauge-high"></i>
+  Engagement
+</div>
+
+<div class="card">
+
+  <div class="big-metric">
+
+    <div class="rate-wrap">
+
+      <div class="rate-icon">
+        <i class="fa-solid fa-bolt"></i>
+      </div>
+
+      <div>
+
+        <div class="muted">
+          Engagement rate · kipindi
+        </div>
+
+        <div class="rate">
+          {{ s.engagement_rate or 0 }}%
+        </div>
+
+        <div class="muted">
+          Likes + comments + shares + saves ÷ views
+        </div>
+
+      </div>
+
+    </div>
+
+    <a class="btn btn-primary"
+       href="{{ url_for('drafts_list') if url_for else '/drafts' }}">
+
+      <i class="fa-solid fa-file-lines"></i>
+      Drafts
+
+    </a>
+
+  </div>
+
+</div>
+
+
+<!-- =========================
+     TIPS
+     CLOSED BY DEFAULT
+========================= -->
+
+{% if s.tips %}
+
+<div class="section-title">
+  <i class="fa-solid fa-lightbulb"></i>
+  Tips
+</div>
+
+<div class="card fold tips-fold">
+
+  <button class="fold-head"
+          type="button"
+          onclick="toggleFold(this)">
+
+    <div class="summary-icon"
+         style="background:#fffbeb;color:#f59e0b">
+
+      <i class="fa-solid fa-lightbulb"></i>
+
+    </div>
+
+    <div class="fold-title">
+
+      <strong>
+        Tips za kuboresha performance
+      </strong>
+
+      <span>
+        Bonyeza hapa kuona ushauri wa mfumo
+      </span>
+
+    </div>
+
+    <div class="fold-icon">
+      <i class="fa-solid fa-chevron-down"></i>
+    </div>
+
+  </button>
+
+
+  <div class="fold-body">
+
+    {% for t in s.tips %}
+
+    <div class="tip">
+
+      <i class="fa-solid fa-lightbulb"></i>
+
+      <span>
+        {{ t }}
+      </span>
+
+    </div>
+
+    {% endfor %}
+
+  </div>
+
+</div>
+
+{% endif %}
+
+
+<!-- =========================
+     DAILY ENGAGEMENT
+     HAPA SIJABADILISHA
+========================= -->
+
+<div class="section-title">
+  <i class="fa-solid fa-chart-column"></i>
+  Engagement kwa siku
+</div>
+
+<div class="card fold">
+
+  <button class="fold-head"
+          type="button"
+          onclick="toggleFold(this)">
+
+    <div class="fold-title">
+
+      <strong>
+        Views na Likes kwa siku
+      </strong>
+
+      <span>
+        Bonyeza kufungua graph · data zote zinabaki
+      </span>
+
+    </div>
+
+    <div class="fold-icon">
+      <i class="fa-solid fa-chevron-down"></i>
+    </div>
+
+  </button>
+
+
+  <div class="fold-body">
+
+  {% if s.daily %}
+
+    <div class="daily-summary">
+      <div class="box">
+        <b>{{ s.daily_views_sum if s.daily_views_sum is defined else s.views_period }}</b>
+        <span>Views (kipindi)</span>
+      </div>
+      <div class="box">
+        <b>{{ s.daily_likes_sum if s.daily_likes_sum is defined else s.likes_period }}</b>
+        <span>Likes (kipindi)</span>
+      </div>
+    </div>
+
+    {% set max_v = namespace(max_v=1) %}
+
+    {% for d in s.daily %}
+
+      {% if d.views > max_v.max_v %}
+        {% set max_v.max_v = d.views %}
+      {% endif %}
+
+      {% if d.likes > max_v.max_v %}
+        {% set max_v.max_v = d.likes %}
+      {% endif %}
+
+    {% endfor %}
+
+
+    <div class="analytics-head">
+
+      <div>
+
+        <div class="analytics-title">
+          Performance
+        </div>
+
+        <div class="analytics-sub">
+          Urefu wa bar unaonyesha kiwango cha activity
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="legend">
+
+      <span>
+        <i class="likes-dot"></i>
+        Likes
+      </span>
+
+      <span>
+        <i class="views-dot"></i>
+        Views / Viewers
+      </span>
+
+    </div>
+
+
+    <div class="chart-wrap">
+
+      <div class="chart-area">
+
+        {% for d in s.daily %}
+
+          {% set h_l = ((d.likes / max_v.max_v) * 100) if max_v.max_v else 0 %}
+
+          {% set h_v = ((d.views / max_v.max_v) * 100) if max_v.max_v else 0 %}
+
+          <div class="day-column">
+
+            <div class="day-bars">
+
+              <div class="day-bar likes"
+                   style="height:{{ [h_l, 3]|max }}%"
+                   title="{{ d.date }} · Likes: {{ d.likes }}">
+              </div>
+
+              <div class="day-bar views"
+                   style="height:{{ [h_v, 3]|max }}%"
+                   title="{{ d.date }} · Views: {{ d.views }}">
+              </div>
+
+            </div>
+
+          </div>
+
+        {% endfor %}
+
+      </div>
+
+
+      <div class="day-labels">
+
+        {% for d in s.daily %}
+
+          <span>
+            {{ d.label if loop.index0 % (2 if s.daily|length > 14 else 1) == 0 else '' }}
+          </span>
+
+        {% endfor %}
+
+      </div>
+
+    </div>
+
+
+    <div class="daily-records">
+
+      {% for d in s.daily %}
+
+      <div class="daily-record">
+
+        <div class="daily-date">
+          {{ d.label or d.date }}
+        </div>
+
+        <div class="daily-values">
+
+          <div class="metric-mini">
+            <b>{{ d.views }}</b>
+            <span>Viewers</span>
+          </div>
+
+          <div class="metric-mini">
+            <b>{{ d.likes }}</b>
+            <span>Likes</span>
+          </div>
+
+          <div class="metric-mini">
+
+            <b>
+
+              {% if d.views %}
+                {{ ((d.likes / d.views) * 100)|round(1) }}%
+              {% else %}
+                0%
+              {% endif %}
+
+            </b>
+
+            <span>Rate</span>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      {% endfor %}
+
+    </div>
+
+
+  {% else %}
+
+    <div class="empty">
+
+      <i class="fa-solid fa-chart-column"></i>
+
+      Hakuna data ya siku bado
+
+    </div>
+
+  {% endif %}
+
+  </div>
+
+</div>
+
+
+<!-- =========================
+     BEST HOURS
+========================= -->
+
+<div class="section-title">
+  <i class="fa-regular fa-clock"></i>
+  Saa bora
+</div>
+
+<div class="card fold open">
+
+  <button class="fold-head"
+          type="button"
+          onclick="toggleFold(this)">
+
+    <div class="fold-title">
+
+      <strong>
+        Ni saa gani watu wanaangalia zaidi?
+      </strong>
+
+      <span>
+        Idadi halisi ya viewers kwa kila saa
+      </span>
+
+    </div>
+
+    <div class="fold-icon">
+      <i class="fa-solid fa-chevron-down"></i>
+    </div>
+
+  </button>
+
+
+  <div class="fold-body">
+
+    {% if s.best_hours %}
+
+    <div class="best-hour-summary">
+
+      {% for h in s.best_hours %}
+
+      <div class="best-hour-pill">
+
+        <i class="fa-solid fa-star"></i>
+
+        {{ '%02d'|format(h.hour) }}:00
+        · {{ h.count }} viewers
+
+      </div>
+
+      {% endfor %}
+
+    </div>
+
+    {% endif %}
+
+
+    <div class="hour-grid">
+
+      {% set hour_map = {} %}
+
+      {% for h in s.hours or [] %}
+        {% set _ = hour_map.update({h.hour: h.count}) %}
+      {% endfor %}
+
+
+      {% set max_h = namespace(m=1) %}
+
+      {% for h in s.hours or [] %}
+
+        {% if h.count > max_h.m %}
+          {% set max_h.m = h.count %}
+        {% endif %}
+
+      {% endfor %}
+
+
+      {% for hr in range(24) %}
+
+        {% set c = hour_map.get(hr, 0) %}
+
+        <div class="hour-cell {{ 'best' if c and c == max_h.m and c > 0 else '' }}">
+
+          <strong>
+            {{ '%02d'|format(hr) }}:00
+          </strong>
+
+          <small>
+            {{ c }} viewers
+          </small>
+
+        </div>
+
+      {% endfor %}
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- =========================
+     WEEKDAYS
+========================= -->
+
+<div class="section-title">
+  <i class="fa-solid fa-calendar-week"></i>
+  Siku za wiki
+</div>
+
+<div class="card fold">
+
+  <button class="fold-head"
+          type="button"
+          onclick="toggleFold(this)">
+
+    <div class="fold-title">
+
+      <strong>
+        Performance kwa siku za wiki
+      </strong>
+
+      <span>
+        Linganisha views za Jumatatu hadi Jumapili
+      </span>
+
+    </div>
+
+    <div class="fold-icon">
+      <i class="fa-solid fa-chevron-down"></i>
+    </div>
+
+  </button>
+
+
+  <div class="fold-body">
+
+    {% if s.weekday_views %}
+
+      {% set max_w = namespace(m=1) %}
+
+      {% for w in s.weekday_views %}
+
+        {% if w.views > max_w.m %}
+          {% set max_w.m = w.views %}
+        {% endif %}
+
+      {% endfor %}
+
+
+      {% for w in s.weekday_views|sort(attribute='dow') %}
+
+      <div class="weekday-row">
+
+        <span class="weekday-name">
+          {{ w.day }}
+        </span>
+
+        <div class="weekday-track">
+          <i style="width:{{ (w.views / max_w.m * 100)|round }}%"></i>
+        </div>
+
+        <span class="weekday-value">
+          {{ w.views }}
+        </span>
+
+      </div>
+
+      {% endfor %}
+
+    {% else %}
+
+      <div class="empty">
+        <i class="fa-solid fa-calendar-xmark"></i>
+        Hakuna data bado
+      </div>
+
+    {% endif %}
+
+  </div>
+
+</div>
+
+
+<!-- =========================
+     MEDIA
+========================= -->
+
+<div class="section-title">
+  <i class="fa-solid fa-photo-film"></i>
+  Aina ya media
+</div>
+
+<div class="card fold">
+
+  <button class="fold-head"
+          type="button"
+          onclick="toggleFold(this)">
+
+    <div class="fold-title">
+
+      <strong>
+        Content performance
+      </strong>
+
+      <span>
+        Video, picha na aina nyingine za post
+      </span>
+
+    </div>
+
+    <div class="fold-icon">
+      <i class="fa-solid fa-chevron-down"></i>
+    </div>
+
+  </button>
+
+
+  <div class="fold-body">
+
+    {% if s.media %}
+
+      {% for m in s.media %}
+
+      <div class="media-row">
+
+        <div class="media-left">
+
+          <div class="media-icon">
+
+            {% if 'video' in (m.type|string)|lower %}
+              <i class="fa-solid fa-video"></i>
+            {% elif 'image' in (m.type|string)|lower or 'photo' in (m.type|string)|lower %}
+              <i class="fa-solid fa-image"></i>
+            {% else %}
+              <i class="fa-solid fa-file"></i>
+            {% endif %}
+
+          </div>
+
+          <div>
+
+            <div class="media-name">
+              {{ m.type }}
+            </div>
+
+            <div class="media-posts">
+              {{ m.posts }} posts
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="media-stats">
+          ❤️ {{ m.likes }}
+          ·
+          👁️ {{ m.views }}
+        </div>
+
+      </div>
+
+      {% endfor %}
+
+    {% else %}
+
+      <div class="empty">
+        Chapisha post ili uone breakdown
+      </div>
+
+    {% endif %}
+
+  </div>
+
+</div>
+
+
+<!-- =========================
+     CATEGORIES
+========================= -->
+
+{% if s.categories %}
+
+<div class="section-title">
+  <i class="fa-solid fa-folder-open"></i>
+  Categories
+</div>
+
+<div class="card fold">
+
+  <button class="fold-head"
+          type="button"
+          onclick="toggleFold(this)">
+
+    <div class="fold-title">
+
+      <strong>
+        Category performance
+      </strong>
+
+      <span>
+        Angalia category zinazofanya vizuri
+      </span>
+
+    </div>
+
+    <div class="fold-icon">
+      <i class="fa-solid fa-chevron-down"></i>
+    </div>
+
+  </button>
+
+
+  <div class="fold-body">
+
+    {% for c in s.categories %}
+
+    <div class="category-row">
+
+      <strong>
+        {{ c.category }}
+      </strong>
+
+      <span class="muted">
+        {{ c.posts }} posts · {{ c.likes }} likes
+      </span>
+
+    </div>
+
+    {% endfor %}
+
+  </div>
+
+</div>
+
+{% endif %}
+
+
+<!-- =========================
+     HASHTAGS
+========================= -->
+
+<div class="section-title">
+  <i class="fa-solid fa-hashtag"></i>
+  Top hashtags
+</div>
+
+<div class="card fold">
+
+  <button class="fold-head"
+          type="button"
+          onclick="toggleFold(this)">
+
+    <div class="fold-title">
+
+      <strong>
+        Hashtags zinazotumika zaidi
+      </strong>
+
+      <span>
+        Bonyeza kufungua list yote
+      </span>
+
+    </div>
+
+    <div class="fold-icon">
+      <i class="fa-solid fa-chevron-down"></i>
+    </div>
+
+  </button>
+
+
+  <div class="fold-body">
+
+    {% if s.top_tags %}
+
+      <div class="tags">
+
+        {% for t in s.top_tags %}
+
+        <a class="tag blue"
+           href="/hashtag/{{ t.tag }}">
+
+          #{{ t.tag }} · {{ t.count }}
+
+        </a>
+
+        {% endfor %}
+
+      </div>
+
+    {% else %}
+
+      <div class="empty">
+        Tumia #hashtags kwenye posts zako
+      </div>
+
+    {% endif %}
+
+  </div>
+
+</div>
+
+
+<!-- =========================
+     GOALS
+========================= -->
+
+<div class="section-title">
+  <i class="fa-solid fa-bullseye"></i>
+  Malengo
+</div>
+
+<div class="card fold">
+
+  <button class="fold-head"
+          type="button"
+          onclick="toggleFold(this)">
+
+    <div class="fold-title">
+
+      <strong>
+        Weka malengo yako
+      </strong>
+
+      <span>
+        Followers na posts
+      </span>
+
+    </div>
+
+    <div class="fold-icon">
+      <i class="fa-solid fa-chevron-down"></i>
+    </div>
+
+  </button>
+
+
+  <div class="fold-body goal-box">
+
+    <label class="muted">
+      Lengo la followers
+    </label>
+
+    <input type="number"
+           id="goalFollowers"
+           min="1"
+           placeholder="mf. 1000">
+
+
+    <label class="muted"
+           style="display:block;margin-top:12px">
+
+      Lengo la posts / mwezi
+
+    </label>
+
+    <input type="number"
+           id="goalPosts"
+           min="1"
+           placeholder="mf. 20">
+
+
+    <div class="progress"
+         id="goalProgFollowers">
+
+      <i id="goalBarFollowers"
+         style="width:0%">
+      </i>
+
+    </div>
+
+    <p class="muted"
+       id="goalTextFollowers"
+       style="margin-top:6px">
+    </p>
+
+
+    <div class="progress"
+         id="goalProgPosts">
+
+      <i id="goalBarPosts"
+         style="width:0%">
+      </i>
+
+    </div>
+
+    <p class="muted"
+       id="goalTextPosts"
+       style="margin-top:6px">
+    </p>
+
+
+    <div class="actions">
+
+      <button type="button"
+              class="btn btn-primary"
+              onclick="saveGoals()">
+
+        <i class="fa-solid fa-floppy-disk"></i>
+
+        Hifadhi malengo
+
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- =========================
+     TOP POSTS
+========================= -->
+
+<div class="section-title">
+  <i class="fa-solid fa-trophy"></i>
+  Post bora
+</div>
+
+<div class="card fold open">
+
+  <button class="fold-head"
+          type="button"
+          onclick="toggleFold(this)">
+
+    <div class="fold-title">
+
+      <strong>
+        Posts zilizofanya vizuri zaidi
+      </strong>
+
+      <span>
+        Video au picha itaonekana moja kwa moja hapa
+      </span>
+
+    </div>
+
+    <div class="fold-icon">
+      <i class="fa-solid fa-chevron-down"></i>
+    </div>
+
+  </button>
+
+
+  <div class="fold-body">
+
+    {% if s.top_posts %}
+
+      {% for p in s.top_posts %}
+
+      <a class="post-row"
+         id="post-insight-{{ p.id }}"
+         href="/post/{{ p.id }}"
+         onclick="event.stopPropagation()">
+
+
+        <div class="post-top">
+
+          <div class="post-badge">
+
+            {% if 'video' in (p.media_type|string)|lower %}
+
+              <i class="fa-solid fa-video"></i>
+              Video
+
+            {% elif 'image' in (p.media_type|string)|lower
+               or 'photo' in (p.media_type|string)|lower %}
+
+              <i class="fa-solid fa-image"></i>
+              Picha
+
+            {% else %}
+
+              <i class="fa-solid fa-file"></i>
+              {{ p.media_type }}
+
+            {% endif %}
+
+          </div>
+
+          <div class="post-meta">
+
+            {{ p.created_at }}
+
+            {% if p.category %}
+              · {{ p.category }}
+            {% endif %}
+
+          </div>
+
+        </div>
+
+
+        {% if p.file_path %}
+
+        <div class="post-preview">
+
+          {% if 'video' in (p.media_type|string)|lower %}
+
+          <span class="video-label">
+            <i class="fa-solid fa-play"></i>
+            Video
+          </span>
+
+          <video controls
+                 preload="metadata"
+                 playsinline>
+
+            <source src="{% if p.file_path %}{% if p.file_path.startswith('http') or p.file_path.startswith('/') %}{{ p.file_path }}{% else %}/static/uploads/{{ p.file_path }}{% endif %}{% endif %}">
+
+          </video>
+
+
+          {% elif 'image' in (p.media_type|string)|lower
+             or 'photo' in (p.media_type|string)|lower
+             or 'jpg' in (p.media_type|string)|lower
+             or 'jpeg' in (p.media_type|string)|lower
+             or 'png' in (p.media_type|string)|lower
+             or 'webp' in (p.media_type|string)|lower %}
+
+          <img src="{% if p.file_path %}{% if p.file_path.startswith('http') or p.file_path.startswith('/') %}{{ p.file_path }}{% else %}/static/uploads/{{ p.file_path }}{% endif %}{% endif %}"
+               alt="Post image"
+               loading="lazy"
+               onerror="this.parentElement.style.display='none'">
+
+          {% endif %}
+
+        </div>
+
+        {% endif %}
+
+
+        {% if p.content %}
+
+        <div class="post-body">
+          {{ p.content }}
+        </div>
+
+        {% endif %}
+
+
+        <div class="post-metrics">
+
+          <div class="post-metric">
+            <b>{{ p.likes_count }}</b>
+            <span>Likes</span>
+          </div>
+
+          <div class="post-metric">
+            <b>{{ p.comments_count }}</b>
+            <span>Comments</span>
+          </div>
+
+          <div class="post-metric">
+            <b>{{ p.views_count }}</b>
+            <span>Viewers</span>
+          </div>
+
+          <div class="post-metric">
+            <b>{{ p.new_followers }}</b>
+            <span>Followers wapya</span>
+          </div>
+
+          <div class="post-metric">
+            <b>{{ p.shares }}</b>
+            <span>Shares</span>
+          </div>
+
+          <div class="post-metric">
+            <b>{{ p.saves_count }}</b>
+            <span>Saves</span>
+          </div>
+
+          <div class="post-metric">
+            <b>{{ p.engagement }}</b>
+            <span>Engagement</span>
+          </div>
+
+        </div>
+
+
+        <div class="engagement-score">
+
+          <span>
+            <i class="fa-solid fa-chart-line"></i>
+            Performance ya post
+          </span>
+
+          <strong>
+            {{ p.engagement }}
+          </strong>
+
+        </div>
+
+      </a>
+
+      {% endfor %}
+
+
+    {% else %}
+
+      <div class="empty">
+
+        <i class="fa-solid fa-chart-line"></i>
+
+        Chapisha post ili uone insights
+
+      </div>
+
+    {% endif %}
+
+  </div>
+
+</div>
+
+
+<!-- =========================
+     LOW ENGAGEMENT
+========================= -->
+
+{% if s.bottom_posts %}
+
+<div class="section-title">
+  <i class="fa-solid fa-arrow-trend-down"></i>
+  Engagement ya chini
+</div>
+
+<div class="card fold">
+
+  <button class="fold-head"
+          type="button"
+          onclick="toggleFold(this)">
+
+    <div class="fold-title">
+
+      <strong>
+        Posts zinazohitaji attention
+      </strong>
+
+      <span>
+        Angalia views, likes na engagement ya kila post
+      </span>
+
+    </div>
+
+    <div class="fold-icon">
+      <i class="fa-solid fa-chevron-down"></i>
+    </div>
+
+  </button>
+
+
+  <div class="fold-body">
+
+    {% for p in s.bottom_posts %}
+
+    <a class="post-row"
+       href="/post/{{ p.id }}"
+       onclick="event.stopPropagation()">
+
+
+      <div class="post-top">
+
+        <div class="post-badge">
+
+          {% if 'video' in (p.media_type|string)|lower %}
+
+            <i class="fa-solid fa-video"></i>
+            Video
+
+          {% elif 'image' in (p.media_type|string)|lower
+             or 'photo' in (p.media_type|string)|lower %}
+
+            <i class="fa-solid fa-image"></i>
+            Picha
+
+          {% else %}
+
+            <i class="fa-solid fa-file"></i>
+            {{ p.media_type }}
+
+          {% endif %}
+
+        </div>
+
+        <div class="post-meta">
+          {{ p.created_at }}
+        </div>
+
+      </div>
+
+
+      {% if p.file_path %}
+
+      <div class="post-preview">
+
+        {% if 'video' in (p.media_type|string)|lower %}
+
+        <span class="video-label">
+          <i class="fa-solid fa-play"></i>
+          Video
+        </span>
+
+        <video controls
+               preload="metadata"
+               playsinline>
+
+          <source src="{% if p.file_path %}{% if p.file_path.startswith('http') or p.file_path.startswith('/') %}{{ p.file_path }}{% else %}/static/uploads/{{ p.file_path }}{% endif %}{% endif %}">
+
+        </video>
+
+
+        {% elif 'image' in (p.media_type|string)|lower
+           or 'photo' in (p.media_type|string)|lower
+           or 'jpg' in (p.media_type|string)|lower
+           or 'jpeg' in (p.media_type|string)|lower
+           or 'png' in (p.media_type|string)|lower
+           or 'webp' in (p.media_type|string)|lower %}
+
+        <img src="{% if p.file_path %}{% if p.file_path.startswith('http') or p.file_path.startswith('/') %}{{ p.file_path }}{% else %}/static/uploads/{{ p.file_path }}{% endif %}{% endif %}"
+             alt="Post image"
+             loading="lazy"
+             onerror="this.parentElement.style.display='none'">
+
+        {% endif %}
+
+      </div>
+
+      {% endif %}
+
+
+      {% if p.content %}
+
+      <div class="post-body">
+        {{ p.content }}
+      </div>
+
+      {% endif %}
+
+
+      <div class="post-metrics">
+
+        <div class="post-metric">
+          <b>{{ p.likes_count }}</b>
+          <span>Likes</span>
+        </div>
+
+        <div class="post-metric">
+          <b>{{ p.comments_count }}</b>
+          <span>Comments</span>
+        </div>
+
+        <div class="post-metric">
+          <b>{{ p.views_count }}</b>
+          <span>Viewers</span>
+        </div>
+
+        <div class="post-metric">
+          <b>{{ p.engagement }}</b>
+          <span>Engagement</span>
+        </div>
+
+      </div>
+
+
+      <div class="engagement-score low-score">
+
+        <span>
+          <i class="fa-solid fa-arrow-trend-down"></i>
+          Engagement
+        </span>
+
+        <strong>
+          {{ p.engagement }}
+        </strong>
+
+      </div>
+
+    </a>
+
+    {% endfor %}
+
+  </div>
+
+</div>
+
+{% endif %}
+
+
+<!-- =========================
+     ACTIVE FOLLOWERS
+========================= -->
+
+<div class="section-title">
+  <i class="fa-solid fa-users"></i>
+  Wafuasi active zaidi
+</div>
+
+<div class="card fold">
+
+  <button class="fold-head"
+          type="button"
+          onclick="toggleFold(this)">
+
+    <div class="fold-title">
+
+      <strong>
+        Wafuasi wanao-interact zaidi
+      </strong>
+
+      <span>
+        Followers wenye engagement kubwa
+      </span>
+
+    </div>
+
+    <div class="fold-icon">
+      <i class="fa-solid fa-chevron-down"></i>
+    </div>
+
+  </button>
+
+
+  <div class="fold-body">
+
+    {% if s.engaged_followers %}
+
+      {% for u in s.engaged_followers %}
+
+      <a class="person"
+         href="/profile/{{ u.username }}">
+
+        <img src="{% if u.profile_pic %}/static/uploads/{{ u.profile_pic }}{% else %}/static/images/default-avatar.png.jfif{% endif %}"
+             onerror="this.src='/static/images/default-avatar.png.jfif'"
+             alt="">
+
+        <div class="person-info">
+
+          <strong>
+
+            {% if u.full_name %}
+              {{ u.full_name }}
+            {% else %}
+              {{ u.username }}
+            {% endif %}
+
+          </strong>
+
+          <span>
+            @{{ u.username }}
+          </span>
+
+        </div>
+
+        <span class="person-score">
+
+          <i class="fa-solid fa-bolt"></i>
+
+          {{ u.score }}
+
+        </span>
+
+      </a>
+
+      {% endfor %}
+
+    {% else %}
+
+      <div class="empty">
+
+        <i class="fa-solid fa-users"></i>
+
+        Hakuna data bado
+
+      </div>
+
+    {% endif %}
+
+  </div>
+
+</div>
+
+
+<div class="actions"
+     style="justify-content:center;margin-top:15px">
+
+  <button type="button"
+          class="btn btn-ghost"
+          onclick="location.reload()">
+
+    <i class="fa-solid fa-rotate"></i>
+
+    Refresh
+
+  </button>
+
+</div>
+
+</main>
+
+
+<script>
+
+const STATS = {{ stats|tojson }};
+const FOLLOWERS = {{ (stats.followers or 0)|int }};
+const POSTS_MONTH = {{ (stats.posts_period or stats.posts_count or 0)|int }};
+
+
+/* =========================
+   PERIOD
+========================= */
+
+function changePeriod(value){
+
+  if(!value) return;
+
+  const url = new URL(window.location.href);
+
+  url.searchParams.set('period', value);
+
+  window.location.href = url.toString();
+
+}
+
+
+/* =========================
+   OPEN / CLOSE SECTIONS
+========================= */
+
+function toggleFold(button){
+
+  const card = button.closest('.fold');
+
+  if(!card) return;
+
+  card.classList.toggle('open');
+
+}
+
+
+/* =========================
+   GOALS
+========================= */
+
+function saveGoals(){
+
+  const f =
+    parseInt(
+      document.getElementById('goalFollowers').value,
+      10
+    ) || 0;
+
+  const p =
+    parseInt(
+      document.getElementById('goalPosts').value,
+      10
+    ) || 0;
+
+
+  localStorage.setItem(
+    'kijiji_goal_followers',
+    String(f)
+  );
+
+  localStorage.setItem(
+    'kijiji_goal_posts',
+    String(p)
+  );
+
+
+  renderGoals();
+
+}
+
+
+/* =========================
+   RENDER GOALS
+========================= */
+
+function renderGoals(){
+
+  const gf =
+    parseInt(
+      localStorage.getItem('kijiji_goal_followers') || '0',
+      10
+    ) || 0;
+
+  const gp =
+    parseInt(
+      localStorage.getItem('kijiji_goal_posts') || '0',
+      10
+    ) || 0;
+
+
+  if(gf){
+
+    document.getElementById('goalFollowers').value = gf;
+
+  }
+
+
+  if(gp){
+
+    document.getElementById('goalPosts').value = gp;
+
+  }
+
+
+  if(gf > 0){
+
+    const pct =
+      Math.min(
+        100,
+        Math.round((FOLLOWERS / gf) * 100)
+      );
+
+
+    document.getElementById(
+      'goalBarFollowers'
+    ).style.width = pct + '%';
+
+
+    document.getElementById(
+      'goalTextFollowers'
+    ).textContent =
+      FOLLOWERS +
+      ' / ' +
+      gf +
+      ' followers (' +
+      pct +
+      '%)';
+
+  }else{
+
+    document.getElementById(
+      'goalBarFollowers'
+    ).style.width = '0%';
+
+
+    document.getElementById(
+      'goalTextFollowers'
+    ).textContent =
+      'Weka lengo la followers';
+
+  }
+
+
+  if(gp > 0){
+
+    const pct =
+      Math.min(
+        100,
+        Math.round((POSTS_MONTH / gp) * 100)
+      );
+
+
+    document.getElementById(
+      'goalBarPosts'
+    ).style.width = pct + '%';
+
+
+    document.getElementById(
+      'goalTextPosts'
+    ).textContent =
+      POSTS_MONTH +
+      ' / ' +
+      gp +
+      ' posts kipindi hiki (' +
+      pct +
+      '%)';
+
+  }else{
+
+    document.getElementById(
+      'goalBarPosts'
+    ).style.width = '0%';
+
+
+    document.getElementById(
+      'goalTextPosts'
+    ).textContent =
+      'Weka lengo la posts';
+
+  }
+
+}
+
+
+/* =========================
+   EXPORT CSV
+========================= */
+
+function exportCSV(){
+
+  const rows = [
+    ['metric', 'value']
+  ];
+
+  const s = STATS || {};
+
+
+  [
+    'posts_count',
+    'likes_count',
+    'comments_count',
+    'views_count',
+    'views_total',
+    'shares_count',
+    'saves_count',
+    'followers',
+    'following',
+    'engagement_rate',
+    'posts_period',
+    'likes_period',
+    'views_period'
+  ].forEach(k => {
+
+    if(s[k] !== undefined){
+
+      rows.push([
+        k,
+        s[k]
+      ]);
+
+    }
+
+  });
+
+
+  if(s.top_posts){
+
+    rows.push([]);
+
+    rows.push([
+      'post_id',
+      'likes',
+      'comments',
+      'views',
+      'engagement',
+      'content'
+    ]);
+
+
+    s.top_posts.forEach(p => {
+
+      rows.push([
+        p.id,
+        p.likes_count,
+        p.comments_count,
+        p.views_count,
+        p.engagement,
+        (p.content || '').replace(/\n/g,' ')
+      ]);
+
+    });
+
+  }
+
+
+  const csv =
+    rows
+      .map(r =>
+        r
+          .map(c =>
+            '"' +
+            String(c).replace(/"/g,'""') +
+            '"'
+          )
+          .join(',')
+      )
+      .join('\n');
+
+
+  const blob =
+    new Blob(
+      [csv],
+      {
+        type:'text/csv;charset=utf-8'
+      }
+    );
+
+
+  const a =
+    document.createElement('a');
+
+
+  a.href =
+    URL.createObjectURL(blob);
+
+  a.download =
+    'kijiji-insights.csv';
+
+  a.click();
+
+}
+
+
+/* =========================
+   START
+========================= */
+
+renderGoals();
+
+</script>
+
+</body>
+</html>
+

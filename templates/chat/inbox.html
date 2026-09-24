@@ -1,0 +1,2664 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+.inbox-wrap {
+    width: 100%;
+    max-width: 680px;
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 0 0 90px;
+    position: relative;
+    background: #f4f7f5;
+}
+
+/* ================= TOP AREA ================= */
+
+.inbox-sticky-top {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding: 15px 14px 13px;
+    background: linear-gradient(
+        180deg,
+        rgba(255,255,255,0.98),
+        rgba(247,250,248,0.96)
+    );
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.06);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+}
+
+.inbox-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 3px;
+}
+
+.inbox-wrap h1 {
+    margin: 0;
+    font-size: 25px;
+    font-weight: 850;
+    letter-spacing: -0.6px;
+    background: linear-gradient(
+        135deg,
+        #0a8f32,
+        #1eb53a,
+        #00a884
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.inbox-sub {
+    margin: 0 0 13px;
+    color: #737a77;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* ================= SEARCH ================= */
+
+.inbox-search-wrap {
+    position: relative;
+}
+
+.inbox-search-wrap i {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #7b827f;
+    font-size: 14px;
+    pointer-events: none;
+    transition: 0.2s ease;
+}
+
+.inbox-search {
+    width: 100%;
+    height: 48px;
+    padding: 0 43px 0 43px;
+    border: 1px solid #e0e6e2;
+    border-radius: 16px;
+    font-size: 14px;
+    outline: none;
+    background: #ffffff;
+    color: #171a18;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.045);
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        transform 0.2s ease;
+}
+
+.inbox-search::placeholder {
+    color: #9ca39f;
+}
+
+.inbox-search:focus {
+    border-color: #1eb53a;
+    box-shadow:
+        0 0 0 4px rgba(30,181,58,0.10),
+        0 5px 18px rgba(0,0,0,0.06);
+    transform: translateY(-1px);
+}
+
+.inbox-search-clear {
+    position: absolute;
+    right: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 27px;
+    height: 27px;
+    border: 0;
+    background: #edf1ee;
+    color: #68706c;
+    border-radius: 50%;
+    font-size: 11px;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: 0.2s ease;
+}
+
+.inbox-search-clear:hover {
+    background: #dfe8e2;
+    transform: translateY(-50%) scale(1.06);
+}
+
+.inbox-search-clear.show {
+    display: flex;
+}
+
+.search-hint {
+    font-size: 11px;
+    color: #1b9d42;
+    margin: 7px 3px 0;
+    display: none;
+}
+
+.search-hint.show {
+    display: block;
+}
+
+/* ================= SELECT BAR ================= */
+
+.select-bar {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 11px;
+    padding: 11px 12px;
+    border-radius: 15px;
+    background: linear-gradient(
+        135deg,
+        #159c37,
+        #1eb53a,
+        #087c31
+    );
+    color: #fff;
+    box-shadow: 0 8px 22px rgba(30,181,58,0.23);
+    animation: selectBarIn 0.22s ease;
+}
+
+.select-bar.show {
+    display: flex;
+}
+
+@keyframes selectBarIn {
+    from {
+        opacity: 0;
+        transform: translateY(-7px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.select-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 750;
+    font-size: 13px;
+}
+
+.select-bar-left i {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.18);
+    font-size: 13px;
+}
+
+.select-bar-actions {
+    display: flex;
+    gap: 7px;
+    flex-shrink: 0;
+}
+
+.select-bar button {
+    border: 0;
+    background: rgba(255,255,255,0.18);
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: 0.2s ease;
+}
+
+.select-bar button:hover {
+    background: rgba(255,255,255,0.30);
+}
+
+.select-bar button.danger {
+    background: #e41e3f;
+}
+
+.select-bar button.danger:hover {
+    background: #c91835;
+}
+
+/* ================= BODY ================= */
+
+.inbox-body {
+    padding: 13px 12px 0;
+}
+
+/* ================= CONVERSATION CARDS ================= */
+
+.conv-card {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 13px;
+    margin-bottom: 9px;
+    border-radius: 18px;
+
+    background: linear-gradient(
+        145deg,
+        #ffffff,
+        #fbfcfb
+    );
+
+    border: 1px solid rgba(0,0,0,0.055);
+
+    box-shadow:
+        0 3px 12px rgba(0,0,0,0.045);
+
+    text-decoration: none;
+    color: inherit;
+
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        border-color 0.18s ease,
+        background 0.18s ease;
+
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.conv-card::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 14px;
+    bottom: 14px;
+    width: 3px;
+    border-radius: 0 5px 5px 0;
+    background: #1eb53a;
+    opacity: 0;
+    transition: 0.2s ease;
+}
+
+.conv-card:hover {
+    transform: translateY(-1px);
+    border-color: rgba(30,181,58,0.30);
+    box-shadow: 0 7px 20px rgba(0,0,0,0.075);
+}
+
+.conv-card:hover::before {
+    opacity: 1;
+}
+
+.conv-card:active {
+    transform: scale(0.985);
+}
+
+.conv-card.unread {
+    background: linear-gradient(
+        145deg,
+        #f3fff5,
+        #ffffff
+    );
+    border-color: rgba(30,181,58,0.23);
+}
+
+.conv-card.unread::before {
+    opacity: 1;
+}
+
+.conv-card.pinned {
+    background: linear-gradient(
+        145deg,
+        #f4fff6,
+        #ffffff
+    );
+    border-color: rgba(30,181,58,0.30);
+    box-shadow:
+        0 5px 18px rgba(30,181,58,0.08);
+}
+
+.conv-card.selected {
+    background: linear-gradient(
+        145deg,
+        #e9f8ed,
+        #f7fff9
+    );
+    border-color: #1eb53a;
+    box-shadow:
+        0 5px 20px rgba(30,181,58,0.13);
+}
+
+.conv-card.selected::before {
+    opacity: 1;
+}
+
+/* ================= CHECK ================= */
+
+.conv-check {
+    display: none;
+    width: 24px;
+    height: 24px;
+    border: 2px solid #1eb53a;
+    border-radius: 50%;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #fff;
+    background: transparent;
+    transition: 0.2s ease;
+}
+
+.inbox-select-mode .conv-check {
+    display: flex;
+}
+
+.conv-card.selected .conv-check {
+    background: #1eb53a;
+    border-color: #1eb53a;
+    box-shadow:
+        0 3px 8px rgba(30,181,58,0.25);
+}
+
+.conv-card.selected .conv-check::after {
+    content: "✓";
+    font-weight: 800;
+}
+
+/* ================= AVATAR ================= */
+
+.conv-avatar {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #e7ebe8;
+    flex-shrink: 0;
+    border: 2px solid #ffffff;
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.12);
+    transition: 0.2s ease;
+}
+
+.conv-card:hover .conv-avatar {
+    transform: scale(1.035);
+}
+
+/* ================= INFO ================= */
+
+.conv-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.conv-info strong {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 15px;
+    font-weight: 750;
+    color: #151817;
+    min-width: 0;
+}
+
+.conv-name {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.pin-icon {
+    color: #1eb53a;
+    font-size: 11px;
+    flex-shrink: 0;
+}
+
+.conv-info p {
+    margin: 4px 0 0;
+    font-size: 12.5px;
+    color: #747b77;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4;
+}
+
+/* ================= META ================= */
+
+.conv-meta {
+    text-align: right;
+    flex-shrink: 0;
+    min-width: 43px;
+}
+
+.conv-meta small {
+    font-size: 10.5px;
+    color: #9a9f9c;
+    display: block;
+    white-space: nowrap;
+}
+
+.badge-new {
+    display: inline-flex;
+    min-width: 20px;
+    height: 20px;
+    align-items: center;
+    justify-content: center;
+
+    background: linear-gradient(
+        135deg,
+        #e41e3f,
+        #c91835
+    );
+
+    color: #fff;
+
+    font-size: 10px;
+    font-weight: 800;
+
+    padding: 2px 6px;
+    border-radius: 20px;
+    margin-top: 5px;
+
+    box-shadow:
+        0 3px 8px rgba(228,30,63,0.22);
+}
+
+/* ================= EMPTY ================= */
+
+.empty {
+    text-align: center;
+    padding: 55px 22px;
+    color: #777;
+
+    background: linear-gradient(
+        145deg,
+        #ffffff,
+        #f8faf9
+    );
+
+    border-radius: 20px;
+    border: 1px solid #e7ebe8;
+    font-size: 14px;
+
+    box-shadow:
+        0 5px 20px rgba(0,0,0,0.04);
+}
+
+.empty::before {
+    content: "💬";
+    display: block;
+    font-size: 42px;
+    margin-bottom: 13px;
+    opacity: 0.65;
+}
+
+/* ================= NO RESULTS ================= */
+
+.no-results {
+    text-align: center;
+    padding: 38px 16px;
+    color: #737a76;
+    font-size: 14px;
+    display: none;
+}
+
+.no-results::before {
+    content: "🔎";
+    display: block;
+    font-size: 30px;
+    margin-bottom: 9px;
+    opacity: 0.65;
+}
+
+/* ================= SUGGEST CHAT PEOPLE ================= */
+
+.people-suggest {
+    margin-top: 18px;
+    padding: 0 0 20px;
+}
+
+.people-suggest-title {
+    margin: 0 0 10px;
+    font-size: 15px;
+    font-weight: 800;
+    color: #151817;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.people-suggest-title i {
+    color: #1eb53a;
+}
+
+.people-search-wrap {
+    position: relative;
+    margin-bottom: 12px;
+}
+
+.people-search-wrap i.fa-magnifying-glass {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #7b827f;
+    font-size: 13px;
+    pointer-events: none;
+}
+
+.people-search {
+    width: 100%;
+    height: 44px;
+    padding: 0 40px 0 40px;
+    border: 1px solid #e0e6e2;
+    border-radius: 14px;
+    font-size: 14px;
+    outline: none;
+    background: #fff;
+    color: #171a18;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.people-search:focus {
+    border-color: #1eb53a;
+    box-shadow: 0 0 0 3px rgba(30,181,58,0.12);
+}
+
+.people-search-clear {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 26px;
+    height: 26px;
+    border: 0;
+    border-radius: 50%;
+    background: #edf1ee;
+    color: #68706c;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 11px;
+    padding: 0;
+}
+
+.people-search-clear.show { display: flex; }
+
+.people-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.people-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 12px;
+    border-radius: 16px;
+    background: linear-gradient(145deg, #ffffff, #fbfcfb);
+    border: 1px solid rgba(0,0,0,0.055);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.people-card img {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #e7ebe8;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    flex-shrink: 0;
+}
+
+.people-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.people-info a {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.people-info .pname {
+    font-size: 14px;
+    font-weight: 750;
+    color: #151817;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.people-info .pname .vcheck {
+    color: #00A3DD;
+    font-size: 11px;
+    margin-left: 3px;
+}
+
+.verified-badge-custom {
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 4px;
+    flex-shrink: 0;
+}
+.verified-badge-custom.small {
+    width: 14px;
+    height: 14px;
+    margin-left: 3px;
+}
+
+.people-info .phandle {
+    font-size: 12px;
+    color: #747b77;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.people-chat-btn {
+    flex-shrink: 0;
+    border: none;
+    border-radius: 10px;
+    padding: 9px 14px;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    color: #fff;
+    background: linear-gradient(135deg, #1eb53a, #00a884);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 3px 10px rgba(30,181,58,0.25);
+}
+
+.people-chat-btn:active { transform: scale(0.96); }
+
+.people-empty {
+    text-align: center;
+    padding: 18px 12px;
+    color: #777;
+    font-size: 13px;
+}
+
+@media (prefers-color-scheme: dark) {
+    .people-suggest-title { color: #f2f5f3; }
+    .people-search {
+        background: #14201a;
+        color: #fff;
+        border-color: #26352d;
+    }
+    .people-card {
+        background: linear-gradient(145deg, #14201a, #101a15);
+        border-color: rgba(255,255,255,0.06);
+    }
+    .people-info .pname { color: #f2f5f3; }
+    .people-info .phandle { color: #8f9a94; }
+}
+
+/* ================= ACTION SHEET ================= */
+
+.inbox-sheet-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    background: rgba(0,0,0,0.48);
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+}
+
+.inbox-sheet-overlay.show {
+    display: flex;
+}
+
+.inbox-sheet {
+    width: min(460px, 100%);
+
+    background: linear-gradient(
+        180deg,
+        #ffffff,
+        #f8faf9
+    );
+
+    border-radius: 24px 24px 0 0;
+    padding: 10px 11px 24px;
+
+    box-shadow:
+        0 -10px 40px rgba(0,0,0,0.18);
+
+    animation:
+        inboxSheetIn 0.24s cubic-bezier(.2,.8,.2,1);
+}
+
+@keyframes inboxSheetIn {
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
+.inbox-sheet-handle {
+    width: 42px;
+    height: 4px;
+    background: #d7dcda;
+    border-radius: 5px;
+    margin: 3px auto 15px;
+}
+
+.inbox-sheet-title {
+    text-align: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: #4e5551;
+    margin-bottom: 9px;
+    padding: 0 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.inbox-sheet button {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 13px;
+
+    padding: 15px 16px;
+
+    border: 0;
+    background: transparent;
+
+    border-radius: 13px;
+
+    font-size: 15px;
+    color: #171a18;
+
+    cursor: pointer;
+    text-align: left;
+
+    transition: 0.18s ease;
+}
+
+.inbox-sheet button:hover {
+    background: #f0f3f1;
+}
+
+.inbox-sheet button:active {
+    transform: scale(0.985);
+}
+
+.inbox-sheet button i {
+    width: 25px;
+    height: 25px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: #1eb53a;
+
+    background: #eaf7ed;
+
+    border-radius: 50%;
+
+    font-size: 11px;
+}
+
+.inbox-sheet button.danger {
+    color: #e41e3f;
+}
+
+.inbox-sheet button.danger i {
+    color: #e41e3f;
+    background: #ffedf0;
+}
+
+.inbox-sheet button.cancel {
+    justify-content: center;
+    margin-top: 8px;
+    background: #f0f2f1;
+    color: #666d69;
+    font-weight: 700;
+}
+
+/* ================= TOAST ================= */
+
+.inbox-toast {
+    position: fixed;
+
+    left: 50%;
+    bottom: 92px;
+
+    transform:
+        translateX(-50%)
+        translateY(15px);
+
+    background:
+        rgba(25,29,27,0.94);
+
+    color: #fff;
+
+    padding: 11px 17px;
+
+    border-radius: 13px;
+
+    font-size: 12.5px;
+    font-weight: 600;
+
+    opacity: 0;
+
+    pointer-events: none;
+
+    z-index: 4000;
+
+    transition:
+        opacity 0.25s ease,
+        transform 0.25s ease;
+
+    box-shadow:
+        0 8px 25px rgba(0,0,0,0.20);
+
+    white-space: nowrap;
+}
+
+.inbox-toast.show {
+    opacity: 1;
+
+    transform:
+        translateX(-50%)
+        translateY(0);
+}
+
+/* ================= MOBILE ================= */
+
+@media (max-width: 480px) {
+
+    .inbox-wrap {
+        max-width: 100%;
+        padding-bottom: 85px;
+    }
+
+    .inbox-sticky-top {
+        padding: 13px 12px 12px;
+    }
+
+    .inbox-wrap h1 {
+        font-size: 24px;
+    }
+
+    .inbox-body {
+        padding: 11px 10px 0;
+    }
+
+    .conv-card {
+        padding: 12px 11px;
+        gap: 10px;
+        border-radius: 17px;
+        margin-bottom: 8px;
+    }
+
+    .conv-avatar {
+        width: 52px;
+        height: 52px;
+    }
+
+    .conv-info strong {
+        font-size: 14.5px;
+    }
+
+    .conv-info p {
+        font-size: 12px;
+    }
+
+    .conv-meta small {
+        font-size: 10px;
+    }
+
+    .badge-new {
+        min-width: 19px;
+        height: 19px;
+        font-size: 9.5px;
+    }
+}
+
+/* ================= VERY SMALL PHONES ================= */
+
+@media (max-width: 350px) {
+
+    .inbox-wrap h1 {
+        font-size: 22px;
+    }
+
+    .inbox-sub {
+        font-size: 12px;
+    }
+
+    .inbox-search {
+        height: 45px;
+        font-size: 13px;
+    }
+
+    .conv-card {
+        padding: 10px 9px;
+        gap: 8px;
+    }
+
+    .conv-avatar {
+        width: 48px;
+        height: 48px;
+    }
+
+    .conv-info strong {
+        font-size: 13.5px;
+    }
+
+    .conv-info p {
+        font-size: 11px;
+    }
+
+    .conv-meta {
+        min-width: 35px;
+    }
+}
+
+/* ================= DARK MODE ================= */
+
+@media (prefers-color-scheme: dark) {
+
+    .inbox-wrap {
+        background: #0c1511;
+    }
+
+    .inbox-sticky-top {
+        background: rgba(12,21,17,0.96);
+        border-bottom-color: rgba(255,255,255,0.07);
+    }
+
+    .inbox-sub {
+        color: #9aa59f;
+    }
+
+    .inbox-search {
+        background: #14201a;
+        color: #fff;
+        border-color: #26352d;
+    }
+
+    .inbox-search::placeholder {
+        color: #78837d;
+    }
+
+    .inbox-search-clear {
+        background: #24312b;
+        color: #aab4ae;
+    }
+
+    .conv-card {
+        background: linear-gradient(
+            145deg,
+            #14201a,
+            #101a15
+        );
+
+        border-color:
+            rgba(255,255,255,0.06);
+
+        color: #fff;
+    }
+
+    .conv-card.unread,
+    .conv-card.pinned {
+        background: linear-gradient(
+            145deg,
+            #14261a,
+            #111d16
+        );
+    }
+
+    .conv-card.selected {
+        background: linear-gradient(
+            145deg,
+            #183523,
+            #13271a
+        );
+    }
+
+    .conv-info strong {
+        color: #f2f5f3;
+    }
+
+    .conv-info p {
+        color: #8f9a94;
+    }
+
+    .conv-meta small {
+        color: #707b74;
+    }
+
+    .empty {
+        background: #14201a;
+        border-color: #26352d;
+        color: #9ca59f;
+    }
+
+    .no-results {
+        color: #9ca59f;
+    }
+
+    .inbox-sheet {
+        background: linear-gradient(
+            180deg,
+            #14201a,
+            #101913
+        );
+    }
+
+    .inbox-sheet-title {
+        color: #a5afa9;
+    }
+
+    .inbox-sheet button {
+        color: #f0f3f1;
+    }
+
+    .inbox-sheet button:hover {
+        background: #1d2922;
+    }
+
+    .inbox-sheet button.cancel {
+        background: #1d2922;
+        color: #9ba49f;
+    }
+}
+</style>
+
+
+<div class="inbox-wrap" id="inboxWrap">
+
+    <!-- FIXED / STICKY TOP -->
+    <div class="inbox-sticky-top" id="inboxStickyTop">
+
+        <div class="inbox-header">
+            <h1>💬 {{ t('inbox') }}</h1>
+        </div>
+
+        <p class="inbox-sub">
+            {{ t('private_messages', 'Ujumbe wako wa faragha') }}
+        </p>
+
+        <div class="inbox-search-wrap">
+
+            <i class="fa-solid fa-magnifying-glass"></i>
+
+            <input
+                type="search"
+                class="inbox-search"
+                id="inboxSearch"
+                placeholder="{{ t('search_inbox', 'Tafuta jina, ujumbe, au neno lolote...') }}"
+                autocomplete="off"
+            >
+
+            <button
+                type="button"
+                class="inbox-search-clear"
+                id="searchClear"
+                onclick="clearInboxSearch()"
+                aria-label="Futa utafutaji"
+            >
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+        </div>
+
+        <p class="search-hint" id="searchHint">
+            {{ t('searching', 'Inatafuta ndani ya ujumbe...') }}
+        </p>
+
+
+        <!-- SELECT BAR -->
+
+        <div class="select-bar" id="selectBar">
+
+            <div class="select-bar-left">
+
+                <i class="fa-solid fa-check-double"></i>
+
+                <span>
+                    <span id="selectedCount">0</span>
+                    {{ t('selected', 'zimechaguliwa') }}
+                </span>
+
+            </div>
+
+            <div class="select-bar-actions">
+
+                <button
+                    type="button"
+                    onclick="cancelSelectMode()"
+                >
+                    {{ t('cancel') }}
+                </button>
+
+                <button
+                    type="button"
+                    class="danger"
+                    onclick="deleteSelected()"
+                >
+                    <i class="fa-solid fa-trash"></i>
+                    Futa
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- BODY -->
+
+    <div class="inbox-body">
+
+        <div id="convList">
+
+        {% if conversations %}
+
+            {% for c in conversations %}
+
+            <div
+                class="conv-card
+                {% if c.unread_count > 0 %}unread{% endif %}
+                {% if c.is_pinned %}pinned{% endif %}"
+                data-username="{{ c.username }}" data-fullname="{{ c.full_name or c.username }}"
+                data-last="{{ (c.last_message or '')|e }}"
+                data-pinned="{{ 1 if c.is_pinned else 0 }}"
+                role="button"
+                tabindex="0"
+            >
+
+                <span
+                    class="conv-check"
+                    aria-hidden="true"
+                ></span>
+
+
+                <img
+                    class="conv-avatar"
+                    src="{{ c.profile_pic|avatar(c.full_name or c.username) }}"
+                    onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ (c.full_name or c.username)|urlencode }}&amp;background=random&amp;color=fff&amp;size=128&amp;bold=true';"
+                    alt=""
+                >
+
+
+                <div class="conv-info">
+
+                    <strong>
+
+                        <span class="conv-name">
+                            {% if c.full_name %}{{ c.full_name }}{% else %}{{ c.username }}{% endif %}
+                        </span>
+
+                        <i
+                            class="fa-solid fa-thumbtack pin-icon"
+                            style="{% if c.is_pinned %}display:inline{% else %}display:none{% endif %};"
+                            title="Pinned"
+                        ></i>
+
+                    </strong>
+
+                    <p class="conv-last">
+                        {{ c.last_message or '...' }}
+                    </p>
+
+                </div>
+
+
+                <div class="conv-meta">
+
+                    <small class="rel-time" data-ts="{{ c.last_time or '' }}">
+                        {{ c.last_time or '' }}
+                    </small>
+
+                    {% if c.unread_count > 0 %}
+
+                    <span class="badge-new">
+                        {{ c.unread_count }}
+                    </span>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        {% else %}
+
+            <div
+                class="empty"
+                id="emptyState"
+            >
+                {{ t('no_messages') }}.<br>
+
+                Nenda kwenye profile ya mtu →
+                bonyeza <strong>Chat</strong>.
+            </div>
+
+        {% endif %}
+
+        </div>
+
+
+        <div
+            class="no-results"
+            id="noResults"
+        >
+            {{ t('no_search_results', 'Hakuna matokeo ya utafutaji.') }}
+        </div>
+
+        <!-- ===== UNAWEZA PIA KUCHATI NA ===== -->
+        <div class="people-suggest" id="peopleSuggest">
+            <h3 class="people-suggest-title">
+                <i class="fa-solid fa-comments"></i>
+                Unaweza pia kuchati na
+            </h3>
+
+            <div class="people-search-wrap">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input
+                    type="search"
+                    class="people-search"
+                    id="peopleSearch"
+                    placeholder="Tafuta jina unalotaka kuchati nalo..."
+                    autocomplete="off"
+                >
+                <button type="button" class="people-search-clear" id="peopleSearchClear" onclick="clearPeopleSearch()" aria-label="Futa">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="people-list" id="peopleList">
+                {% if suggested_chat_users %}
+                    {% for u in suggested_chat_users %}
+                    <div class="people-card" data-username="{{ u.username }}">
+                        <a href="/profile/{{ u.username }}">
+                            <img
+                                src="{{ u.profile_pic|avatar(u.full_name or u.username) }}"
+                                onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ (u.full_name or u.username)|urlencode }}&amp;background=random&amp;color=fff&amp;size=128&amp;bold=true';"
+                                alt="@{{ u.username }}"
+                            >
+                        </a>
+                        <div class="people-info">
+                            <a href="/profile/{{ u.username }}">
+                                <div class="pname">
+                                    {{ u.full_name or u.username }}
+                                    {% if u.is_verified == 1 %}
+                                    <svg class="verified-badge-custom small" viewBox="0 0 24 24" title="Verified">
+                                        <path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="#8A2BE2"/>
+                                        <path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#FFFFFF"/>
+                                    </svg>
+                                    {% endif %}
+                                </div>
+                                <div class="phandle">@{{ u.username }}</div>
+                            </a>
+                        </div>
+                        <a class="people-chat-btn" href="/chat/{{ u.username }}">
+                            <i class="fa-solid fa-comment"></i> Chat
+                        </a>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="people-empty" id="peopleEmptyDefault">
+                        Tafuta jina hapo juu ili uanze chat mpya.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- LONG PRESS ACTION SHEET -->
+
+<div
+    class="inbox-sheet-overlay"
+    id="inboxSheet"
+    onclick="if(event.target===this) closeSheet()"
+>
+
+    <div class="inbox-sheet">
+
+        <div class="inbox-sheet-handle"></div>
+
+        <div
+            class="inbox-sheet-title"
+            id="sheetTitle"
+        >
+            Chaguo
+        </div>
+
+
+        <button
+            type="button"
+            id="sheetPinBtn"
+            onclick="pinFromSheet()"
+        >
+
+            <i class="fa-solid fa-thumbtack"></i>
+
+            <span id="sheetPinLabel">
+                {{ t('pin_chat', 'Pin chat') }}
+            </span>
+
+        </button>
+
+
+        <button
+            type="button"
+            id="sheetArchiveBtn"
+            onclick="archiveFromSheet()"
+        >
+            <i class="fa-solid fa-box-archive"></i>
+            <span>Archive chat</span>
+        </button>
+
+
+        <button
+            type="button"
+            onclick="selectFromSheet()"
+        >
+
+            <i class="fa-solid fa-check-double"></i>
+
+            {{ t('select', 'Select') }}
+
+        </button>
+
+
+        <button
+            type="button"
+            class="danger"
+            onclick="deleteFromSheet()"
+        >
+
+            <i class="fa-solid fa-trash"></i>
+
+            {{ t('delete_chat', 'Futa chat') }}
+
+        </button>
+
+
+        <button
+            type="button"
+            class="cancel"
+            onclick="closeSheet()"
+        >
+            {{ t('cancel') }}
+        </button>
+
+    </div>
+
+</div>
+
+
+<div
+    class="inbox-toast"
+    id="inboxToast"
+></div>
+
+
+<script>
+
+(function () {
+
+    let selectMode = false;
+    let selected = new Set();
+    let activeUsername = null;
+    let longPressTimer = null;
+    let touchMoved = false;
+    let searchTimer = null;
+    let serverMatchUsernames = null;
+
+
+    function showToast(msg) {
+
+        const el =
+            document.getElementById('inboxToast');
+
+        if (!el) return;
+
+        el.textContent = msg;
+
+        el.classList.add('show');
+
+        setTimeout(
+            () => el.classList.remove('show'),
+            2200
+        );
+    }
+
+
+    function isPinned(username) {
+
+        const card =
+            document.querySelector(
+                '.conv-card[data-username="' +
+                CSS.escape(username) +
+                '"]'
+            );
+
+        return card &&
+               card.dataset.pinned === '1';
+    }
+
+
+    function applyPinUI() {
+
+        const list =
+            document.getElementById('convList');
+
+        if (!list) return;
+
+        const cards =
+            Array.from(
+                list.querySelectorAll('.conv-card')
+            );
+
+
+        cards.forEach(card => {
+
+            const pinnedFlag =
+                card.dataset.pinned === '1';
+
+            card.classList.toggle(
+                'pinned',
+                pinnedFlag
+            );
+
+
+            const icon =
+                card.querySelector('.pin-icon');
+
+            if (icon) {
+
+                icon.style.display =
+                    pinnedFlag
+                    ? 'inline'
+                    : 'none';
+
+            }
+
+        });
+
+
+        cards.sort((a, b) => {
+
+            const pa =
+                a.dataset.pinned === '1'
+                ? 0
+                : 1;
+
+            const pb =
+                b.dataset.pinned === '1'
+                ? 0
+                : 1;
+
+            if (pa !== pb) {
+                return pa - pb;
+            }
+
+            return 0;
+
+        });
+
+
+        cards.forEach(c =>
+            list.appendChild(c)
+        );
+
+    }
+
+
+    function openChat(username) {
+
+        if (!username) return;
+
+        window.location.href =
+            '/chat/' +
+            encodeURIComponent(username);
+
+    }
+
+
+    function openSheet(username) {
+
+        activeUsername = username;
+
+        const title =
+            document.getElementById('sheetTitle');
+
+        const pinLabel =
+            document.getElementById('sheetPinLabel');
+
+
+        if (title) {
+            const card = document.querySelector('.conv-card[data-username="' + CSS.escape(username) + '"]');
+            title.textContent = (card && card.dataset.fullname) ? card.dataset.fullname : username;
+        }
+
+
+        if (pinLabel) {
+
+            pinLabel.textContent =
+                isPinned(username)
+                ? 'Ondoa pin'
+                : 'Pin chat';
+
+        }
+
+
+        document
+            .getElementById('inboxSheet')
+            .classList.add('show');
+
+    }
+
+
+    function closeSheet() {
+
+        document
+            .getElementById('inboxSheet')
+            .classList.remove('show');
+
+        activeUsername = null;
+
+    }
+
+
+    window.closeSheet = closeSheet;
+
+
+    window.pinFromSheet = function () {
+
+        if (!activeUsername) return;
+
+        const u = activeUsername;
+
+        const currentlyPinned =
+            isPinned(u);
+
+        const wantPinned =
+            !currentlyPinned;
+
+        closeSheet();
+
+
+        const card =
+            document.querySelector(
+                '.conv-card[data-username="' +
+                CSS.escape(u) +
+                '"]'
+            );
+
+
+        if (card) {
+
+            card.dataset.pinned =
+                wantPinned
+                ? '1'
+                : '0';
+
+        }
+
+
+        applyPinUI();
+
+
+        showToast(
+            wantPinned
+            ? 'Chat imepiniwa'
+            : 'Pin imeondolewa'
+        );
+
+
+        fetch(
+            '/inbox/pin',
+            {
+                method: 'POST',
+
+                headers: {
+                    'Content-Type':
+                        'application/json',
+
+                    'X-Requested-With':
+                        'XMLHttpRequest'
+                },
+
+                body: JSON.stringify({
+                    username: u,
+                    pinned: wantPinned
+                })
+            }
+        )
+
+        .then(r => r.json())
+
+        .then(data => {
+
+            if (!data || !data.success) {
+
+                if (card) {
+
+                    card.dataset.pinned =
+                        currentlyPinned
+                        ? '1'
+                        : '0';
+
+                }
+
+                applyPinUI();
+
+                showToast(
+                    'Pin imeshindikana'
+                );
+
+            }
+
+        })
+
+        .catch(() => {
+
+            if (card) {
+
+                card.dataset.pinned =
+                    currentlyPinned
+                    ? '1'
+                    : '0';
+
+            }
+
+            applyPinUI();
+
+            showToast(
+                'Pin imeshindikana — angalia mtandao'
+            );
+
+        });
+
+    };
+
+
+    window.selectFromSheet = function () {
+
+        const u = activeUsername;
+
+        closeSheet();
+
+        enterSelectMode();
+
+        if (u) {
+            toggleSelect(u);
+        }
+
+    };
+
+
+
+    window.archiveFromSheet = function () {
+        if (!activeUsername) return;
+        const u = activeUsername;
+        closeSheet();
+        fetch('/inbox/archive', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ username: u, archived: true })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data && data.success) {
+                const card = document.querySelector(
+                    '.conv-card[data-username="' + CSS.escape(u) + '"]'
+                );
+                if (card) card.remove();
+                showToast('Chat ime-archive');
+            } else {
+                showToast((data && data.message) || 'Archive imeshindikana');
+            }
+        })
+        .catch(() => showToast('Hitilafu ya mtandao'));
+    };
+
+window.deleteFromSheet = function () {
+
+        if (!activeUsername) return;
+
+        const u = activeUsername;
+
+        closeSheet();
+
+
+        if (
+            !confirm(
+                'Una uhakika unataka kufuta chat na ' +
+                u +
+                '?'
+            )
+        ) return;
+
+
+        deleteConversations([u]);
+
+    };
+
+
+    function enterSelectMode() {
+
+        selectMode = true;
+
+        selected.clear();
+
+
+        document
+            .getElementById('inboxWrap')
+            .classList.add(
+                'inbox-select-mode'
+            );
+
+
+        document
+            .getElementById('selectBar')
+            .classList.add('show');
+
+
+        updateSelectedCount();
+
+
+        document
+            .querySelectorAll('.conv-card')
+            .forEach(
+                c =>
+                    c.classList.remove(
+                        'selected'
+                    )
+            );
+
+    }
+
+
+    window.cancelSelectMode =
+        function () {
+
+            selectMode = false;
+
+            selected.clear();
+
+
+            document
+                .getElementById('inboxWrap')
+                .classList.remove(
+                    'inbox-select-mode'
+                );
+
+
+            document
+                .getElementById('selectBar')
+                .classList.remove('show');
+
+
+            document
+                .querySelectorAll('.conv-card')
+                .forEach(
+                    c =>
+                        c.classList.remove(
+                            'selected'
+                        )
+                );
+
+        };
+
+
+    function toggleSelect(username) {
+
+        const card =
+            document.querySelector(
+                '.conv-card[data-username="' +
+                CSS.escape(username) +
+                '"]'
+            );
+
+
+        if (!card) return;
+
+
+        if (selected.has(username)) {
+
+            selected.delete(username);
+
+            card.classList.remove(
+                'selected'
+            );
+
+        } else {
+
+            selected.add(username);
+
+            card.classList.add(
+                'selected'
+            );
+
+        }
+
+
+        updateSelectedCount();
+
+    }
+
+
+    function updateSelectedCount() {
+
+        const el =
+            document.getElementById(
+                'selectedCount'
+            );
+
+        if (el) {
+
+            el.textContent =
+                String(selected.size);
+
+        }
+
+    }
+
+
+    window.deleteSelected = function () {
+
+        if (selected.size === 0) {
+
+            showToast(
+                'Chagua chat angalau moja'
+            );
+
+            return;
+
+        }
+
+
+        const names =
+            Array.from(selected);
+
+
+        if (
+            !confirm(
+                '{{ t('delete_chat', 'Futa chat') }} ' +
+                names.length +
+                ' zilizochaguliwa?'
+            )
+        ) return;
+
+
+        deleteConversations(names);
+
+        cancelSelectMode();
+
+    };
+
+
+    function deleteConversations(
+        usernames
+    ) {
+
+        usernames.forEach(u => {
+
+            const card =
+                document.querySelector(
+                    '.conv-card[data-username="' +
+                    CSS.escape(u) +
+                    '"]'
+                );
+
+
+            if (card) {
+                card.remove();
+            }
+
+        });
+
+
+        const remaining =
+            document.querySelectorAll(
+                '.conv-card'
+            );
+
+
+        if (remaining.length === 0) {
+
+            const list =
+                document.getElementById(
+                    'convList'
+                );
+
+
+            if (
+                list &&
+                !document.getElementById(
+                    'emptyState'
+                )
+            ) {
+
+                list.innerHTML =
+                    '<div class="empty" id="emptyState">' +
+                    '{{ t('no_messages') }}.<br>' +
+                    'Nenda kwenye profile ya mtu → bonyeza ' +
+                    '<strong>Chat</strong>.' +
+                    '</div>';
+
+            }
+
+        }
+
+
+        showToast(
+            usernames.length === 1
+            ? 'Chat imefutwa'
+            : usernames.length +
+              ' chat zimefutwa'
+        );
+
+
+        fetch(
+            '/inbox/delete',
+            {
+                method: 'POST',
+
+                headers: {
+                    'Content-Type':
+                        'application/json',
+
+                    'X-Requested-With':
+                        'XMLHttpRequest'
+                },
+
+                body: JSON.stringify({
+                    usernames: usernames
+                })
+            }
+        ).catch(() => {});
+
+    }
+
+
+    function applySearchFilter() {
+
+        const q =
+            (
+                document
+                .getElementById(
+                    'inboxSearch'
+                )
+                .value || ''
+            )
+            .trim()
+            .toLowerCase();
+
+
+        const cards =
+            document.querySelectorAll(
+                '.conv-card'
+            );
+
+
+        let visible = 0;
+
+
+        cards.forEach(card => {
+
+            const name =
+                (
+                    card.dataset.username ||
+                    ''
+                ).toLowerCase();
+
+            const fullname =
+                (
+                    card.dataset.fullname ||
+                    ''
+                ).toLowerCase();
+
+            const last =
+                (
+                    card.dataset.last ||
+                    ''
+                ).toLowerCase();
+
+
+            let match =
+                !q ||
+                name.indexOf(q) !== -1 ||
+                fullname.indexOf(q) !== -1 ||
+                last.indexOf(q) !== -1;
+
+
+            if (
+                q &&
+                serverMatchUsernames &&
+                serverMatchUsernames.has(
+                    card.dataset.username
+                )
+            ) {
+
+                match = true;
+
+            }
+
+
+            card.style.display =
+                match
+                ? ''
+                : 'none';
+
+
+            if (match) {
+                visible++;
+            }
+
+        });
+
+
+        const noRes =
+            document.getElementById(
+                'noResults'
+            );
+
+
+        if (noRes) {
+
+            noRes.style.display =
+                (
+                    q &&
+                    visible === 0 &&
+                    cards.length > 0
+                )
+                ? 'block'
+                : 'none';
+
+        }
+
+    }
+
+
+    function runSearch() {
+
+        const input =
+            document.getElementById(
+                'inboxSearch'
+            );
+
+
+        const q =
+            (input.value || '').trim();
+
+
+        const clearBtn =
+            document.getElementById(
+                'searchClear'
+            );
+
+
+        const hint =
+            document.getElementById(
+                'searchHint'
+            );
+
+
+        if (clearBtn) {
+
+            clearBtn.classList.toggle(
+                'show',
+                q.length > 0
+            );
+
+        }
+
+
+        if (!q) {
+
+            serverMatchUsernames = null;
+
+            if (hint) {
+                hint.classList.remove('show');
+            }
+
+            applySearchFilter();
+
+            return;
+
+        }
+
+
+        if (hint) {
+            hint.classList.add('show');
+        }
+
+
+        applySearchFilter();
+
+
+        clearTimeout(searchTimer);
+
+
+        searchTimer =
+            setTimeout(
+                function () {
+
+                    fetch(
+                        '/inbox/search?q=' +
+                        encodeURIComponent(q),
+                        {
+                            headers: {
+                                'X-Requested-With':
+                                    'XMLHttpRequest'
+                            }
+                        }
+                    )
+
+                    .then(r => {
+
+                        if (!r.ok) {
+                            throw new Error(
+                                'no route'
+                            );
+                        }
+
+                        return r.json();
+
+                    })
+
+                    .then(data => {
+
+                        if (
+                            data &&
+                            Array.isArray(
+                                data.usernames
+                            )
+                        ) {
+
+                            serverMatchUsernames =
+                                new Set(
+                                    data.usernames
+                                );
+
+                            applySearchFilter();
+
+                        }
+
+                    })
+
+                    .catch(() => {
+
+                        serverMatchUsernames =
+                            null;
+
+                    })
+
+                    .finally(() => {
+
+                        if (hint) {
+                            hint.classList.remove(
+                                'show'
+                            );
+                        }
+
+                    });
+
+                },
+                350
+            );
+
+    }
+
+
+    window.clearInboxSearch =
+        function () {
+
+            const input =
+                document.getElementById(
+                    'inboxSearch'
+                );
+
+
+            if (input) {
+
+                input.value = '';
+
+                input.focus();
+
+            }
+
+
+            serverMatchUsernames = null;
+
+
+            document
+                .getElementById(
+                    'searchClear'
+                )
+                .classList.remove(
+                    'show'
+                );
+
+
+            document
+                .getElementById(
+                    'searchHint'
+                )
+                .classList.remove(
+                    'show'
+                );
+
+
+            applySearchFilter();
+
+        };
+
+
+    function bindCards() {
+
+        document
+            .querySelectorAll(
+                '.conv-card'
+            )
+            .forEach(card => {
+
+                const username =
+                    card.dataset.username;
+
+
+                card.addEventListener(
+                    'click',
+                    function (e) {
+
+                        if (selectMode) {
+
+                            e.preventDefault();
+
+                            toggleSelect(
+                                username
+                            );
+
+                            return;
+
+                        }
+
+                        openChat(username);
+
+                    }
+                );
+
+
+                card.addEventListener(
+                    'touchstart',
+                    function () {
+
+                        touchMoved = false;
+
+                        longPressTimer =
+                            setTimeout(
+                                function () {
+
+                                    if (
+                                        !touchMoved &&
+                                        !selectMode
+                                    ) {
+
+                                        openSheet(
+                                            username
+                                        );
+
+                                    }
+
+                                },
+                                550
+                            );
+
+                    },
+                    {
+                        passive: true
+                    }
+                );
+
+
+                card.addEventListener(
+                    'touchmove',
+                    function () {
+
+                        touchMoved = true;
+
+                        clearTimeout(
+                            longPressTimer
+                        );
+
+                    },
+                    {
+                        passive: true
+                    }
+                );
+
+
+                card.addEventListener(
+                    'touchend',
+                    function () {
+
+                        clearTimeout(
+                            longPressTimer
+                        );
+
+                    }
+                );
+
+
+                card.addEventListener(
+                    'touchcancel',
+                    function () {
+
+                        clearTimeout(
+                            longPressTimer
+                        );
+
+                    }
+                );
+
+
+                card.addEventListener(
+                    'contextmenu',
+                    function (e) {
+
+                        e.preventDefault();
+
+                        if (!selectMode) {
+
+                            openSheet(
+                                username
+                            );
+
+                        }
+
+                    }
+                );
+
+
+                let mouseTimer = null;
+
+
+                card.addEventListener(
+                    'mousedown',
+                    function (e) {
+
+                        if (e.button !== 0) {
+                            return;
+                        }
+
+
+                        mouseTimer =
+                            setTimeout(
+                                function () {
+
+                                    if (!selectMode) {
+
+                                        openSheet(
+                                            username
+                                        );
+
+                                    }
+
+                                },
+                                550
+                            );
+
+                    }
+                );
+
+
+                card.addEventListener(
+                    'mouseup',
+                    function () {
+
+                        clearTimeout(
+                            mouseTimer
+                        );
+
+                    }
+                );
+
+
+                card.addEventListener(
+                    'mouseleave',
+                    function () {
+
+                        clearTimeout(
+                            mouseTimer
+                        );
+
+                    }
+                );
+
+            });
+
+    }
+
+
+    function parseInboxDate(ts) {
+        if (!ts) return null;
+        if (ts === 'now') return new Date();
+        var d = new Date(String(ts).trim().replace(' ', 'T'));
+        if (isNaN(d.getTime())) d = new Date(String(ts).replace(/-/g, '/'));
+        return isNaN(d.getTime()) ? null : d;
+    }
+
+    function formatInboxRelative(ts) {
+        var d = parseInboxDate(ts);
+        if (!d) return String(ts || '').slice(0, 16);
+        var now = new Date();
+        var sec = Math.floor((now - d) / 1000);
+        if (sec < 45) return 'Sasa';
+        if (sec < 3600) return Math.floor(sec / 60) + 'm';
+        if (sec < 86400 && d.getDate() === now.getDate()) {
+            return Math.floor(sec / 3600) + 'h';
+        }
+        var yest = new Date(now);
+        yest.setDate(now.getDate() - 1);
+        if (d.getDate() === yest.getDate() && d.getMonth() === yest.getMonth() && d.getFullYear() === yest.getFullYear()) {
+            return 'Yesterday';
+        }
+        var days = Math.floor(sec / 86400);
+        if (days < 7) return days + 'd';
+        if (days < 14) return '1w';
+        if (days < 30) return Math.floor(days / 7) + 'w';
+        if (days < 60) return '1mo';
+        if (days < 365) return Math.floor(days / 30) + 'mo';
+        return Math.floor(days / 365) + 'y';
+    }
+
+    function applyInboxRelativeTimes() {
+        document.querySelectorAll('.rel-time[data-ts]').forEach(function(el) {
+            var ts = el.getAttribute('data-ts');
+            if (ts) el.textContent = formatInboxRelative(ts);
+        });
+    }
+
+    /* ===== PEOPLE SUGGEST SEARCH ===== */
+    var peopleSearchTimer = null;
+    var peopleDefaultHTML = null;
+
+    function peopleAvatarUrl(pic, name) {
+        if (pic && (String(pic).indexOf('http://') === 0 || String(pic).indexOf('https://') === 0)) return pic;
+        if (pic) return '/static/uploads/' + pic;
+        var n = encodeURIComponent(name || 'U');
+        return 'https://ui-avatars.com/api/?name=' + n + '&background=random&color=fff&size=128&bold=true';
+    }
+
+    function renderPeopleList(users) {
+        var list = document.getElementById('peopleList');
+        if (!list) return;
+
+        if (!users || !users.length) {
+            list.innerHTML = '<div class="people-empty">Hakuna mtumiaji aliyepatikana.</div>';
+            return;
+        }
+
+        var html = '';
+        users.forEach(function (u) {
+            var name = (u.full_name || u.username || '').replace(/</g, '&lt;');
+            var uname = (u.username || '').replace(/</g, '&lt;');
+            var verified = u.is_verified
+                ? ' <svg class="verified-badge-custom small" viewBox="0 0 24 24" title="Verified">' +
+                  '<path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="#8A2BE2"/>' +
+                  '<path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#FFFFFF"/>' +
+                  '</svg>'
+                : '';
+            var href = '/profile/' + encodeURIComponent(u.username);
+            var chat = '/chat/' + encodeURIComponent(u.username);
+            var img = peopleAvatarUrl(u.profile_pic, name || uname);
+            var fallbackImg = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name || uname || 'U') + '&background=random&color=fff&size=128&bold=true';
+
+            html +=
+                '<div class="people-card" data-username="' + uname + '">' +
+                '<a href="' + href + '"><img src="' + img + '" onerror="this.onerror=null;this.src=\'' + fallbackImg + '\';" alt="@' + uname + '"></a>' +
+                '<div class="people-info"><a href="' + href + '">' +
+                '<div class="pname">' + name + verified + '</div>' +
+                '<div class="phandle">@' + uname + '</div>' +
+                '</a></div>' +
+                '<a class="people-chat-btn" href="' + chat + '"><i class="fa-solid fa-comment"></i> Chat</a>' +
+                '</div>';
+        });
+        list.innerHTML = html;
+    }
+
+    function runPeopleSearch() {
+        var input = document.getElementById('peopleSearch');
+        var clearBtn = document.getElementById('peopleSearchClear');
+        if (!input) return;
+
+        var q = (input.value || '').trim();
+        if (clearBtn) clearBtn.classList.toggle('show', q.length > 0);
+
+        if (!q) {
+            if (peopleDefaultHTML !== null) {
+                var list = document.getElementById('peopleList');
+                if (list) list.innerHTML = peopleDefaultHTML;
+            }
+            return;
+        }
+
+        clearTimeout(peopleSearchTimer);
+        peopleSearchTimer = setTimeout(function () {
+            fetch('/inbox/people_search?q=' + encodeURIComponent(q), {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin'
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                renderPeopleList((data && data.users) ? data.users : []);
+            })
+            .catch(function () {
+                renderPeopleList([]);
+            });
+        }, 280);
+    }
+
+    window.clearPeopleSearch = function () {
+        var input = document.getElementById('peopleSearch');
+        var clearBtn = document.getElementById('peopleSearchClear');
+        if (input) {
+            input.value = '';
+            input.focus();
+        }
+        if (clearBtn) clearBtn.classList.remove('show');
+        if (peopleDefaultHTML !== null) {
+            var list = document.getElementById('peopleList');
+            if (list) list.innerHTML = peopleDefaultHTML;
+        }
+    };
+
+    document.addEventListener(
+        'DOMContentLoaded',
+        function () {
+
+            applyPinUI();
+
+            bindCards();
+
+            applyInboxRelativeTimes();
+            setInterval(applyInboxRelativeTimes, 60000);
+
+
+            const search =
+                document.getElementById(
+                    'inboxSearch'
+                );
+
+
+            if (search) {
+
+                search.addEventListener(
+                    'input',
+                    runSearch
+                );
+
+            }
+
+            // People suggest search
+            var plist = document.getElementById('peopleList');
+            if (plist) peopleDefaultHTML = plist.innerHTML;
+
+            var pSearch = document.getElementById('peopleSearch');
+            if (pSearch) {
+                pSearch.addEventListener('input', runPeopleSearch);
+            }
+
+        }
+    );
+
+})();
+
+</script>
+
+{% endblock %}

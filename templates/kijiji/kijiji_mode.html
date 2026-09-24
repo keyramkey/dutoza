@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Kijiji Mode - Kijiji Tanzania</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --green: #1EB53A;
+            --green-dark: #0f8a2a;
+            --blue: #00A3DD;
+            --yellow: #FCD116;
+            --purple: #8A2BE2;
+            --bg: #f0f4f1;
+            --card: #ffffff;
+            --text: #0f1a12;
+            --muted: #65727a;
+            --line: #e6ece8;
+            --radius: 20px;
+            --shadow: 0 6px 20px rgba(16, 60, 30, 0.08);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: var(--text); padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+        a { text-decoration: none; color: inherit; }
+
+        /* ============ HEADER ============ */
+        header {
+            position: sticky; top: 0; z-index: 1000;
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 16px;
+            padding-top: calc(12px + env(safe-area-inset-top, 0px));
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--line);
+        }
+        .back-btn {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: #eef5ef; color: var(--green-dark);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; transition: transform .15s;
+        }
+        .back-btn:active { transform: scale(0.92); }
+        header h1 { font-size: 18px; font-weight: 800; color: var(--text); letter-spacing: -.2px; }
+        header h1 i { color: var(--green); margin-right: 6px; }
+
+        .container { max-width: 600px; margin: 0 auto; padding: 16px 14px 8px; }
+
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 18px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+            animation: rise .45s ease both;
+        }
+        .container > *:nth-child(2) { animation-delay: .06s; }
+        .container > *:nth-child(3) { animation-delay: .12s; }
+        .container > *:nth-child(4) { animation-delay: .18s; }
+        .container > *:nth-child(5) { animation-delay: .24s; }
+        @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+        .section-title {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 12px; font-weight: 800; letter-spacing: .8px; text-transform: uppercase;
+            color: var(--muted); margin-bottom: 14px;
+        }
+        .section-title .chip {
+            margin-left: auto; letter-spacing: 0; text-transform: none;
+            background: #eaf7ee; color: var(--green-dark);
+            padding: 3px 10px; border-radius: 999px; font-size: 12px;
+        }
+
+        /* ============ HERO ============ */
+        .hero {
+            position: relative; overflow: hidden;
+            padding: 22px 20px 20px;
+            border-radius: 24px;
+            color: #fff;
+            background: linear-gradient(135deg, #0c8f2c 0%, #1EB53A 42%, #00A3DD 100%);
+            box-shadow: 0 12px 28px rgba(0, 140, 90, 0.32);
+            margin-bottom: 16px;
+            animation: rise .45s ease both;
+        }
+        .hero::before, .hero::after {
+            content: ""; position: absolute; border-radius: 50%; pointer-events: none;
+            background: rgba(255, 255, 255, 0.10);
+        }
+        .hero::before { width: 190px; height: 190px; top: -70px; right: -50px; }
+        .hero::after { width: 130px; height: 130px; bottom: -60px; left: -30px; background: rgba(252, 209, 22, 0.16); }
+        .hero > * { position: relative; z-index: 1; }
+
+        .hero-top { display: flex; align-items: center; gap: 14px; }
+        .hero-icon {
+            width: 54px; height: 54px; border-radius: 18px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            font-size: 22px; color: #fff;
+        }
+        .hero-text { flex: 1; min-width: 0; }
+        .hero-text h2 { font-size: 20px; font-weight: 800; letter-spacing: -.3px; }
+        .hero-text p { font-size: 13px; opacity: .92; margin-top: 3px; line-height: 1.4; }
+
+        /* Switch */
+        .switch { position: relative; display: inline-block; width: 58px; height: 34px; flex-shrink: 0; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; top: 0; right: 0; bottom: 0; left: 0; cursor: pointer;
+            background: rgba(255, 255, 255, 0.32);
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            border-radius: 34px; transition: .25s;
+        }
+        .slider::before {
+            content: ""; position: absolute; left: 3px; top: 3px;
+            width: 26px; height: 26px; border-radius: 50%;
+            background: #fff; transition: .25s;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.28);
+        }
+        .switch input:checked + .slider { background: var(--yellow); border-color: var(--yellow); }
+        .switch input:checked + .slider::before { transform: translateX(24px); }
+        .switch input:disabled + .slider { opacity: .6; cursor: not-allowed; }
+
+        .status-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            margin-top: 18px;
+            padding: 7px 14px; border-radius: 999px;
+            font-size: 12px; font-weight: 800; letter-spacing: .6px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .status-badge::before {
+            content: ""; width: 9px; height: 9px; border-radius: 50%; background: #cbd5d0;
+        }
+        .status-badge.on::before { background: var(--yellow); box-shadow: 0 0 0 4px rgba(252, 209, 22, 0.3); animation: pulse 1.8s infinite; }
+        @keyframes pulse { 0%,100% { box-shadow: 0 0 0 3px rgba(252,209,22,.35); } 50% { box-shadow: 0 0 0 7px rgba(252,209,22,.08); } }
+
+        .hero .info-text {
+            margin-top: 14px; padding-top: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.25);
+            font-size: 13px; line-height: 1.65; opacity: .95;
+        }
+        .hero .info-text strong { color: var(--yellow); }
+
+        /* ============ PREVIEW (mini profile) ============ */
+        .mini-profile { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+        .mini-avatar {
+            width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
+            background: linear-gradient(135deg, var(--green), var(--blue));
+            color: #fff; font-weight: 800; font-size: 20px;
+            display: flex; align-items: center; justify-content: center;
+            border: 3px solid #e3f6e8;
+        }
+        .mini-name { font-weight: 800; font-size: 15px; }
+        .mini-sub { font-size: 12.5px; color: var(--muted); margin-top: 1px; }
+
+        .preview-stats { display: flex; gap: 10px; }
+        .stat {
+            flex: 1; text-align: center;
+            background: linear-gradient(180deg, #f7fbf8, #eef6f0);
+            border: 1px solid var(--line);
+            border-radius: 16px; padding: 14px 8px;
+        }
+        .stat i { font-size: 15px; margin-bottom: 6px; display: block; }
+        .stat.f i { color: var(--green); }
+        .stat.g i { color: var(--blue); }
+        .stat.fr i { color: var(--purple); }
+        .stat strong { display: block; font-size: 24px; font-weight: 800; letter-spacing: -.5px; }
+        .stat span { font-size: 12px; color: var(--muted); font-weight: 600; }
+
+        /* ============ NOTE ============ */
+        .note {
+            display: flex; gap: 12px;
+            background: #fff9e3; border: 1px solid #fbe7a0;
+            border-radius: 16px; padding: 14px 16px;
+            font-size: 13px; line-height: 1.6; color: #6b5300;
+            margin-bottom: 16px;
+            animation: rise .45s ease both;
+        }
+        .note i { color: #d4a017; font-size: 17px; margin-top: 2px; }
+
+        /* ============ RECOMMENDABLE ============ */
+        .rec-card { display: flex; align-items: center; gap: 14px; }
+        .rec-card.ok { background: linear-gradient(135deg, #ecfdf3, #e0f8ea); border: 1px solid #bdeccb; }
+        .rec-card.bad { background: linear-gradient(135deg, #fff1f1, #ffe6e6); border: 1px solid #fecaca; }
+        .rec-icon {
+            width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 19px;
+        }
+        .ok .rec-icon { background: linear-gradient(135deg, #1EB53A, #12a04c); box-shadow: 0 6px 14px rgba(30,181,58,.35); }
+        .bad .rec-icon { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 6px 14px rgba(220,38,38,.3); }
+        .rec-card strong { font-size: 15px; display: block; }
+        .ok strong { color: #15803d; }
+        .bad strong { color: #b91c1c; }
+        .rec-card p { font-size: 12.8px; margin-top: 3px; line-height: 1.45; }
+        .ok p { color: #166534; }
+        .bad p { color: #991b1b; }
+
+        /* ============ LINKUP ============ */
+        .lu-desc { font-size: 13.5px; line-height: 1.6; color: #4b5a52; margin-bottom: 14px; }
+        .lu-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+        .lu-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px; border-radius: 16px;
+            background: #f7faf8; border: 1px solid var(--line);
+        }
+        .lu-item.active { background: #effaf2; border-color: #a8e3b9; }
+        .lu-avatar {
+            position: relative; width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0;
+            background: linear-gradient(135deg, var(--green), var(--blue));
+            color: #fff; font-weight: 800; font-size: 18px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .lu-item.active .lu-avatar { box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--green); }
+        .lu-info { flex: 1; min-width: 0; }
+        .lu-info strong { display: block; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lu-info .meta { font-size: 12px; color: var(--muted); display: block; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lu-info .tag-active {
+            display: inline-block; margin-top: 5px;
+            font-size: 10.5px; font-weight: 800; letter-spacing: .5px;
+            color: #fff; background: var(--green); padding: 2px 8px; border-radius: 999px;
+        }
+        .lu-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+        .btn-mini {
+            border: none; cursor: pointer; font-weight: 700; font-size: 12px;
+            padding: 8px 12px; border-radius: 10px; text-align: center;
+            transition: transform .15s;
+        }
+        .btn-mini:active { transform: scale(0.95); }
+        .btn-switch { background: #e2f7e8; color: var(--green-dark); }
+        .btn-switch.current { background: var(--green); color: #fff; }
+        .btn-open { background: #eaeff0; color: #37474f; }
+
+        .btn-wide {
+            width: 100%; border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 13px; border-radius: 14px;
+            font-size: 14px; font-weight: 700;
+            transition: transform .15s;
+        }
+        .btn-wide:active { transform: scale(0.98); }
+        .btn-back-profile { background: #eef2ef; color: #33413a; margin-bottom: 10px; }
+        .btn-create {
+            background: linear-gradient(135deg, var(--green), var(--blue));
+            color: #fff; box-shadow: 0 8px 18px rgba(0, 150, 120, 0.3);
+        }
+
+        .lu-empty {
+            text-align: center; padding: 22px 14px; margin-bottom: 10px;
+            border: 2px dashed #cfe3d5; border-radius: 16px;
+            color: var(--muted); font-size: 13.5px; line-height: 1.55;
+        }
+        .lu-empty i { display: block; font-size: 26px; color: var(--green); margin-bottom: 8px; }
+
+        /* ============ TOOLS ============ */
+        .tool {
+            display: flex; align-items: center; gap: 14px;
+            padding: 12px 4px; border-bottom: 1px solid var(--line);
+            transition: background .15s;
+        }
+        .tool:last-child { border-bottom: none; padding-bottom: 2px; }
+        .tool:first-of-type { padding-top: 2px; }
+        .tool:active { background: #f5f9f6; }
+        .tool-icon {
+            width: 42px; height: 42px; border-radius: 13px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; font-size: 17px;
+        }
+        .tool-icon.blue { background: #e1f4fc; color: var(--blue); }
+        .tool-icon.purple { background: #f0e6fc; color: var(--purple); }
+        .tool-icon.yellow { background: #fff6cc; color: #d4a017; }
+        .tool-body { flex: 1; min-width: 0; }
+        .tool-body strong { display: block; font-size: 14.5px; }
+        .tool-body span { font-size: 12.5px; color: var(--muted); }
+        .tool .chev { color: #c3cdc7; font-size: 13px; }
+
+        /* ============ BOTTOM NAV ============ */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%; z-index: 1000;
+            display: flex; justify-content: space-around; align-items: center;
+            padding: 8px 0; padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid var(--line);
+        }
+        .bottom-nav a {
+            width: 52px; height: 44px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            color: #76827b; font-size: 20px; transition: background .15s, color .15s;
+        }
+        .bottom-nav a:active { background: #eaf7ee; color: var(--green); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a class="back-btn" href="{{ url_for('settings') }}"><i class="fa-solid fa-arrow-left"></i></a>
+        <h1><i class="fa-solid fa-tower-broadcast"></i>Kijiji Mode</h1>
+    </header>
+
+    {% set max_lu = max_linkups if max_linkups is defined else 3 %}
+
+    <div class="container">
+
+        <!-- ================= HERO + TOGGLE ================= -->
+        <div class="hero">
+            <div class="hero-top">
+                <div class="hero-icon"><i class="fa-solid fa-tower-broadcast"></i></div>
+                <div class="hero-text">
+                    <h2>Kijiji Mode</h2>
+
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="villageModeToggle" {% if village_mode %}checked{% endif %} onchange="toggleVillageMode(this)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <span id="statusBadge" class="status-badge {{ 'on' if village_mode else 'off' }}">
+                {{ 'IMEWASHWA' if village_mode else 'IMEZIMWA' }}
+            </span>
+
+            <p class="info-text">
+                Kijiji Mode ikiwa <strong>ON</strong>, profile yako itaonyesha
+                <strong>Followers</strong> na <strong>Following</strong> badala ya Friends,
+            </p>
+          </div>
+
+        <!-- ================= PREVIEW ================= -->
+        <div class="card">
+            <div class="section-title"><i class="fa-solid fa-eye"></i> Profile yako itaonekana hivi</div>
+
+            <div class="mini-profile">
+                <div class="mini-avatar">{{ (session.username or 'K')[0]|upper }}</div>
+                <div>
+                    <div class="mini-name">@{{ session.username or '' }}</div>
+                    <div class="mini-sub">{{ 'Kijiji Mode iko ON' if village_mode else 'Kijiji Mode iko OFF' }}</div>
+                </div>
+            </div>
+
+            <div class="preview-stats">
+                {% if village_mode %}
+                <div class="stat f">
+                    <i class="fa-solid fa-users"></i>
+                    <strong>{{ followers_count }}</strong>
+                    <span>Followers</span>
+                </div>
+                <div class="stat g">
+                    <i class="fa-solid fa-user-plus"></i>
+                    <strong>{{ following_count }}</strong>
+                    <span>Following</span>
+                </div>
+                {% else %}
+                <div class="stat fr">
+                    <i class="fa-solid fa-user-group"></i>
+                    <strong>{{ friends_count }}</strong>
+                    <span>Friends</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ================= NOTE ================= -->
+        <div class="note">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>Kijiji Mode inakupa nafasi ya kuungana na watu kwa mtindo wa Kijiji, kushiriki na kujenga mahusiano ya kijamii kwa urahisi zaidi.
+            Friends wako wa kawaida hawafutwi wala kupotea; ukiizima Kijiji Mode,
+            profile yako inarudi papo hapo kwenye mfumo wa kawaida wa Friends
+            Unaweza kubadilisha mode wakati wowote bila kupoteza connections zako.
+            </span>
+        </div>
+
+        {% if village_mode %}
+        <!-- ================= RECOMMENDABLE ================= -->
+        <div class="card rec-card {{ 'ok' if recommendable else 'bad' }}">
+            <div class="rec-icon">
+                <i class="fa-solid {% if recommendable %}fa-circle-check{% else %}fa-triangle-exclamation{% endif %}"></i>
+            </div>
+            <div>
+                {% if recommendable %}
+                <strong>Recommendable</strong>
+                <p>Profile yako inaweza kupendekezwa kwa watumiaji wengine.</p>
+                {% else %}
+                <strong>Your profile is on risk</strong>
+                <p>Una warning, profile yako haipendekezwi kwa sasa.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ================= LINKUP ================= -->
+        <div class="card">
+            <div class="section-title">
+                <i class="fa-solid fa-link"></i> Linkup zangu
+                <span class="chip">{{ my_linkups|length if my_linkups else 0 }} / {{ max_lu }}</span>
+            </div>
+
+            <p class="lu-desc">
+                Linkup ni ukurasa wako. Unaweza kuwa na Kijiji Mode ON bila Linkup.
+            </p>
+
+            {% if my_linkups %}
+            <div class="lu-list">
+                {% for lu in my_linkups %}
+                {% set is_active = active_linkup and active_linkup.id == lu.id %}
+                <div class="lu-item {% if is_active %}active{% endif %}">
+                    <div class="lu-avatar">{{ (lu.display_name or 'L')[0]|upper }}</div>
+                    <div class="lu-info">
+                        <strong>{{ lu.display_name }}</strong>
+                        <span class="meta">@{{ lu.username }} · {{ lu.category or 'general' }}</span>
+                        {% if is_active %}<span class="tag-active">ACTIVE</span>{% endif %}
+                    </div>
+                    <div class="lu-actions">
+                        <button type="button" class="btn-mini btn-switch {% if is_active %}current{% endif %}" onclick="switchLinkup({{ lu.id }})">
+                            {% if is_active %}Inatumika{% else %}Switch{% endif %}
+                        </button>
+                        <a class="btn-mini btn-open" href="{{ url_for('linkup_public', username=lu.username) }}">Fungua</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <button type="button" class="btn-wide btn-back-profile" onclick="switchLinkup(null)">
+                <i class="fa-solid fa-user"></i> Rudi Profile yangu (si Linkup)
+            </button>
+            {% else %}
+            <div class="lu-empty">
+                <i class="fa-solid fa-link"></i>
+                Bado huna Linkup. Tengeneza ili uwe na ukurasa wa category yako.
+            </div>
+            {% endif %}
+
+            {% if not my_linkups or (my_linkups|length < max_lu) %}
+            <a class="btn-wide btn-create" href="{{ url_for('linkup_create') }}">
+                <i class="fa-solid fa-plus"></i> Tengeneza Linkup
+            </a>
+            {% endif %}
+        </div>
+
+        <!-- ================= TOOLS ================= -->
+        <div class="card">
+            <div class="section-title"><i class="fa-solid fa-wand-magic-sparkles"></i> Vitu vingine vya Kijiji Mode</div>
+
+            <a class="tool" href="/insights">
+                <div class="tool-icon blue"><i class="fa-solid fa-chart-simple"></i></div>
+                <div class="tool-body">
+                    <strong>Dashboard / Insights</strong>
+                    <span>Fuatilia ukuaji wa profile yako</span>
+                </div>
+                <i class="fa-solid fa-chevron-right chev"></i>
+            </a>
+
+            <a class="tool" href="{{ url_for('edit_profile') }}">
+                <div class="tool-icon purple"><i class="fa-solid fa-tags"></i></div>
+                <div class="tool-body">
+                    <strong>Category ya Profile</strong>
+                    <span>Chagua aina ya profile yako</span>
+                </div>
+                <i class="fa-solid fa-chevron-right chev"></i>
+            </a>
+
+            {% if active_linkup %}
+            <a class="tool" href="{{ url_for('home') }}?open_badge=1&linkup_id={{ active_linkup.id }}&linkup_name={{ active_linkup.display_name|urlencode }}">
+                <div class="tool-icon yellow"><i class="fa-solid fa-certificate"></i></div>
+                <div class="tool-body">
+                    <strong>Omba Verified Badge ya Linkup</strong>
+                    <span>Kwa "{{ active_linkup.display_name }}"</span>
+                </div>
+                <i class="fa-solid fa-chevron-right chev"></i>
+            </a>
+            {% else %}
+            <div class="tool" style="cursor:default;">
+                <div class="tool-icon yellow"><i class="fa-solid fa-certificate"></i></div>
+                <div class="tool-body">
+                    <strong style="color:#9aa79f;">Omba Verified Badge ya Linkup</strong>
+                    <span>Chagua Linkup inayotumika (Switch) kwanza</span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+    </div>
+
+    <div class="bottom-nav">
+        <a href="{{ url_for('home') }}"><i class="fa-solid fa-house"></i></a>
+        <a href="{{ url_for('search') }}"><i class="fa-solid fa-magnifying-glass"></i></a>
+        <a href="{{ url_for('notifications') }}"><i class="fa-solid fa-bell"></i></a>
+        {% if identity_is_linkup and identity_url %}
+        <a href="{{ identity_url }}" title="{{ identity_name }}"><i class="fa-solid fa-link"></i></a>
+        {% else %}
+        <a href="{{ url_for('profile', username=session.username) }}"><i class="fa-solid fa-user"></i></a>
+        {% endif %}
+    </div>
+
+<script>
+function toggleVillageMode(checkbox) {
+    checkbox.disabled = true;
+    var wantOn = checkbox.checked;
+
+    fetch('{{ url_for("settings_kijiji_mode") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        },
+        body: 'village_mode=' + (wantOn ? 'on' : 'off')
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (!data || !data.success) {
+            checkbox.checked = !wantOn;
+            return;
+        }
+        var badge = document.getElementById('statusBadge');
+        badge.textContent = data.village_mode ? 'IMEWASHWA' : 'IMEZIMWA';
+        badge.className = 'status-badge ' + (data.village_mode ? 'on' : 'off');
+        window.location.reload();
+    })
+    .catch(function() {
+        checkbox.checked = !wantOn;
+    })
+    .finally(function() {
+        checkbox.disabled = false;
+    });
+}
+
+function switchLinkup(linkupId) {
+    fetch('{{ url_for("linkup_switch") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ linkup_id: linkupId === null ? null : linkupId })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data && data.success) {
+            if (data.message && window.KijijiToast) KijijiToast(data.message, 'success');
+            setTimeout(function() {
+                if (data.redirect_url) window.location.href = data.redirect_url;
+                else window.location.reload();
+            }, data.message && window.KijijiToast ? 550 : 0);
+        } else {
+            if (window.KijijiToast) KijijiToast((data && data.message) || 'Imeshindikana', 'error');
+            else alert((data && data.message) || 'Imeshindikana');
+        }
+    })
+    .catch(function() {
+        if (window.KijijiToast) KijijiToast('Imeshindikana', 'error');
+        else alert('Imeshindikana');
+    });
+}
+</script>
+
+</body>
+</html>

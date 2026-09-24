@@ -1,0 +1,3570 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+:root {
+  --chat-primary: #1eb53a;
+  --chat-primary-dark: #168b2b;
+  --chat-bg: #eef4f0;
+  --chat-page: #f7f9f8;
+  --chat-card: #ffffff;
+  --chat-text: #172019;
+  --chat-muted: #738078;
+  --chat-border: #e2e9e4;
+  --chat-danger: #e41e3f;
+  --chat-blue: #279ee8;
+  --chat-shadow: 0 8px 28px rgba(25, 55, 36, .08);
+  --chat-radius: 18px;
+}
+
+body.chat-dark {
+  --chat-bg: #121815;
+  --chat-page: #0d120f;
+  --chat-card: #19221c;
+  --chat-text: #edf5ef;
+  --chat-muted: #9aa99e;
+  --chat-border: #2b392f;
+  --chat-shadow: 0 8px 28px rgba(0,0,0,.25);
+}
+
+* { box-sizing: border-box; }
+
+.chat-page {
+  position: fixed;
+  top: 60px;
+  bottom: 55px;
+  left: 0;
+  right: 0;
+  background: var(--chat-page);
+  color: var(--chat-text);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 10;
+}
+
+.chat-shell {
+  width: min(760px, 100%);
+  height: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.chat-topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 65px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--chat-card);
+  border-bottom: 1px solid var(--chat-border);
+  box-shadow: 0 2px 6px rgba(0,0,0,.04);
+}
+
+.chat-icon-btn {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--chat-text);
+  background: var(--chat-bg);
+  box-shadow: 0 2px 6px rgba(0,0,0,.04);
+  transition: .2s ease;
+  flex: 0 0 auto;
+}
+
+.chat-icon-btn:hover {
+  transform: translateY(-1px);
+  background: var(--chat-primary);
+  color: #fff;
+}
+
+.call-menu-wrap {
+  position: relative;
+  flex: 0 0 auto;
+}
+.call-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 160px;
+  background: var(--chat-card);
+  border: 1px solid var(--chat-border);
+  border-radius: 12px;
+  box-shadow: var(--chat-shadow);
+  overflow: hidden;
+  z-index: 40;
+}
+.call-dropdown.show { display: block; animation: menuIn .16s ease-out; }
+.call-dropdown button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 0;
+  background: transparent;
+  color: var(--chat-text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+.call-dropdown button:hover { background: var(--chat-bg); }
+.call-dropdown button i { color: var(--chat-primary); width: 18px; text-align: center; }
+
+/* Status reply card inside chat */
+.status-reply-card {
+  display: block;
+  margin-bottom: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(30,181,58,.08);
+  border-left: 3px solid var(--chat-primary);
+  text-decoration: none;
+  color: inherit;
+}
+.status-reply-card .src-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--chat-primary);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.status-reply-card .src-preview {
+  font-size: 12px;
+  color: var(--chat-muted);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  line-height: 1.35;
+}
+.status-reply-card .src-media {
+  margin-top: 6px;
+  border-radius: 8px;
+  overflow: hidden;
+  width: 72px;
+  height: 72px;
+  background: #0d120f;
+  flex-shrink: 0;
+}
+.status-reply-card .src-media img,
+.status-reply-card .src-media video {
+  display: block;
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+}
+.status-reply-card .src-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.status-reply-card .src-text {
+  min-width: 0;
+  flex: 1;
+}
+.msg-text a.chat-user-link {
+  color: var(--chat-primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+.msg-text a.chat-user-link:hover { text-decoration: underline; }
+.rel-time { white-space: nowrap; }
+
+.chat-profile {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.chat-avatar-wrap { position: relative; flex: 0 0 auto; }
+
+.chat-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #dfe8e1;
+  display: block;
+}
+
+.online-dot {
+  position: absolute;
+  right: 0;
+  bottom: 1px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--chat-card);
+  border-radius: 50%;
+  background: var(--chat-primary);
+  display: none;
+}
+
+.online-dot.show { display: block; }
+
+.chat-user-info { min-width: 0; }
+
+.chat-user-name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 750;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-user-status {
+  margin-top: 2px;
+  color: var(--chat-muted);
+  font-size: 11px;
+}
+
+.verified-badge {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.chat-content {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  padding-top: 65px;
+  padding-bottom: 70px;
+}
+
+.chat-box {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding: 15px 12px;
+  background:
+    radial-gradient(circle at 15% 15%, rgba(30,181,58,.06) 0 2px, transparent 3px),
+    radial-gradient(circle at 85% 75%, rgba(30,181,58,.05) 0 2px, transparent 3px),
+    var(--chat-bg);
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--chat-primary) transparent;
+}
+
+.chat-box::-webkit-scrollbar { width: 5px; }
+.chat-box::-webkit-scrollbar-thumb {
+  border-radius: 20px;
+  background: var(--chat-primary);
+}
+
+.date-divider {
+  width: fit-content;
+  margin: 4px auto 16px;
+  padding: 5px 11px;
+  border-radius: 20px;
+  color: var(--chat-muted);
+  background: var(--chat-card);
+  border: 1px solid var(--chat-border);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.bubble {
+  position: relative;
+  width: fit-content;
+  max-width: min(82%, 560px);
+  margin: 0 0 9px;
+  padding: 10px 12px 7px;
+  border-radius: 15px;
+  color: var(--chat-text);
+  font-size: 14px;
+  line-height: 1.45;
+  word-break: break-word;
+  user-select: none;
+  animation: bubbleIn .18s ease-out;
+  transition: transform 0.15s ease;
+  touch-action: pan-y;
+}
+
+@keyframes bubbleIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.bubble.me {
+  margin-left: auto;
+  border-bottom-right-radius: 4px;
+  background: linear-gradient(135deg, #d9f8df, #c9f1d1);
+}
+
+.bubble.them {
+  margin-right: auto;
+  border-bottom-left-radius: 4px;
+  background: var(--chat-card);
+  box-shadow: 0 2px 6px rgba(0,0,0,.06);
+}
+
+.chat-dark .bubble.me {
+  color: #effff2;
+  background: #1d6330;
+}
+
+.bubble.hidden-msg {
+  opacity: .55;
+  filter: grayscale(.5);
+}
+
+.bubble.swiping {
+  z-index: 5;
+}
+
+.msg-text {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.msg-text.clamped {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+}
+
+.see-more-btn {
+  display: inline-block;
+  margin-top: 4px;
+  border: 0;
+  background: none;
+  color: var(--chat-primary);
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  padding: 0;
+}
+
+.see-more-btn:hover { text-decoration: underline; }
+
+/* Reply quote inside bubble */
+.reply-quote {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(0,0,0,.06);
+  border-left: 3px solid var(--chat-primary);
+  font-size: 12px;
+  cursor: pointer;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.chat-dark .reply-quote { background: rgba(255,255,255,.08); }
+
+.reply-quote-body {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.reply-quote-name {
+  display: block;
+  font-weight: 700;
+  color: var(--chat-primary);
+  margin-bottom: 2px;
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.reply-quote-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  color: var(--chat-muted);
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.35;
+  max-height: 2.7em;
+}
+.bubble-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-top: 4px;
+  color: var(--chat-muted);
+  font-size: 10px;
+}
+
+.ticks {
+  font-size: 13px;
+  letter-spacing: -2px;
+}
+
+.ticks.read { color: var(--chat-blue); }
+.ticks.sent,
+.ticks.delivered { color: var(--chat-muted); }
+.ticks.sending-tick { color: var(--chat-muted); }
+
+.bubble.sending { opacity: .68; }
+
+.reaction-badge {
+  position: absolute;
+  right: 10px;
+  bottom: -18px;
+  padding: 2px 7px;
+  border: 2px solid var(--chat-bg);
+  border-radius: 20px;
+  background: var(--chat-card);
+  font-size: 14px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.12);
+  z-index: 2;
+}
+
+.bubble.them .reaction-badge {
+  right: auto;
+  left: 10px;
+}
+
+/* Ujumbe wenye reaction: ongeza nafasi chini ili emoji isifunike muda/tick */
+.bubble.has-reaction {
+  margin-bottom: 24px;
+}
+
+.msg-media {
+  margin-top: 6px;
+  overflow: hidden;
+  border-radius: 13px;
+}
+
+.msg-media img,
+.msg-media video {
+  display: block;
+  width: 100%;
+  max-width: 340px;
+  max-height: 300px;
+  object-fit: cover;
+  border-radius: 13px;
+  cursor: pointer;
+}
+
+.file-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 210px;
+  padding: 11px;
+  border-radius: 13px;
+  color: inherit;
+  text-decoration: none;
+  background: rgba(0,0,0,.06);
+}
+
+.file-card i {
+  color: var(--chat-primary);
+  font-size: 25px;
+}
+
+.file-card strong {
+  display: block;
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.file-card small {
+  color: var(--chat-muted);
+  font-size: 10px;
+}
+
+.audio-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 230px;
+}
+
+.audio-play {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--chat-primary);
+  cursor: pointer;
+}
+
+.audio-info { flex: 1; min-width: 0; }
+
+.audio-title {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--chat-muted);
+  font-size: 11px;
+}
+
+.audio-card audio {
+  width: 100%;
+  height: 28px;
+}
+
+.chat-empty {
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--chat-muted);
+  text-align: center;
+}
+
+.chat-empty-icon {
+  width: 62px;
+  height: 62px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 12px;
+  border-radius: 50%;
+  color: var(--chat-primary);
+  background: rgba(30,181,58,.12);
+  font-size: 27px;
+}
+
+.chat-empty strong {
+  color: var(--chat-text);
+  font-size: 15px;
+}
+
+.chat-empty span {
+  margin-top: 5px;
+  font-size: 13px;
+}
+
+/* OVERLAY MSHALE WA KURUDI CHINI */
+.new-message-btn {
+  position: absolute;
+  z-index: 25;
+  bottom: 80px;
+  right: 20px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--chat-primary);
+  box-shadow: var(--chat-shadow);
+  cursor: pointer;
+  font-size: 15px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.new-message-btn.show {
+  display: inline-flex;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.new-message-btn:hover {
+  transform: scale(1.1);
+}
+
+.typing-indicator {
+  display: none;
+  width: fit-content;
+  margin: 0 0 8px 5px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  color: var(--chat-muted);
+  background: var(--chat-card);
+  font-size: 12px;
+}
+
+.typing-indicator.show { display: block; }
+
+.typing-dots span {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-left: 2px;
+  border-radius: 50%;
+  background: var(--chat-primary);
+  animation: typing 1s infinite ease-in-out;
+}
+
+.typing-dots span:nth-child(2) { animation-delay: .15s; }
+.typing-dots span:nth-child(3) { animation-delay: .3s; }
+
+@keyframes typing {
+  0%, 60%, 100% { transform: translateY(0); opacity: .4; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+
+/* Reply bar (juu ya compose) */
+.reply-bar {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--chat-border);
+  background: var(--chat-bg);
+}
+
+.reply-bar.show { display: flex; }
+
+.reply-bar-content {
+  flex: 1;
+  min-width: 0;
+  border-left: 3px solid var(--chat-primary);
+  padding-left: 10px;
+}
+
+.reply-bar-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--chat-primary);
+}
+
+.reply-bar-text {
+  display: block;
+  font-size: 12px;
+  color: var(--chat-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.reply-bar-close {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--chat-muted);
+  cursor: pointer;
+  font-size: 16px;
+  flex: 0 0 auto;
+}
+
+.reply-bar-close:hover { color: var(--chat-danger); }
+
+/* Attachment preview — WhatsApp style */
+.attach-preview {
+  display: none;
+  position: relative;
+  border-top: 1px solid var(--chat-border);
+  background: var(--chat-card);
+  max-height: 280px;
+  overflow: hidden;
+}
+
+.attach-preview.show { display: block; }
+
+.attach-preview-media {
+  position: relative;
+  width: 100%;
+  background: #0d120f;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  max-height: 220px;
+  overflow: hidden;
+}
+
+.attach-preview-media.show { display: flex; }
+
+.attach-preview-media img,
+.attach-preview-media video {
+  display: block;
+  max-width: 100%;
+  max-height: 220px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.attach-preview-file-row {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+}
+
+.attach-preview-file-row.show { display: flex; }
+
+.attach-preview-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: rgba(30,181,58,.12);
+  color: var(--chat-primary);
+  font-size: 22px;
+  flex: 0 0 auto;
+}
+
+.attach-preview-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.attach-preview-name {
+  display: block;
+  font-size: 13px;
+  font-weight: 650;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--chat-text);
+}
+
+.attach-preview-size {
+  display: block;
+  font-size: 11px;
+  color: var(--chat-muted);
+  margin-top: 2px;
+}
+
+.attach-preview-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 5;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0,0,0,.55);
+  color: #fff;
+  cursor: pointer;
+  font-size: 15px;
+  display: grid;
+  place-items: center;
+}
+
+.attach-preview-remove:hover { background: rgba(228,30,63,.85); }
+
+.attach-preview-caption {
+  display: none;
+  padding: 6px 12px 0;
+  font-size: 11px;
+  color: var(--chat-muted);
+}
+
+.attach-preview-caption.show { display: block; }
+
+.chat-compose {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  border-top: 1px solid var(--chat-border);
+  background: var(--chat-card);
+  box-shadow: 0 -2px 10px rgba(0,0,0,.04);
+}
+
+.chat-compose-inner {
+  padding: 8px 10px;
+}
+
+.chat-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  background: var(--chat-bg);
+  border: 1.5px solid var(--chat-border);
+  border-radius: 26px;
+  padding: 6px 6px 6px 8px;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.chat-form:focus-within {
+  border-color: var(--chat-primary);
+  box-shadow: 0 0 0 3px rgba(30,181,58,.08);
+}
+
+.attach-btn,
+.mic-btn,
+.send-btn {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: .18s ease;
+  font-size: 15px;
+}
+
+.attach-btn,
+.mic-btn {
+  color: var(--chat-muted);
+  background: transparent;
+}
+
+.attach-btn:hover,
+.mic-btn:hover {
+  background: var(--chat-border);
+  color: var(--chat-text);
+}
+
+.send-btn {
+  display: none;
+  color: #fff;
+  background: var(--chat-text);
+}
+
+.send-btn:hover {
+  background: var(--chat-primary-dark);
+  transform: scale(1.05);
+}
+
+.mic-btn.recording {
+  color: #fff;
+  background: var(--chat-danger);
+  animation: recordPulse 1s infinite;
+}
+
+@keyframes recordPulse {
+  50% { box-shadow: 0 0 0 8px rgba(228,30,63,.12); }
+}
+
+.message-input {
+  flex: 1;
+  min-width: 0;
+  max-height: 100px;
+  resize: none;
+  padding: 8px 6px;
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  color: var(--chat-text);
+  background: transparent;
+  font: inherit;
+  line-height: 1.35;
+}
+
+.file-name,
+.recording-hint {
+  display: none;
+  margin: 5px 0 0 14px;
+  color: var(--chat-primary);
+  font-size: 11px;
+}
+
+.recording-hint { color: var(--chat-danger); }
+
+.upload-progress-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.upload-progress-overlay.show { display: flex; }
+.upload-progress-card {
+  background: var(--chat-card);
+  border-radius: 20px;
+  padding: 22px 20px 18px;
+  width: min(300px, 92vw);
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+}
+.upload-progress-ring {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  border: 4px solid var(--chat-border);
+  border-top-color: var(--chat-primary);
+  border-right-color: #00A3DD;
+  animation: uploadSpin 0.85s linear infinite;
+}
+@keyframes uploadSpin { to { transform: rotate(360deg); } }
+.upload-progress-card h4 {
+  font-size: 15px;
+  color: var(--chat-text);
+  margin: 0 0 12px;
+  font-weight: 700;
+}
+.upload-progress-bar-wrap {
+  height: 8px;
+  background: var(--chat-border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.upload-progress-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--chat-primary), #00A3DD);
+  border-radius: 8px;
+  transition: width 0.2s ease;
+}
+.upload-progress-pct {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--chat-primary);
+  margin-bottom: 4px;
+}
+.upload-progress-mb {
+  font-size: 12px;
+  color: var(--chat-muted);
+  font-weight: 600;
+}
+.upload-btn-cancel {
+  border: none;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  background: #fee2e2;
+  color: #dc2626;
+  margin-top: 14px;
+}
+.upload-btn-cancel:hover { background: #fecaca; }
+
+.upload-btn-minimize {
+  border: none;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  background: var(--chat-border);
+  color: var(--chat-text);
+  margin-top: 14px;
+  margin-right: 8px;
+}
+.upload-btn-minimize:hover { opacity: .85; }
+.upload-progress-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+.upload-progress-actions .upload-btn-cancel,
+.upload-progress-actions .upload-btn-minimize { margin-top: 0; }
+
+/* Hali ya "minimized" - card kubwa inafichwa, badge ndogo inaonekana chini
+   ili mtumiaji aendelee na mambo mengine wakati inatuma */
+.upload-progress-overlay.minimized {
+  position: fixed;
+  inset: auto;
+  right: 14px;
+  bottom: 84px;
+  left: auto;
+  top: auto;
+  width: auto;
+  padding: 0;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  align-items: flex-end;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+.upload-progress-overlay.minimized .upload-progress-card {
+  display: none;
+}
+.upload-progress-mini-pill {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  background: var(--chat-card);
+  border-radius: 30px;
+  padding: 8px 14px 8px 8px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+  cursor: pointer;
+  pointer-events: auto;
+}
+.upload-progress-overlay.minimized .upload-progress-mini-pill { display: flex; }
+.upload-progress-mini-ring {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 3px solid var(--chat-border);
+  border-top-color: var(--chat-primary);
+  animation: uploadSpin 0.85s linear infinite;
+  flex: 0 0 auto;
+}
+.upload-progress-mini-pct {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--chat-text);
+}
+
+.attach-menu {
+  position: absolute;
+  left: 10px;
+  bottom: 60px;
+  z-index: 30;
+  display: none;
+  min-width: 190px;
+  overflow: hidden;
+  border: 1px solid var(--chat-border);
+  border-radius: 15px;
+  background: var(--chat-card);
+  box-shadow: var(--chat-shadow);
+}
+
+.attach-menu.show {
+  display: block;
+  animation: menuIn .16s ease-out;
+}
+
+@keyframes menuIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.attach-menu button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 16px;
+  border: 0;
+  color: var(--chat-text);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.attach-menu button:hover { background: var(--chat-bg); }
+
+.attach-menu i {
+  width: 20px;
+  text-align: center;
+  color: var(--chat-primary);
+}
+
+.action-sheet,
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: none;
+}
+
+.action-sheet {
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  background: rgba(0,0,0,.5);
+}
+
+.action-sheet.show { display: flex; }
+
+.action-box {
+  width: min(440px, 100%);
+  padding: 10px 9px 22px;
+  border-radius: 20px 20px 0 0;
+  background: var(--chat-card);
+  animation: sheetIn .2s ease-out;
+}
+
+@keyframes sheetIn {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.action-handle {
+  width: 38px;
+  height: 4px;
+  margin: 3px auto 12px;
+  border-radius: 10px;
+  background: var(--chat-border);
+}
+
+.reaction-row {
+  display: flex;
+  justify-content: space-around;
+  padding: 4px 2px 13px;
+  border-bottom: 1px solid var(--chat-border);
+}
+
+.reaction-row button {
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--chat-bg);
+  cursor: pointer;
+  font-size: 21px;
+  transition: .15s ease;
+}
+
+.reaction-row button:hover { transform: scale(1.12); }
+
+.action-box > button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 15px;
+  border: 0;
+  border-radius: 11px;
+  color: var(--chat-text);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-size: 14px;
+}
+
+.action-box > button:hover { background: var(--chat-bg); }
+
+.action-box > button i {
+  width: 20px;
+  color: var(--chat-primary);
+  text-align: center;
+}
+
+.action-box > button.danger { color: var(--chat-danger); }
+
+.action-box > button.cancel {
+  justify-content: center;
+  margin-top: 5px;
+  color: var(--chat-muted);
+  background: var(--chat-bg);
+  text-align: center;
+}
+
+.lightbox {
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0,0,0,.92);
+}
+
+.lightbox.show { display: flex; }
+
+.lightbox img {
+  max-width: min(100%, 900px);
+  max-height: 88dvh;
+  border-radius: 12px;
+  object-fit: contain;
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(255,255,255,.16);
+  cursor: pointer;
+  font-size: 20px;
+}
+
+.chat-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 95px;
+  z-index: 3000;
+  transform: translate(-50%, 20px);
+  padding: 10px 16px;
+  border-radius: 10px;
+  color: #fff;
+  background: #222;
+  opacity: 0;
+  pointer-events: none;
+  transition: .25s ease;
+  font-size: 12px;
+}
+
+.chat-toast.show {
+  transform: translate(-50%, 0);
+  opacity: 1;
+}
+
+.call-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, #0d1f12 0%, #122a1a 50%, #0a1510 100%);
+  color: #fff;
+  padding: 24px;
+}
+
+.call-overlay.show { display: flex; }
+
+.call-avatar {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(30,181,58,.5);
+  margin-bottom: 18px;
+  box-shadow: 0 0 0 8px rgba(30,181,58,.15);
+}
+
+.call-name {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 6px;
+}
+
+.call-status {
+  color: rgba(255,255,255,.7);
+  font-size: 14px;
+  margin-bottom: 28px;
+}
+
+.call-timer {
+  font-size: 15px;
+  color: rgba(255,255,255,.55);
+  margin-bottom: 20px;
+  display: none;
+}
+
+.call-timer.show { display: block; }
+
+.call-actions {
+  display: flex;
+  gap: 22px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.call-btn {
+  width: 60px;
+  height: 60px;
+  border: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 22px;
+  color: #fff;
+  transition: .2s ease;
+}
+
+.call-btn:hover { transform: scale(1.08); }
+
+.call-btn.accept { background: #1eb53a; }
+.call-btn.reject,
+.call-btn.hangup { background: #e41e3f; }
+.call-btn.mute { background: rgba(255,255,255,.15); }
+.call-btn.mute.active { background: #555; }
+.call-btn.cam { background: rgba(255,255,255,.15); }
+.call-btn.cam.off { background: #555; }
+
+.call-video-wrap {
+  position: relative;
+  width: min(100%, 420px);
+  aspect-ratio: 3/4;
+  max-height: 55dvh;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #111;
+  margin-bottom: 20px;
+  display: none;
+}
+
+.call-video-wrap.show { display: block; }
+
+#remoteVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #000;
+}
+
+#localVideo {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: 28%;
+  max-width: 120px;
+  aspect-ratio: 3/4;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 2px solid rgba(255,255,255,.3);
+  background: #222;
+}
+
+.call-ring-pulse {
+  animation: ringPulse 1.2s infinite ease-in-out;
+}
+
+@keyframes ringPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(30,181,58,.45); }
+  50% { box-shadow: 0 0 0 16px rgba(30,181,58,0); }
+}
+
+/* Swipe reply hint icon */
+.swipe-reply-icon {
+  position: absolute;
+  left: -36px;
+  top: 50%;
+  transform: translateY(-50%) scale(0.5);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--chat-primary);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  opacity: 0;
+  transition: .15s ease;
+  pointer-events: none;
+}
+
+.bubble.swiping .swipe-reply-icon {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+}
+
+@media (max-width: 600px) {
+  .chat-topbar { min-height: 60px; gap: 5px; }
+  .chat-icon-btn { width: 36px; height: 36px; }
+  .bubble { max-width: 86%; font-size: 13.5px; }
+  .attach-menu { left: 5px; }
+}
+</style>
+
+<div class="chat-page">
+  <div class="chat-shell">
+
+    <header class="chat-topbar">
+      <button type="button" class="chat-icon-btn" onclick="history.back()" aria-label="Rudi">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+
+      <a class="chat-profile" href="{{ url_for('profile', username=receiver.username) }}">
+        <span class="chat-avatar-wrap">
+          <img class="chat-avatar"
+               src="{{ url_for('static', filename='uploads/' ~ receiver.profile_pic) if receiver.profile_pic else url_for('static', filename='images/default-avatar.png.jfif') }}"
+               alt="{{ receiver.username }}"
+               onerror="this.src='https://via.placeholder.com/80'"
+               id="receiverAvatar">
+          <span class="online-dot" id="onlineDot"></span>
+        </span>
+
+        <span class="chat-user-info">
+          <strong class="chat-user-name">
+            {% if receiver.full_name %}{{ receiver.full_name }}{% else %}{{ receiver.username }}{% endif %}
+            {% if receiver.is_verified %}
+              <svg class="verified-badge" viewBox="0 0 24 24" aria-label="Verified">
+                <path d="M12 0 15.3 3.5 20.1 2.3 20.5 7.3 24 10.4 21.7 14.8 22.9 19.6 18 20.8 15.7 25.2 12 23 8.3 25.2 6 20.8 1.1 19.6 2.3 14.8 0 10.4 3.5 7.3 3.9 2.3 8.7 3.5Z" fill="#8A2BE2"/>
+                <path d="m9.8 15.6-3.6-3.6-1.4 1.4 5 5L20 8.2l-1.4-1.4Z" fill="#fff"/>
+              </svg>
+            {% endif %}
+          </strong>
+          <small style="display:block; color:var(--chat-muted); font-size:11px; font-weight:500;">@{{ receiver.username }}</small>
+          <small class="chat-user-status" id="userStatus">Private chat</small>
+        </span>
+      </a>
+
+      <div class="call-menu-wrap" id="callMenuWrap">
+        <button type="button" class="chat-icon-btn call-main-btn" onclick="toggleCallMenu(event)" aria-label="Call" title="Call">
+          <i class="fa-solid fa-phone"></i>
+        </button>
+        <div class="call-dropdown" id="callDropdown">
+          <button type="button" onclick="closeCallMenu(); startCall(false)">
+            <i class="fa-solid fa-phone"></i> Voice call
+          </button>
+          <button type="button" onclick="closeCallMenu(); startCall(true)">
+            <i class="fa-solid fa-video"></i> Video call
+          </button>
+        </div>
+      </div>
+
+      <button type="button" class="chat-icon-btn" onclick="toggleDarkMode()" aria-label="Badili theme">
+        <i class="fa-solid fa-moon"></i>
+      </button>
+    </header>
+
+    <main class="chat-content">
+      <div class="chat-box" id="chatBox">
+
+        {% if messages %}
+          {% set ns = namespace(prev_day='') %}
+          {% for msg in messages %}
+            {% set isme = (msg.sender_id == session['user_id']) %}
+            {% set hidden = msg.is_hidden if msg.is_hidden is defined else 0 %}
+            {% set day_key = (msg.created_at|string)[:10] if msg.created_at else '' %}
+            {% if day_key and day_key != ns.prev_day %}
+              <div class="date-divider" data-day="{{ day_key }}">{{ day_key }}</div>
+              {% set ns.prev_day = day_key %}
+            {% endif %}
+
+            <div class="bubble {{ 'me' if isme else 'them' }} {{ 'hidden-msg' if hidden else '' }} {{ 'has-reaction' if msg.reaction else '' }}"
+                 data-id="{{ msg.id }}"
+                 data-mine="{{ 1 if isme else 0 }}"
+                 data-text="{{ msg.message or '' }}"
+                 data-file="{{ msg.file_path or '' }}"
+                 data-media="{{ msg.media_type or '' }}"
+                 data-created="{{ msg.created_at or '' }}"
+                 data-hidden="{{ 1 if hidden else 0 }}"
+                 data-sender="{{ msg.sender_username if msg.sender_username is defined else (receiver.username if not isme else 'Wewe') }}"
+                 oncontextmenu="return openMsgMenu(event, {{ msg.id }}, {{ 1 if isme else 0 }})"
+                 ontouchstart="msgTouchStart(event, {{ msg.id }}, {{ 1 if isme else 0 }})"
+                 ontouchend="msgTouchEnd(event)"
+                 ontouchmove="msgTouchMove(event)">
+
+              <span class="swipe-reply-icon"><i class="fa-solid fa-reply"></i></span>
+
+              {% if msg.reaction %}
+                <span class="reaction-badge">{{ msg.reaction }}</span>
+              {% endif %}
+
+              {% if hidden %}
+                <p class="msg-text hidden-reveal" onclick="quickUnhide({{ msg.id }}, this)" style="cursor:pointer;">
+                  <i class="fa-solid fa-eye-slash"></i>
+                  Ujumbe umefichwa
+                  <span style="display:block;font-size:11px;opacity:.75;margin-top:2px;">Bonyeza kuonyesha</span>
+                </p>
+              {% else %}
+
+                {% if msg.reply_to_text is defined and msg.reply_to_text %}
+                  <div class="reply-quote" onclick="scrollToMsg({{ msg.reply_to_id or 0 }})">
+                    <div class="reply-quote-body">
+                      <span class="reply-quote-name">{{ msg.reply_to_name or 'Ujumbe' }}</span>
+                      <span class="reply-quote-text">{{ msg.reply_to_text }}</span>
+                    </div>
+                  </div>
+                {% endif %}
+
+                {% if msg.message %}
+                  <div class="msg-body-wrap" data-raw-msg="1">
+                    <p class="msg-text" id="msgText-{{ msg.id }}">{{ msg.message }}</p>
+                    <button type="button" class="see-more-btn" id="seeMore-{{ msg.id }}" style="display:none;" onclick="toggleSeeMore({{ msg.id }})">Tazama zaidi</button>
+                  </div>
+                {% endif %}
+
+                {% if msg.file_path and (msg.media_type|default('')) != 'status_reply' %}
+                  {% set file_url = url_for('static', filename='uploads/' ~ msg.file_path) %}
+                  {% set aud_ext = msg.file_path.rsplit('.', 1)[-1].lower() if msg.file_path and '.' in msg.file_path else '' %}
+                  {% set aud_mime = {'webm':'audio/webm','mp3':'audio/mpeg','wav':'audio/wav','aac':'audio/aac','m4a':'audio/mp4','opus':'audio/opus','ogg':'audio/ogg'}.get(aud_ext, 'audio/webm') %}
+
+                  <div class="msg-media">
+                    {% if msg.media_type == 'image' %}
+                      <img src="{{ file_url }}" alt="Picha" onclick="openLightbox(this.src)">
+
+                    {% elif msg.media_type == 'video' %}
+                      <video controls playsinline
+                             src="{{ file_url }}"
+                             onplay="pauseBgMusic()"
+                             onpause="resumeBgMusic()"
+                             onended="resumeBgMusic()"></video>
+
+                    {% elif msg.media_type == 'audio' %}
+                      <div class="audio-card">
+                        <button class="audio-play" type="button" onclick="toggleAudio(this)">
+                          <i class="fa-solid fa-play"></i>
+                        </button>
+                        <div class="audio-info">
+                          <span class="audio-title">Voice note</span>
+                          <audio controls preload="metadata"
+                                 onplay="pauseBgMusic()"
+                                 onpause="resumeBgMusic()"
+                                 onended="resumeBgMusic()">
+                            <source src="{{ file_url }}" type="{{ aud_mime }}">
+                          </audio>
+                        </div>
+                      </div>
+
+                    {% else %}
+                      <a class="file-card"
+                         href="{{ file_url }}"
+                         target="_blank"
+                         rel="noopener"
+                         {% if not msg.file_path.endswith('.html') and not msg.file_path.endswith('.htm') %}download{% endif %}>
+                        <i class="fa-solid fa-file"></i>
+                        <span>
+                          <strong>{{ msg.file_path.split('/')[-1] }}</strong>
+                          <small>{{ (msg.media_type or 'FILE')|upper }}</small>
+                        </span>
+                        <i class="fa-solid fa-download"></i>
+                      </a>
+                    {% endif %}
+                  </div>
+                {% endif %}
+              {% endif %}
+
+              <div class="bubble-meta">
+                <small class="rel-time" data-ts="{{ msg.created_at }}">{{ msg.created_at }}</small>
+
+                {% if isme %}
+                  {% set read = msg.is_read if msg.is_read is defined else 0 %}
+                  {% set delivered = msg.is_delivered if msg.is_delivered is defined else 0 %}
+
+                  {% if read %}
+                    <span class="ticks read" title="Read">✓✓</span>
+                  {% elif delivered %}
+                    <span class="ticks delivered" title="Delivered">✓✓</span>
+                  {% else %}
+                    <span class="ticks sent" title="Sent">✓</span>
+                  {% endif %}
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+
+        {% else %}
+          <div class="chat-empty">
+            <div class="chat-empty-icon">
+              <i class="fa-regular fa-comments"></i>
+            </div>
+            <strong>Hakuna ujumbe bado</strong>
+            <span>Anzisha mazungumzo na {% if receiver.full_name %}{{ receiver.full_name }}{% else %}{{ receiver.username }}{% endif %}</span>
+          </div>
+        {% endif %}
+
+        <div class="typing-indicator" id="typingIndicator">
+          Anaandika
+          <span class="typing-dots">
+            <span></span><span></span><span></span>
+          </span>
+        </div>
+      </div>
+
+      <button type="button"
+              class="new-message-btn"
+              id="newMessageBtn"
+              onclick="scrollChat()"
+              title="Rudi chini">
+        <i class="fa-solid fa-arrow-down"></i>
+      </button>
+
+      <div class="chat-compose">
+        <!-- Attachment Preview (WhatsApp style) -->
+        <div class="attach-preview" id="attachPreview">
+          <button type="button" class="attach-preview-remove" onclick="clearAttachment()" aria-label="Ondoa">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+
+          <!-- Picha / Video preview kubwa -->
+          <div class="attach-preview-media" id="previewMedia">
+            <img id="previewThumb" alt="Preview" style="display:none;">
+            <video id="previewVideo" controls playsinline style="display:none;"></video>
+          </div>
+
+          <!-- File / audio row -->
+          <div class="attach-preview-file-row" id="previewFileRow">
+            <div class="attach-preview-icon" id="previewIcon">
+              <i class="fa-solid fa-file"></i>
+            </div>
+            <div class="attach-preview-info">
+              <span class="attach-preview-name" id="previewName"></span>
+              <span class="attach-preview-size" id="previewSize"></span>
+            </div>
+          </div>
+
+          <div class="attach-preview-caption" id="previewCaption">Andika caption chini kisha tuma</div>
+        </div>
+
+        <!-- Reply Bar -->
+        <div class="reply-bar" id="replyBar">
+          <div class="reply-bar-content">
+            <span class="reply-bar-label" id="replyBarLabel">Kujibu</span>
+            <span class="reply-bar-text" id="replyBarText"></span>
+          </div>
+          <button type="button" class="reply-bar-close" onclick="cancelReply()" aria-label="Ghairi reply">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="chat-compose-inner">
+          <div class="attach-menu" id="attachMenu">
+            <button type="button" onclick="pickCamera('image')">
+              <i class="fa-solid fa-camera"></i>
+              Piga picha
+            </button>
+            <button type="button" onclick="pickCamera('video')">
+              <i class="fa-solid fa-video"></i>
+              Rekodi video
+            </button>
+            <button type="button" onclick="pickGallery()">
+              <i class="fa-solid fa-images"></i>
+              Chagua gallery
+            </button>
+            <button type="button" onclick="pickDocument()">
+              <i class="fa-solid fa-file"></i>
+              Document
+            </button>
+          </div>
+
+          <form class="chat-form"
+                id="chatForm"
+                action="{{ url_for('send_message', user_id=receiver.id) }}"
+                method="POST"
+                enctype="multipart/form-data">
+
+            <input type="hidden" name="reply_to" id="replyToInput" value="">
+
+            <button type="button"
+                    class="attach-btn"
+                    onclick="toggleAttachMenu()"
+                    aria-label="Ambatisha file">
+              <i class="fa-solid fa-plus"></i>
+            </button>
+
+            <input type="file" name="file" id="chatFile" hidden onchange="showFileName(this)">
+            <input type="file" id="cameraImage" accept="image/*" capture="environment" hidden onchange="onCameraFile(this)">
+            <input type="file" id="cameraVideo" accept="video/*" capture="environment" hidden onchange="onCameraFile(this)">
+
+            <textarea name="message"
+                      id="msgInput"
+                      class="message-input"
+                      rows="1"
+                      placeholder="{{ t('type_message') }}"
+                      autocomplete="off"></textarea>
+
+            <button type="button"
+                    class="mic-btn"
+                    id="micBtn"
+                    onclick="toggleVoiceNote()"
+                    aria-label="Rekodi voice note">
+              <i class="fa-solid fa-microphone"></i>
+            </button>
+
+            <button type="submit"
+                    class="send-btn"
+                    id="sendBtn"
+                    aria-label="Tuma ujumbe">
+              <i class="fa-solid fa-paper-plane"></i>
+            </button>
+          </form>
+
+          <div class="file-name" id="fileNameHint"></div>
+
+          <div class="upload-progress-overlay" id="uploadProgressOverlay" aria-live="polite">
+            <div class="upload-progress-card">
+              <div class="upload-progress-ring"></div>
+              <h4 id="uploadProgressTitle">Inatuma media...</h4>
+              <div class="upload-progress-pct" id="uploadProgressPct">0%</div>
+              <div class="upload-progress-bar-wrap">
+                <div class="upload-progress-bar-fill" id="uploadProgressBar"></div>
+              </div>
+              <div class="upload-progress-mb" id="uploadProgressMb">0 MB / 0 MB</div>
+              <div class="upload-progress-actions">
+                <button type="button" class="upload-btn-minimize" onclick="minimizeChatUpload()">
+                  <i class="fa-solid fa-minus"></i> Minimize
+                </button>
+                <button type="button" class="upload-btn-cancel" id="uploadBtnCancel" onclick="cancelChatUpload()">
+                  <i class="fa-solid fa-xmark"></i> Cancel
+                </button>
+              </div>
+            </div>
+            <div class="upload-progress-mini-pill" id="uploadProgressMiniPill" onclick="restoreChatUpload()">
+              <div class="upload-progress-mini-ring"></div>
+              <span class="upload-progress-mini-pct" id="uploadProgressMiniPct">0%</span>
+            </div>
+          </div>
+
+          <div class="recording-hint" id="recordingHint">
+            <i class="fa-solid fa-circle"></i>
+            Inarekodi...
+            <span id="recTimer">00:00</span>
+            <button type="button"
+                    onclick="cancelVoiceNote()"
+                    style="border:0;background:none;color:inherit;cursor:pointer;margin-left:8px;">
+              Ghairi
+            </button>
+            <button type="button"
+                    onclick="stopVoiceNote()"
+                    aria-label="Tuma voice note"
+                    style="border:0;background:var(--chat-primary);color:#fff;cursor:pointer;margin-left:8px;width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;">
+              <i class="fa-solid fa-check" style="font-size:12px;"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="action-sheet" id="msgActionSheet" onclick="closeMsgMenu()">
+  <div class="action-box" onclick="event.stopPropagation()">
+    <div class="action-handle"></div>
+
+    <div class="reaction-row">
+      <button type="button" onclick="reactMsg('😀')">😀</button>
+      <button type="button" onclick="reactMsg('❤️')">❤️</button>
+      <button type="button" onclick="reactMsg('😂')">😂</button>
+      <button type="button" onclick="reactMsg('😮')">😮</button>
+      <button type="button" onclick="reactMsg('😢')">😢</button>
+    </div>
+
+    <button type="button" id="msgReplyBtn" onclick="replyFromMenu()">
+      <i class="fa-solid fa-reply"></i>
+      Reply
+    </button>
+
+    <button type="button" id="msgCopyBtn" onclick="copyMsg()">
+      <i class="fa-solid fa-copy"></i>
+      Copy
+    </button>
+
+    <button type="button" onclick="shareMsg()">
+      <i class="fa-solid fa-share-nodes"></i>
+      Share
+    </button>
+
+    <button type="button" onclick="forwardMsg()">
+      <i class="fa-solid fa-share"></i>
+      Forward
+    </button>
+
+    <button type="button" id="msgStarBtn" onclick="starMsg()">
+      <i class="fa-solid fa-star"></i>
+      Star / Unstar
+    </button>
+
+    <button type="button" id="msgEditBtn" onclick="editMsg()" style="display:none;">
+      <i class="fa-solid fa-pen"></i>
+      Edit
+    </button>
+
+    <button type="button" id="msgHideBtn" onclick="toggleHideMsg()">
+      <i class="fa-solid fa-eye-slash"></i>
+      <span id="msgHideBtnLabel">Hide</span>
+    </button>
+
+    <button type="button" class="danger" id="msgDeleteBtn" onclick="deleteMsg()">
+      <i class="fa-solid fa-trash"></i>
+      Futa kwangu (Delete for me)
+    </button>
+
+    <button type="button" class="cancel" onclick="closeMsgMenu()">
+      Cancel
+    </button>
+  </div>
+</div>
+
+<div class="lightbox" id="imgLightbox" onclick="closeLightbox()">
+  <button type="button"
+          class="lightbox-close"
+          onclick="closeLightbox();event.stopPropagation()"
+          aria-label="Funga picha">
+    <i class="fa-solid fa-xmark"></i>
+  </button>
+  <img id="lightboxImg" src="" alt="Preview" onclick="event.stopPropagation()">
+</div>
+
+<div class="chat-toast" id="chatToast"></div>
+
+<div class="call-overlay" id="callOverlay">
+  <div class="call-video-wrap" id="callVideoWrap">
+    <video id="remoteVideo" autoplay playsinline></video>
+    <video id="localVideo" autoplay playsinline muted></video>
+  </div>
+
+  <img class="call-avatar call-ring-pulse" id="callAvatar"
+       src="{{ url_for('static', filename='uploads/' ~ receiver.profile_pic) if receiver.profile_pic else url_for('static', filename='images/default-avatar.png.jfif') }}"
+       alt=""
+       onerror="this.src='https://via.placeholder.com/120'">
+
+  <h2 class="call-name" id="callName">{% if receiver.full_name %}{{ receiver.full_name }}{% else %}{{ receiver.username }}{% endif %}</h2>
+  <p class="call-status" id="callStatus">Inaita...</p>
+  <p class="call-timer" id="callTimer">00:00</p>
+
+  <div class="call-actions" id="callActions"></div>
+</div>
+
+<audio id="bg-music" loop>
+  <source src="{{ url_for('static', filename='uploads/background.mp3') }}" type="audio/mpeg">
+</audio>
+
+<audio id="ringtone" loop>
+  <source src="{{ url_for('static', filename='uploads/ringtone.mp3') }}" type="audio/mpeg">
+</audio>
+
+<script>
+/* ===== VOLUME FROM SETTINGS (defaults: bg 20%, ringtone 30%) ===== */
+(function applySavedVolumes() {
+  function getVol(key, def) {
+    const raw = localStorage.getItem(key);
+    if (raw === null || raw === '') return def;
+    const n = parseInt(raw, 10);
+    if (isNaN(n) || n < 0 || n > 100) return def;
+    return n;
+  }
+  const bgVol = getVol('kijiji_bg_volume', 20) / 100;
+  const ringVol = getVol('kijiji_ringtone_volume', 30) / 100;
+  const bg = document.getElementById('bg-music');
+  const ring = document.getElementById('ringtone');
+  if (bg) bg.volume = bgVol;
+  if (ring) ring.volume = ringVol;
+})();
+
+let chatLongPressTimer = null;
+let activeMsgId = null;
+let activeMsgMine = 0;
+let activeMsgEl = null;
+let activeChatUploadXhr = null;
+
+function showChatUploadProgress(totalBytes) {
+  const ov = document.getElementById("uploadProgressOverlay");
+  const bar = document.getElementById("uploadProgressBar");
+  const pct = document.getElementById("uploadProgressPct");
+  const mbEl = document.getElementById("uploadProgressMb");
+  const miniPct = document.getElementById("uploadProgressMiniPct");
+  if (ov) { ov.classList.add("show"); ov.classList.remove("minimized"); }
+  if (bar) bar.style.width = "0%";
+  if (pct) pct.textContent = "0%";
+  if (miniPct) miniPct.textContent = "0%";
+  if (mbEl) mbEl.textContent = "0 MB / " + formatFileSize(totalBytes || 0);
+}
+
+function setChatUploadProgress(loaded, total) {
+  const bar = document.getElementById("uploadProgressBar");
+  const pct = document.getElementById("uploadProgressPct");
+  const mbEl = document.getElementById("uploadProgressMb");
+  const miniPct = document.getElementById("uploadProgressMiniPct");
+  let p = 0;
+  if (total > 0) p = Math.max(0, Math.min(100, Math.round((loaded / total) * 100)));
+  if (bar) bar.style.width = p + "%";
+  if (pct) pct.textContent = p + "%";
+  if (miniPct) miniPct.textContent = p + "%";
+  if (mbEl) mbEl.textContent = formatFileSize(loaded) + " / " + formatFileSize(total);
+}
+
+function hideChatUploadProgress() {
+  const ov = document.getElementById("uploadProgressOverlay");
+  if (ov) { ov.classList.remove("show"); ov.classList.remove("minimized"); }
+}
+
+function minimizeChatUpload() {
+  const ov = document.getElementById("uploadProgressOverlay");
+  if (ov) ov.classList.add("minimized");
+}
+
+function restoreChatUpload() {
+  const ov = document.getElementById("uploadProgressOverlay");
+  if (ov) ov.classList.remove("minimized");
+}
+
+function cancelChatUpload() {
+  if (activeChatUploadXhr) {
+    try { activeChatUploadXhr.abort(); } catch (err) {}
+    activeChatUploadXhr = null;
+  }
+  hideChatUploadProgress();
+}
+
+let mediaRecorder = null;
+let audioChunks = [];
+let recStartTime = null;
+let recTimerInterval = null;
+let isRecording = false;
+let pollInterval = null;
+
+let lastMsgId = {{ messages[-1].id if messages else 0 }};
+const receiverId = {{ receiver.id }};
+const myUserId = {{ session['user_id'] }};
+const staticUploadBase = "{{ url_for('static', filename='uploads/') }}";
+const receiverName = "{{ receiver.username }}";
+
+/* ===== SWIPE TO REPLY ===== */
+let swipeStartX = 0;
+let swipeStartY = 0;
+let swipeActiveBubble = null;
+let swipeDx = 0;
+const SWIPE_THRESHOLD = 60;
+
+/* ===== REPLY STATE ===== */
+let replyToId = null;
+let replyToText = "";
+let replyToName = "";
+
+/* ===== TYPING ===== */
+let typingTimeout = null;
+let lastTypingSent = 0;
+let typingPollInterval = null;
+
+document.addEventListener("DOMContentLoaded", () => {
+  scrollChat();
+  initSeeMoreButtons();
+  enhanceAllChatMessages();
+  applyChatRelativeTimes();
+  setInterval(applyChatRelativeTimes, 60000);
+
+  const input = document.getElementById("msgInput");
+
+  input.addEventListener("input", () => {
+    input.style.height = "auto";
+    input.style.height = Math.min(input.scrollHeight, 100) + "px";
+
+    const hasText = input.value.trim().length > 0;
+    const hasFile = document.getElementById("chatFile").files && document.getElementById("chatFile").files[0];
+    document.getElementById("sendBtn").style.display = (hasText || hasFile) ? "inline-flex" : "none";
+    document.getElementById("micBtn").style.display = (hasText || hasFile) ? "none" : "inline-flex";
+
+    // Typing indicator
+    sendTypingStatus(true);
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => sendTypingStatus(false), 2000);
+  });
+
+  input.addEventListener("keydown", event => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      document.getElementById("chatForm").requestSubmit();
+    }
+  });
+
+  document.getElementById("chatBox").addEventListener("scroll", () => {
+    const box = document.getElementById("chatBox");
+    const btn = document.getElementById("newMessageBtn");
+    const distanceToBottom = box.scrollHeight - box.scrollTop - box.clientHeight;
+
+    if (distanceToBottom > 40) {
+      btn.classList.add("show");
+    } else {
+      btn.classList.remove("show");
+    }
+  });
+
+  pollInterval = setInterval(pollNewMessages, 2500);
+  typingPollInterval = setInterval(pollTypingStatus, 2000);
+  startCallSignalPoll();
+});
+
+window.addEventListener("beforeunload", () => {
+  stopBgMusic();
+  sendTypingStatus(false);
+  if (callActive) hangupCall(true);
+});
+window.addEventListener("pagehide", stopBgMusic);
+
+function scrollChat() {
+  const box = document.getElementById("chatBox");
+  if (box) {
+    box.scrollTop = box.scrollHeight;
+    document.getElementById("newMessageBtn").classList.remove("show");
+  }
+}
+
+function isNearBottom() {
+  const box = document.getElementById("chatBox");
+  if (!box) return true;
+  return box.scrollHeight - box.scrollTop - box.clientHeight < 40;
+}
+
+function showToast(text) {
+  const toast = document.getElementById("chatToast");
+  toast.textContent = text;
+  toast.classList.add("show");
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => toast.classList.remove("show"), 2200);
+}
+
+function toggleDarkMode() {
+  document.body.classList.toggle("chat-dark");
+  localStorage.setItem(
+    "chat-theme",
+    document.body.classList.contains("chat-dark") ? "dark" : "light"
+  );
+}
+
+if (localStorage.getItem("chat-theme") === "dark") {
+  document.body.classList.add("chat-dark");
+}
+
+/* ===== SEE MORE ===== */
+function initSeeMoreButtons() {
+  document.querySelectorAll(".msg-text").forEach(el => {
+    const id = el.id.replace("msgText-", "");
+    if (!id) return;
+    // temporarily unclamp to measure
+    el.classList.remove("clamped");
+    if (el.scrollHeight > 80) { // ~4 lines
+      el.classList.add("clamped");
+      const btn = document.getElementById("seeMore-" + id);
+      if (btn) btn.style.display = "inline-block";
+    }
+  });
+}
+
+function toggleSeeMore(id) {
+  const el = document.getElementById("msgText-" + id);
+  const btn = document.getElementById("seeMore-" + id);
+  if (!el || !btn) return;
+  if (el.classList.contains("clamped")) {
+    el.classList.remove("clamped");
+    btn.textContent = "Ficha";
+  } else {
+    el.classList.add("clamped");
+    btn.textContent = "Tazama zaidi";
+  }
+}
+
+/* ===== ATTACHMENT PREVIEW ===== */
+function toggleAttachMenu() {
+  document.getElementById("attachMenu").classList.toggle("show");
+}
+
+function pickCamera(type) {
+  document.getElementById("attachMenu").classList.remove("show");
+  if (type === "image") document.getElementById("cameraImage").click();
+  else document.getElementById("cameraVideo").click();
+}
+
+function pickGallery() {
+  document.getElementById("attachMenu").classList.remove("show");
+  const input = document.getElementById("chatFile");
+  // Media pekee (picha/video) - hii ndio inafanya video zionekane kwenye gallery picker ya simu
+  input.setAttribute("accept", "image/*,video/*");
+  input.click();
+}
+
+function pickDocument() {
+  document.getElementById("attachMenu").classList.remove("show");
+  const input = document.getElementById("chatFile");
+  // Ondoa accept ili faili za aina zote ziweze kuchaguliwa (pdf, doc, zip, n.k)
+  input.removeAttribute("accept");
+  input.click();
+}
+
+function onCameraFile(input) {
+  if (!input.files || !input.files[0]) return;
+  const mainInput = document.getElementById("chatFile");
+  const dataTransfer = new DataTransfer();
+  dataTransfer.items.add(input.files[0]);
+  mainInput.files = dataTransfer.files;
+  showFileName(mainInput);
+}
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+}
+
+let previewObjectUrl = null;
+
+function showFileName(input) {
+  const preview = document.getElementById("attachPreview");
+  const mediaWrap = document.getElementById("previewMedia");
+  const thumb = document.getElementById("previewThumb");
+  const videoEl = document.getElementById("previewVideo");
+  const fileRow = document.getElementById("previewFileRow");
+  const icon = document.getElementById("previewIcon");
+  const nameEl = document.getElementById("previewName");
+  const sizeEl = document.getElementById("previewSize");
+  const caption = document.getElementById("previewCaption");
+  const hint = document.getElementById("fileNameHint");
+
+  // safisha URL ya zamani
+  if (previewObjectUrl) {
+    URL.revokeObjectURL(previewObjectUrl);
+    previewObjectUrl = null;
+  }
+
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+    const type = file.type || "";
+    nameEl.textContent = file.name;
+    sizeEl.textContent = formatFileSize(file.size);
+
+    thumb.style.display = "none";
+    videoEl.style.display = "none";
+    videoEl.removeAttribute("src");
+    mediaWrap.classList.remove("show");
+    fileRow.classList.remove("show");
+    caption.classList.remove("show");
+
+    if (type.startsWith("image/")) {
+      previewObjectUrl = URL.createObjectURL(file);
+      thumb.src = previewObjectUrl;
+      thumb.style.display = "block";
+      mediaWrap.classList.add("show");
+      caption.classList.add("show");
+    } else if (type.startsWith("video/")) {
+      previewObjectUrl = URL.createObjectURL(file);
+      videoEl.src = previewObjectUrl;
+      videoEl.style.display = "block";
+      mediaWrap.classList.add("show");
+      caption.classList.add("show");
+    } else if (type.startsWith("audio/")) {
+      icon.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+      fileRow.classList.add("show");
+    } else {
+      icon.innerHTML = '<i class="fa-solid fa-file"></i>';
+      fileRow.classList.add("show");
+    }
+
+    preview.classList.add("show");
+    hint.style.display = "none";
+    document.getElementById("sendBtn").style.display = "inline-flex";
+    document.getElementById("micBtn").style.display = "none";
+  } else {
+    clearAttachment();
+  }
+}
+
+function clearAttachment() {
+  const input = document.getElementById("chatFile");
+  input.value = "";
+  document.getElementById("cameraImage").value = "";
+  document.getElementById("cameraVideo").value = "";
+
+  if (previewObjectUrl) {
+    URL.revokeObjectURL(previewObjectUrl);
+    previewObjectUrl = null;
+  }
+
+  const thumb = document.getElementById("previewThumb");
+  const videoEl = document.getElementById("previewVideo");
+  thumb.src = "";
+  thumb.style.display = "none";
+  videoEl.pause();
+  videoEl.removeAttribute("src");
+  videoEl.style.display = "none";
+
+  document.getElementById("previewMedia").classList.remove("show");
+  document.getElementById("previewFileRow").classList.remove("show");
+  document.getElementById("previewCaption").classList.remove("show");
+  document.getElementById("attachPreview").classList.remove("show");
+  document.getElementById("fileNameHint").style.display = "none";
+
+  const hasText = document.getElementById("msgInput").value.trim().length > 0;
+  document.getElementById("sendBtn").style.display = hasText ? "inline-flex" : "none";
+  document.getElementById("micBtn").style.display = hasText ? "none" : "inline-flex";
+}
+
+function openLightbox(src) {
+  document.getElementById("lightboxImg").src = src;
+  document.getElementById("imgLightbox").classList.add("show");
+}
+
+function closeLightbox() {
+  document.getElementById("imgLightbox").classList.remove("show");
+  document.getElementById("lightboxImg").src = "";
+}
+
+function audioMimeFromPath(path) {
+  const ext = (path || "").split(".").pop().toLowerCase();
+  const map = { webm: "audio/webm", mp3: "audio/mpeg", wav: "audio/wav", aac: "audio/aac", m4a: "audio/mp4", opus: "audio/opus", ogg: "audio/ogg" };
+  return map[ext] || "audio/webm";
+}
+
+function toggleAudio(button) {
+  const audio = button.parentElement.querySelector("audio");
+  const icon = button.querySelector("i");
+  if (audio.paused) {
+    document.querySelectorAll("audio").forEach(item => {
+      if (item !== audio) item.pause();
+    });
+    audio.play();
+    icon.className = "fa-solid fa-pause";
+  } else {
+    audio.pause();
+    icon.className = "fa-solid fa-play";
+  }
+  audio.onended = () => { icon.className = "fa-solid fa-play"; };
+}
+
+function startBgMusic() {
+  const music = document.getElementById("bg-music");
+  if (music) {
+    // Re-apply volume from Settings (default 20%)
+    const stored = localStorage.getItem('kijiji_bg_volume');
+    let vol = 20;
+    if (stored !== null && stored !== '') {
+      const n = parseInt(stored, 10);
+      if (!isNaN(n) && n >= 0 && n <= 100) vol = n;
+    }
+    music.volume = vol / 100;
+    music.play().catch(() => {});
+  }
+}
+
+function pauseBgMusic() {
+  const music = document.getElementById("bg-music");
+  if (music && !music.paused) music.pause();
+}
+
+function resumeBgMusic() {
+  const music = document.getElementById("bg-music");
+  if (music) music.play().catch(() => {});
+}
+
+function stopBgMusic() {
+  const music = document.getElementById("bg-music");
+  if (music) {
+    music.pause();
+    music.currentTime = 0;
+  }
+}
+
+document.addEventListener("click", startBgMusic, { once: true });
+
+/* ===== VOICE NOTE ===== */
+function toggleVoiceNote() {
+  isRecording ? stopVoiceNote() : startVoiceNote();
+}
+
+function startVoiceNote() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showToast("Browser yako haiungi mkono voice note");
+    return;
+  }
+  navigator.mediaDevices.getUserMedia({ audio: true })
+    .then(stream => {
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+      mediaRecorder.ondataavailable = event => {
+        if (event.data.size > 0) audioChunks.push(event.data);
+      };
+      mediaRecorder.onstop = () => {
+        stream.getTracks().forEach(track => track.stop());
+        if (audioChunks.length) {
+          const blob = new Blob(audioChunks, { type: "audio/webm" });
+          sendVoiceNote(blob);
+        }
+      };
+      mediaRecorder.start();
+      isRecording = true;
+      recStartTime = Date.now();
+      document.getElementById("micBtn").classList.add("recording");
+      document.getElementById("recordingHint").style.display = "block";
+      recTimerInterval = setInterval(updateRecTimer, 500);
+    })
+    .catch(() => showToast("Ruhusa ya microphone imekataliwa"));
+}
+
+function stopVoiceNote() {
+  if (!mediaRecorder || !isRecording) return;
+  mediaRecorder.stop();
+  isRecording = false;
+  document.getElementById("micBtn").classList.remove("recording");
+  document.getElementById("recordingHint").style.display = "none";
+  clearInterval(recTimerInterval);
+}
+
+function cancelVoiceNote() {
+  if (mediaRecorder && isRecording) {
+    mediaRecorder.ondataavailable = null;
+    mediaRecorder.onstop = null;
+    mediaRecorder.stop();
+  }
+  isRecording = false;
+  audioChunks = [];
+  document.getElementById("micBtn").classList.remove("recording");
+  document.getElementById("recordingHint").style.display = "none";
+  clearInterval(recTimerInterval);
+}
+
+function updateRecTimer() {
+  const elapsed = Math.floor((Date.now() - recStartTime) / 1000);
+  const minutes = Math.floor(elapsed / 60);
+  const seconds = elapsed % 60;
+  document.getElementById("recTimer").textContent =
+    String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0");
+}
+
+/* ===== PENDING (optimistic) BUBBLE - kwa voice note na media ===== */
+function appendPendingBubble(tempId, opts) {
+  opts = opts || {};
+  const box = document.getElementById("chatBox");
+  const empty = box.querySelector(".chat-empty");
+  if (empty) empty.remove();
+
+  const bubble = document.createElement("div");
+  bubble.className = "bubble me sending";
+  bubble.dataset.id = tempId;
+  bubble.dataset.mine = "1";
+  bubble.dataset.text = opts.message || "";
+  bubble.dataset.sender = "Wewe";
+
+  let html = `<span class="swipe-reply-icon"><i class="fa-solid fa-reply"></i></span>`;
+
+  if (opts.replyToText) {
+    html += `<div class="reply-quote">
+      <div class="reply-quote-body">
+        <span class="reply-quote-name">${escapeHtml(opts.replyToName || "Ujumbe")}</span>
+        <span class="reply-quote-text">${escapeHtml(opts.replyToText)}</span>
+      </div>
+    </div>`;
+  }
+
+  if (opts.message) {
+    html += `<div class="msg-body-wrap"><p class="msg-text">${escapeHtml(opts.message)}</p></div>`;
+  }
+
+  let localUrl = "";
+  if (opts.file) {
+    localUrl = URL.createObjectURL(opts.file);
+    const type = opts.file.type || "";
+    if (opts.isVoice || type.startsWith("audio/")) {
+      html += `<div class="audio-card"><button class="audio-play" type="button" disabled><i class="fa-solid fa-play"></i></button><div class="audio-info"><span class="audio-title">Voice note</span><audio controls preload="metadata"><source src="${localUrl}"></audio></div></div>`;
+    } else if (type.startsWith("image/")) {
+      html += `<div class="msg-media"><img src="${localUrl}" alt="Picha"></div>`;
+    } else if (type.startsWith("video/")) {
+      html += `<div class="msg-media"><video controls playsinline src="${localUrl}"></video></div>`;
+    } else {
+      const fileName = opts.fileName || "Faili";
+      html += `<a class="file-card" href="javascript:void(0)" onclick="return false;"><i class="fa-solid fa-file"></i><span><strong>${escapeHtml(fileName)}</strong><small>${escapeHtml((type || "FILE").split("/").pop().toUpperCase())}</small></span></a>`;
+    }
+  }
+
+  html += `<div class="bubble-meta"><small class="rel-time">Inatuma...</small><span class="ticks sending-tick" title="Inatuma"><i class="fa-solid fa-clock-rotate-left" style="font-size:10px;"></i></span></div>`;
+
+  bubble.innerHTML = html;
+  bubble.dataset.localUrl = localUrl;
+  box.appendChild(bubble);
+  return bubble;
+}
+
+function removePendingBubble(tempId) {
+  const el = document.querySelector(`[data-id="${tempId}"]`);
+  if (!el) return;
+  const url = el.dataset.localUrl;
+  if (url) { try { URL.revokeObjectURL(url); } catch (err) {} }
+  el.remove();
+}
+
+function sendVoiceNote(blob) {
+  const currentReplyId = replyToId;
+  const currentReplyText = replyToText;
+  const currentReplyName = replyToName;
+
+  const fileName = "voice_" + Date.now() + ".webm";
+  const formData = new FormData();
+  formData.append("file", blob, fileName);
+  formData.append("message", "");
+  if (currentReplyId) formData.append("reply_to", String(currentReplyId));
+
+  cancelReply();
+
+  // Onyesha voice note mara moja (haisubiri upload ikamilike) + hesabu MB
+  const tempId = "temp-" + Date.now();
+  appendPendingBubble(tempId, {
+    file: blob,
+    fileName: fileName,
+    isVoice: true,
+    replyToId: currentReplyId,
+    replyToText: currentReplyText,
+    replyToName: currentReplyName
+  });
+  scrollChat();
+  showChatUploadProgress(blob.size || 0);
+
+  const xhr = new XMLHttpRequest();
+  activeChatUploadXhr = xhr;
+  xhr.open("POST", "{{ url_for('send_message', user_id=receiver.id) }}", true);
+  xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+
+  xhr.upload.onprogress = ev => {
+    if (ev.lengthComputable) setChatUploadProgress(ev.loaded, ev.total);
+  };
+
+  xhr.onload = () => {
+    activeChatUploadXhr = null;
+    hideChatUploadProgress();
+    let data;
+    try { data = JSON.parse(xhr.responseText); } catch (err) { data = null; }
+    removePendingBubble(tempId);
+    if (!data || !data.success) {
+      showToast((data && data.error) || "Voice note haijatumwa");
+      return;
+    }
+    if (data.message) {
+      if (currentReplyId && !data.message.reply_to_text) {
+        data.message.reply_to_id = currentReplyId;
+        data.message.reply_to_text = currentReplyText;
+        data.message.reply_to_name = currentReplyName;
+      }
+      appendBubble(data.message, true);
+      lastMsgId = Math.max(lastMsgId, data.message.id);
+      scrollChat();
+    } else {
+      setTimeout(pollNewMessages, 400);
+    }
+  };
+
+  xhr.onerror = () => {
+    activeChatUploadXhr = null;
+    hideChatUploadProgress();
+    removePendingBubble(tempId);
+    showToast("Tatizo la mtandao");
+  };
+
+  xhr.onabort = () => {
+    activeChatUploadXhr = null;
+    hideChatUploadProgress();
+    removePendingBubble(tempId);
+  };
+
+  xhr.send(formData);
+}
+
+/* ===== SEND MESSAGE ===== */
+document.getElementById("chatForm").addEventListener("submit", event => {
+  event.preventDefault();
+  const form = event.target;
+  const formData = new FormData(form);
+  const input = document.getElementById("msgInput");
+  const fileInput = document.getElementById("chatFile");
+  const message = (formData.get("message") || "").trim();
+  const hasFile = fileInput.files && fileInput.files[0];
+  if (!message && !hasFile) return;
+
+  // Hifadhi reply state kabla ya kufuta UI
+  const currentReplyId = replyToId;
+  const currentReplyText = replyToText;
+  const currentReplyName = replyToName;
+
+  // Hakikisha reply_to inaenda server
+  formData.delete("reply_to");
+  if (currentReplyId) {
+    formData.append("reply_to", String(currentReplyId));
+  }
+
+  const attachedFile = hasFile ? fileInput.files[0] : null;
+
+  // Onyesha ujumbe/media mara moja (bila kusubiri upload ikamilike)
+  const tempId = "temp-" + Date.now();
+  appendPendingBubble(tempId, {
+    message,
+    file: attachedFile,
+    fileName: attachedFile ? attachedFile.name : "",
+    replyToId: currentReplyId,
+    replyToText: currentReplyText,
+    replyToName: currentReplyName
+  });
+  scrollChat();
+
+  // Futa input + reply + preview mara moja (hata kwa attachment + caption)
+  input.value = "";
+  input.style.height = "auto";
+  document.getElementById("sendBtn").style.display = "none";
+  document.getElementById("micBtn").style.display = "inline-flex";
+  clearAttachment();
+  cancelReply();
+
+  const totalBytes = attachedFile ? attachedFile.size : 0;
+  if (attachedFile) showChatUploadProgress(totalBytes);
+
+  const xhr = new XMLHttpRequest();
+  activeChatUploadXhr = xhr;
+  xhr.open("POST", form.action, true);
+  xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+
+  if (attachedFile) {
+    xhr.upload.onprogress = ev => {
+      if (ev.lengthComputable) setChatUploadProgress(ev.loaded, ev.total);
+    };
+  }
+
+  xhr.onload = () => {
+    activeChatUploadXhr = null;
+    hideChatUploadProgress();
+    let data;
+    try { data = JSON.parse(xhr.responseText); } catch (err) { data = null; }
+    removePendingBubble(tempId);
+    if (!data || !data.success) {
+      showToast((data && data.error) || "Ujumbe haujatumwa");
+      return;
+    }
+    // Hakikisha input bado tupu baada ya success
+    input.value = "";
+    input.style.height = "auto";
+    clearAttachment();
+    cancelReply();
+    if (data.message) {
+      // Kama server hairudishi reply fields, tumia zile za local
+      if (currentReplyId && !data.message.reply_to_text) {
+        data.message.reply_to_id = currentReplyId;
+        data.message.reply_to_text = currentReplyText;
+        data.message.reply_to_name = currentReplyName;
+      }
+      appendBubble(data.message, true);
+      lastMsgId = Math.max(lastMsgId, data.message.id);
+      scrollChat();
+    } else {
+      setTimeout(pollNewMessages, 400);
+    }
+  };
+
+  xhr.onerror = () => {
+    activeChatUploadXhr = null;
+    hideChatUploadProgress();
+    removePendingBubble(tempId);
+    showToast("Tatizo la mtandao");
+  };
+
+  xhr.onabort = () => {
+    activeChatUploadXhr = null;
+    hideChatUploadProgress();
+    removePendingBubble(tempId);
+  };
+
+  xhr.send(formData);
+});
+
+function pollNewMessages() {
+  fetch("{{ url_for('get_chat_messages', user_id=receiver.id) }}?after_id=" + lastMsgId)
+    .then(response => response.json())
+    .then(data => {
+      if (!data.messages || !data.messages.length) return;
+      const shouldScroll = isNearBottom();
+      data.messages.forEach(message => {
+        if (document.querySelector(`[data-id="${message.id}"]`)) {
+          updateTicks(message);
+          return;
+        }
+        appendBubble(message, message.sender_id == myUserId);
+        lastMsgId = Math.max(lastMsgId, message.id);
+      });
+      if (shouldScroll) scrollChat();
+      else document.getElementById("newMessageBtn").classList.add("show");
+    })
+    .catch(() => {});
+}
+
+function appendBubble(message, isMe) {
+  if (document.querySelector(`[data-id="${message.id}"]`)) return;
+  const box = document.getElementById("chatBox");
+  const empty = box.querySelector(".chat-empty");
+  if (empty) empty.remove();
+
+  const bubble = document.createElement("div");
+  bubble.className = "bubble " + (isMe ? "me" : "them") + (message.reaction ? " has-reaction" : "");
+  bubble.dataset.id = message.id;
+  bubble.dataset.mine = isMe ? "1" : "0";
+  bubble.dataset.text = message.message || "";
+  bubble.dataset.file = message.file_path || "";
+  bubble.dataset.media = message.media_type || "";
+  bubble.dataset.sender = isMe ? "Wewe" : (message.sender_username || receiverName);
+  bubble.oncontextmenu = event => openMsgMenu(event, message.id, isMe ? 1 : 0);
+  bubble.ontouchstart = event => msgTouchStart(event, message.id, isMe ? 1 : 0);
+  bubble.ontouchend = event => msgTouchEnd(event);
+  bubble.ontouchmove = event => msgTouchMove(event);
+
+  let html = `<span class="swipe-reply-icon"><i class="fa-solid fa-reply"></i></span>`;
+  if (message.reaction) {
+    html += `<span class="reaction-badge">${escapeHtml(message.reaction)}</span>`;
+  }
+
+  // Reply quote
+  if (message.reply_to_text) {
+    html += `<div class="reply-quote" onclick="scrollToMsg(${message.reply_to_id || 0})">
+      <div class="reply-quote-body">
+        <span class="reply-quote-name">${escapeHtml(message.reply_to_name || "Ujumbe")}</span>
+        <span class="reply-quote-text">${escapeHtml(message.reply_to_text)}</span>
+      </div>
+    </div>`;
+  }
+
+  if (message.message) {
+    html += `<div class="msg-body-wrap">${renderMessageHtml(message.message, message.id, { filePath: message.file_path || '', mediaType: message.media_type || '' })}</div>`;
+    html += `<button type="button" class="see-more-btn" id="seeMore-${message.id}" style="display:none;" onclick="toggleSeeMore(${message.id})">Tazama zaidi</button>`;
+  }
+  // Status reply: media inaonyeshwa kwenye status-reply-card, si kama media ya kawaida
+  const isStatusReply = !!(message.message && String(message.message).indexOf("[[STATUS_REPLY:") === 0);
+  if (message.file_path && !isStatusReply) {
+    const src = staticUploadBase + message.file_path;
+    const mediaType = message.media_type || "file";
+    if (mediaType === "image") {
+      html += `<div class="msg-media"><img src="${src}" alt="Picha" onclick="openLightbox(this.src)"></div>`;
+    } else if (mediaType === "video") {
+      html += `<div class="msg-media"><video controls playsinline src="${src}" onplay="pauseBgMusic()" onpause="resumeBgMusic()"></video></div>`;
+    } else if (mediaType === "audio") {
+      html += `<div class="audio-card"><button class="audio-play" type="button" onclick="toggleAudio(this)"><i class="fa-solid fa-play"></i></button><div class="audio-info"><span class="audio-title">Voice note</span><audio controls preload="metadata"><source src="${src}" type="${audioMimeFromPath(message.file_path)}"></audio></div></div>`;
+    } else {
+      const fileName = (message.file_path || "").split("/").pop();
+      html += `<a class="file-card" href="${src}" target="_blank" rel="noopener" download><i class="fa-solid fa-file"></i><span><strong>${escapeHtml(fileName)}</strong><small>${escapeHtml(mediaType.toUpperCase())}</small></span><i class="fa-solid fa-download"></i></a>`;
+    }
+  }
+
+  let status = "";
+  if (isMe) {
+    if (message.is_read) status = `<span class="ticks read" title="Read">✓✓</span>`;
+    else if (message.is_delivered) status = `<span class="ticks delivered" title="Delivered">✓✓</span>`;
+    else status = `<span class="ticks sent" title="Sent">✓</span>`;
+  }
+
+  const ts = message.created_at || "now";
+  html += `<div class="bubble-meta"><small class="rel-time" data-ts="${escapeHtml(ts)}">${escapeHtml(formatChatRelative(ts))}</small>${status}</div>`;
+  bubble.dataset.created = ts;
+  bubble.innerHTML = html;
+  box.appendChild(bubble);
+
+  // Apply see more if needed
+  setTimeout(() => {
+    const textEl = document.getElementById("msgText-" + message.id);
+    if (textEl && textEl.scrollHeight > 80) {
+      textEl.classList.add("clamped");
+      const btn = document.getElementById("seeMore-" + message.id);
+      if (btn) btn.style.display = "inline-block";
+    }
+  }, 50);
+}
+
+function updateTicks(message) {
+  if (message.sender_id != myUserId) return;
+  const bubble = document.querySelector(`[data-id="${message.id}"]`);
+  if (!bubble) return;
+  const ticks = bubble.querySelector(".ticks");
+  if (!ticks) return;
+  if (message.is_read) {
+    ticks.className = "ticks read";
+    ticks.textContent = "✓✓";
+    ticks.title = "Read";
+  } else if (message.is_delivered) {
+    ticks.className = "ticks delivered";
+    ticks.textContent = "✓✓";
+    ticks.title = "Delivered";
+  }
+}
+
+function escapeHtml(value) {
+  const div = document.createElement("div");
+  div.textContent = value == null ? "" : String(value);
+  return div.innerHTML;
+}
+
+/* ===== RELATIVE TIME (Today / Yesterday / One week ago ...) ===== */
+function parseChatDate(ts) {
+  if (!ts) return null;
+  if (ts === "now") return new Date();
+  let d = new Date(String(ts).trim().replace(" ", "T"));
+  if (isNaN(d.getTime())) d = new Date(String(ts).replace(/-/g, "/"));
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function formatChatRelative(ts) {
+  const d = parseChatDate(ts);
+  if (!d) return String(ts || "").slice(0, 16);
+  const now = new Date();
+  const sec = Math.floor((now - d) / 1000);
+  if (sec < 45) return "Sasa hivi";
+  if (sec < 3600) return Math.floor(sec / 60) + "m ago";
+  if (sec < 86400 && d.getDate() === now.getDate()) {
+    return "Today " + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+  const yest = new Date(now);
+  yest.setDate(now.getDate() - 1);
+  if (d.getDate() === yest.getDate() && d.getMonth() === yest.getMonth() && d.getFullYear() === yest.getFullYear()) {
+    return "Yesterday " + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+  const days = Math.floor(sec / 86400);
+  if (days < 7) return days + (days === 1 ? " day ago" : " days ago");
+  if (days < 14) return "One week ago";
+  if (days < 30) return Math.floor(days / 7) + " weeks ago";
+  if (days < 60) return "One month ago";
+  if (days < 365) return Math.floor(days / 30) + " months ago";
+  if (days < 730) return "One year ago";
+  return Math.floor(days / 365) + " years ago";
+}
+
+function formatDayDivider(dayKey) {
+  if (!dayKey) return "";
+  const d = parseChatDate(dayKey + "T12:00:00");
+  if (!d) return dayKey;
+  const now = new Date();
+  const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startThat = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diffDays = Math.round((startToday - startThat) / 86400000);
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays > 1 && diffDays < 7) return diffDays + " days ago";
+  if (diffDays >= 7 && diffDays < 14) return "One week ago";
+  if (diffDays < 30) return Math.floor(diffDays / 7) + " weeks ago";
+  if (diffDays < 60) return "One month ago";
+  if (diffDays < 365) return Math.floor(diffDays / 30) + " months ago";
+  return d.toLocaleDateString();
+}
+
+function applyChatRelativeTimes() {
+  document.querySelectorAll(".bubble-meta .rel-time[data-ts]").forEach(function(el) {
+    const ts = el.getAttribute("data-ts");
+    if (ts) el.textContent = formatChatRelative(ts);
+  });
+  document.querySelectorAll(".date-divider[data-day]").forEach(function(el) {
+    const day = el.getAttribute("data-day");
+    if (day) el.textContent = formatDayDivider(day);
+  });
+}
+
+/* ===== STATUS REPLY RENDER + @username links ===== */
+function parseStatusReplyMessage(raw) {
+  if (!raw) return null;
+  // New: [[STATUS_REPLY:id:replier:media:file]]  OR old: [[STATUS_REPLY:id:replier]]
+  let m = String(raw).match(/^\[\[STATUS_REPLY:(\d+):([^:\]]+):([^:\]]*):([^\]]*)\]\]\s*\n?([\s\S]*)$/);
+  if (m) {
+    return {
+      statusId: m[1],
+      replier: m[2],
+      mediaType: m[3] || "",
+      filePath: m[4] || "",
+      body: m[5] || ""
+    };
+  }
+  m = String(raw).match(/^\[\[STATUS_REPLY:(\d+):([^\]]+)\]\]\s*\n?([\s\S]*)$/);
+  if (!m) return null;
+  return { statusId: m[1], replier: m[2], mediaType: "", filePath: "", body: m[3] || "" };
+}
+
+function linkifyChatText(text) {
+  const escaped = escapeHtml(text || "");
+  // @username → profile link
+  return escaped.replace(/@([A-Za-z0-9_]+)/g, function(_, u) {
+    return '<a class="chat-user-link" href="/profile/' + encodeURIComponent(u) + '">@' + u + '</a>';
+  });
+}
+
+function renderMessageHtml(raw, msgId, extra) {
+  const parsed = parseStatusReplyMessage(raw);
+  let html = "";
+  if (parsed) {
+    // Extract preview line "↩️ Status ya @user: ..."
+    let preview = "";
+    let replyText = parsed.body;
+    const lines = parsed.body.split("\n");
+    if (lines.length && /Status/i.test(lines[0])) {
+      preview = lines[0].replace(/^↩️\s*/, "").trim();
+      replyText = lines.slice(1).join("\n").replace(/^\n+/, "");
+    }
+    let mediaHtml = "";
+    // Prefer file from message format; bubble may also have data-file
+    extra = extra || {};
+    let fpath = parsed.filePath || extra.filePath || "";
+    let mtype = (parsed.mediaType || extra.mediaType || "").toLowerCase();
+    if (fpath && (mtype === "image" || mtype === "video")) {
+      const src = (typeof staticUploadBase !== "undefined" ? staticUploadBase : "/static/uploads/") + fpath;
+      if (mtype === "image") {
+        mediaHtml = '<div class="src-media"><img src="' + src + '" alt="Status" loading="lazy"></div>';
+      } else {
+        mediaHtml = '<div class="src-media"><video src="' + src + '" muted playsinline preload="metadata"></video></div>';
+      }
+    }
+    html += '<a class="status-reply-card" href="/home?open_status=' + encodeURIComponent(parsed.statusId) + '" title="Fungua status">' +
+      '<div class="src-label"><i class="fa-solid fa-circle" style="font-size:8px;"></i> Status reply</div>' +
+      '<div class="src-row">' +
+        mediaHtml +
+        '<div class="src-text">' +
+          (preview ? '<div class="src-preview">' + linkifyChatText(preview) + '</div>' : '<div class="src-preview">Bofya fungua status</div>') +
+        '</div>' +
+      '</div>' +
+      '</a>';
+    if (replyText.trim()) {
+      html += '<p class="msg-text" id="msgText-' + msgId + '">' + linkifyChatText(replyText.trim()) + '</p>';
+    }
+  } else {
+    html += '<p class="msg-text" id="msgText-' + msgId + '">' + linkifyChatText(raw) + '</p>';
+  }
+  return html;
+}
+
+function enhanceAllChatMessages() {
+  document.querySelectorAll(".bubble[data-text]").forEach(function(bubble) {
+    const raw = bubble.getAttribute("data-text") || "";
+    if (!raw) return;
+    const id = bubble.dataset.id;
+    const wrap = bubble.querySelector(".msg-body-wrap");
+    const textEl = bubble.querySelector(".msg-text");
+    if (!textEl || textEl.closest(".reply-quote")) return;
+    // Skip hidden
+    if (bubble.classList.contains("hidden-msg")) return;
+    const seeMore = bubble.querySelector(".see-more-btn");
+    const html = renderMessageHtml(raw, id, {
+      filePath: bubble.dataset.file || "",
+      mediaType: bubble.dataset.media || ""
+    });
+    if (wrap) {
+      wrap.innerHTML = html + (seeMore ? seeMore.outerHTML : '<button type="button" class="see-more-btn" id="seeMore-' + id + '" style="display:none;" onclick="toggleSeeMore(' + id + ')">Tazama zaidi</button>');
+    } else if (textEl) {
+      const parent = textEl.parentNode;
+      const tmp = document.createElement("div");
+      tmp.innerHTML = html;
+      parent.insertBefore(tmp, textEl);
+      while (tmp.firstChild) parent.insertBefore(tmp.firstChild, tmp);
+      tmp.remove();
+      textEl.remove();
+    }
+  });
+}
+
+function toggleCallMenu(e) {
+  if (e) e.stopPropagation();
+  const dd = document.getElementById("callDropdown");
+  if (dd) dd.classList.toggle("show");
+}
+function closeCallMenu() {
+  const dd = document.getElementById("callDropdown");
+  if (dd) dd.classList.remove("show");
+}
+document.addEventListener("click", function(ev) {
+  if (!ev.target.closest("#callMenuWrap")) closeCallMenu();
+});
+
+function scrollToMsg(id) {
+  if (!id) return;
+  const el = document.querySelector(`[data-id="${id}"]`);
+  if (el) {
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.style.outline = "2px solid var(--chat-primary)";
+    setTimeout(() => el.style.outline = "", 1500);
+  }
+}
+
+/* ===== SWIPE TO REPLY + LONG PRESS ===== */
+function msgTouchStart(event, id, mine) {
+  const touch = event.touches[0];
+  swipeStartX = touch.clientX;
+  swipeStartY = touch.clientY;
+  swipeDx = 0;
+  swipeActiveBubble = document.querySelector(`[data-id="${id}"]`);
+  chatLongPressTimer = setTimeout(() => openMsgMenu(null, id, mine), 550);
+}
+
+function msgTouchMove(event) {
+  if (!swipeActiveBubble) return;
+  const touch = event.touches[0];
+  const dx = touch.clientX - swipeStartX;
+  const dy = touch.clientY - swipeStartY;
+
+  // Cancel long press if moved
+  if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+    clearTimeout(chatLongPressTimer);
+  }
+
+  // Only horizontal right swipe
+  if (Math.abs(dx) > Math.abs(dy) && dx > 0) {
+    event.preventDefault();
+    swipeDx = Math.min(dx, 90);
+    swipeActiveBubble.style.transform = `translateX(${swipeDx}px)`;
+    swipeActiveBubble.classList.add("swiping");
+  }
+}
+
+function msgTouchEnd(event) {
+  clearTimeout(chatLongPressTimer);
+  if (swipeActiveBubble) {
+    if (swipeDx >= SWIPE_THRESHOLD) {
+      const id = swipeActiveBubble.dataset.id;
+      const text = swipeActiveBubble.dataset.text || "";
+      const sender = swipeActiveBubble.dataset.sender || "";
+      startReply(id, text, sender);
+    }
+    swipeActiveBubble.style.transform = "";
+    swipeActiveBubble.classList.remove("swiping");
+  }
+  swipeActiveBubble = null;
+  swipeDx = 0;
+}
+
+/* ===== REPLY ===== */
+function startReply(id, text, name) {
+  replyToId = id;
+  replyToText = text || (text === "" ? "Media" : text);
+  replyToName = name || "Ujumbe";
+  document.getElementById("replyToInput").value = id;
+  document.getElementById("replyBarLabel").textContent = "Kujibu " + replyToName;
+  document.getElementById("replyBarText").textContent = replyToText || "Media";
+  document.getElementById("replyBar").classList.add("show");
+  document.getElementById("msgInput").focus();
+}
+
+function cancelReply() {
+  replyToId = null;
+  replyToText = "";
+  replyToName = "";
+  document.getElementById("replyToInput").value = "";
+  document.getElementById("replyBar").classList.remove("show");
+}
+
+function replyFromMenu() {
+  if (!activeMsgEl) return;
+  const id = activeMsgEl.dataset.id;
+  const text = activeMsgEl.dataset.text || "";
+  const sender = activeMsgEl.dataset.sender || "";
+  closeMsgMenu();
+  startReply(id, text, sender);
+}
+
+/* ===== TYPING INDICATOR ===== */
+function sendTypingStatus(isTyping) {
+  const now = Date.now();
+  if (isTyping && now - lastTypingSent < 1500) return;
+  lastTypingSent = now;
+  fetch("/chat/typing/" + receiverId, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" },
+    body: JSON.stringify({ typing: !!isTyping })
+  }).catch(() => {});
+}
+
+function pollTypingStatus() {
+  fetch("/chat/typing-status/" + receiverId)
+    .then(r => r.json())
+    .then(data => {
+      const statusEl = document.getElementById("userStatus");
+      const bottomEl = document.getElementById("typingIndicator");
+      const dot = document.getElementById("onlineDot");
+
+      if (dot) dot.classList.toggle("show", !!(data && data.online));
+
+      if (data && data.typing) {
+        if (statusEl) {
+          statusEl.textContent = "Anaandika...";
+          statusEl.style.color = "var(--chat-primary)";
+        }
+        if (bottomEl) bottomEl.classList.add("show");
+        if (isNearBottom()) scrollChat();
+      } else {
+        if (statusEl) {
+          if (data && data.online) {
+            statusEl.textContent = "Online";
+            statusEl.style.color = "var(--chat-primary)";
+          } else if (data && data.last_seen) {
+            statusEl.textContent = "Alionekana mwisho " + formatChatRelative(data.last_seen);
+            statusEl.style.color = "";
+          } else {
+            statusEl.textContent = "Private chat";
+            statusEl.style.color = "";
+          }
+        }
+        if (bottomEl) bottomEl.classList.remove("show");
+      }
+    })
+    .catch(() => {});
+}
+
+/* ===== MESSAGE MENU ===== */
+function openMsgMenu(event, id, mine) {
+  if (event) event.preventDefault();
+  activeMsgId = id;
+  activeMsgMine = mine;
+  activeMsgEl = document.querySelector(`[data-id="${id}"]`);
+  document.getElementById("msgCopyBtn").style.display =
+    activeMsgEl && activeMsgEl.dataset.text.trim() ? "flex" : "none";
+  document.getElementById("msgDeleteBtn").style.display = "flex";
+  var editBtn = document.getElementById("msgEditBtn");
+  if (editBtn) editBtn.style.display = mine ? "flex" : "none";
+  var hideLabel = document.getElementById("msgHideBtnLabel");
+  if (hideLabel) {
+    const isHidden = activeMsgEl && activeMsgEl.dataset.hidden === "1";
+    hideLabel.textContent = isHidden ? "Onyesha (Unhide)" : "Hide";
+  }
+  document.getElementById("msgActionSheet").classList.add("show");
+  return false;
+}
+
+function closeMsgMenu() {
+  document.getElementById("msgActionSheet").classList.remove("show");
+  activeMsgId = null;
+  activeMsgEl = null;
+}
+
+function copyMsg() {
+  if (!activeMsgEl) return;
+  const text = activeMsgEl.dataset.text;
+  if (!text) {
+    showToast("Hakuna maandishi ya kunakili");
+    closeMsgMenu();
+    return;
+  }
+  navigator.clipboard?.writeText(text)
+    .then(() => showToast("Ujumbe umenakiliwa"))
+    .catch(() => showToast("Copy haijafanikiwa"));
+  closeMsgMenu();
+}
+
+function shareMsg() {
+  if (!activeMsgEl) return;
+  const text = activeMsgEl.dataset.text;
+  const file = activeMsgEl.dataset.file;
+  const shareData = {
+    title: "Kijiji Tanzania",
+    text: text || "",
+    url: file ? window.location.origin + staticUploadBase + file : undefined
+  };
+  if (navigator.share) navigator.share(shareData).catch(() => {});
+  else if (text && navigator.clipboard) {
+    navigator.clipboard.writeText(text);
+    showToast("Ujumbe umenakiliwa");
+  } else showToast("Share haipatikani kwenye browser hii");
+  closeMsgMenu();
+}
+
+function forwardMsg() {
+  if (!activeMsgEl || !activeMsgId) return;
+  const text = activeMsgEl.dataset.text || "";
+  const uname = prompt("Andika username wa kupokea forward:");
+  if (!uname || !uname.trim()) { closeMsgMenu(); return; }
+  fetch("/chat/forward", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" },
+    body: JSON.stringify({ message_id: Number(activeMsgId), to_username: uname.trim() })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.success) showToast("Ujumbe ume-forward");
+    else showToast(d.message || "Forward imeshindikana");
+  })
+  .catch(() => showToast("Hitilafu ya mtandao"));
+  closeMsgMenu();
+}
+
+function starMsg() {
+  if (!activeMsgId) return;
+  fetch("/chat/star/" + activeMsgId, {
+    method: "POST",
+    headers: { "X-Requested-With": "XMLHttpRequest" }
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.success) showToast(d.starred ? "Ujumbe ume-star" : "Star imeondolewa");
+    else showToast(d.message || "Imeshindikana");
+  })
+  .catch(() => showToast("Hitilafu ya mtandao"));
+  closeMsgMenu();
+}
+
+function editMsg() {
+  if (!activeMsgId || !activeMsgEl) return;
+  const old = activeMsgEl.dataset.text || "";
+  const neu = prompt("Hariri ujumbe:", old);
+  if (neu === null) { closeMsgMenu(); return; }
+  const text = neu.trim();
+  if (!text) { showToast("Ujumbe hawezi kuwa tupu"); closeMsgMenu(); return; }
+  fetch("/chat/edit/" + activeMsgId, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" },
+    body: JSON.stringify({ content: text })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.success) {
+      activeMsgEl.dataset.text = text;
+      const p = activeMsgEl.querySelector(".msg-text");
+      if (p) p.textContent = text;
+      showToast("Ujumbe umehaririwa");
+    } else showToast(d.message || "Edit imeshindikana");
+  })
+  .catch(() => showToast("Hitilafu ya mtandao"));
+  closeMsgMenu();
+}
+
+function reactMsg(reaction) {
+  if (!activeMsgId) return;
+  fetch("{{ url_for('chat_react', msg_id=0) }}".replace("/0", "/" + activeMsgId), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reaction })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (!data.success || !activeMsgEl) return;
+    let badge = activeMsgEl.querySelector(".reaction-badge");
+    if (!badge) {
+      badge = document.createElement("span");
+      badge.className = "reaction-badge";
+      activeMsgEl.prepend(badge);
+    }
+    badge.textContent = reaction;
+    activeMsgEl.classList.add("has-reaction");
+    closeMsgMenu();
+  })
+  .catch(() => showToast("Reaction haijafanikiwa"));
+}
+
+function toggleHideMsg() {
+  if (!activeMsgId || !activeMsgEl) return;
+  const isHidden = activeMsgEl.dataset.hidden === "1";
+  if (isHidden) {
+    revealHiddenMsg(activeMsgId, activeMsgEl, () => closeMsgMenu());
+  } else {
+    hideMsg();
+  }
+}
+
+function hideMsg() {
+  if (!activeMsgId) return;
+  const el = activeMsgEl;
+  fetch("{{ url_for('chat_hide', msg_id=0) }}".replace("/0", "/" + activeMsgId), {
+    method: "POST"
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success && el) {
+      el.classList.add("hidden-msg");
+      el.dataset.hidden = "1";
+      showToast("Ujumbe umefichwa");
+    }
+    closeMsgMenu();
+  });
+}
+
+/* Bonyeza ujumbe uliofichwa ili kuuona tena */
+function quickUnhide(msgId, el) {
+  const bubble = el ? el.closest(".bubble") : document.querySelector(`[data-id="${msgId}"]`);
+  revealHiddenMsg(msgId, bubble);
+}
+
+function revealHiddenMsg(msgId, bubble, done) {
+  fetch("{{ url_for('chat_unhide', msg_id=0) }}".replace("/0", "/" + msgId), {
+    method: "POST"
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (!data.success) {
+      showToast("Imeshindikana kuonyesha ujumbe");
+      if (done) done();
+      return;
+    }
+    if (bubble) {
+      bubble.classList.remove("hidden-msg");
+      bubble.dataset.hidden = "0";
+      bubble.dataset.text = data.message || "";
+      bubble.dataset.file = data.file_path || "";
+      bubble.dataset.media = data.media_type || "";
+
+      let contentHtml = "";
+      if (data.message) {
+        contentHtml += `<div class="msg-body-wrap"><p class="msg-text">${escapeHtml(data.message)}</p></div>`;
+      }
+      if (data.file_path) {
+        const src = staticUploadBase + data.file_path;
+        const mediaType = data.media_type || "file";
+        if (mediaType === "image") {
+          contentHtml += `<div class="msg-media"><img src="${src}" alt="Picha" onclick="openLightbox(this.src)"></div>`;
+        } else if (mediaType === "video") {
+          contentHtml += `<div class="msg-media"><video controls playsinline src="${src}"></video></div>`;
+        } else if (mediaType === "audio") {
+          contentHtml += `<div class="audio-card"><button class="audio-play" type="button" onclick="toggleAudio(this)"><i class="fa-solid fa-play"></i></button><div class="audio-info"><span class="audio-title">Voice note</span><audio controls preload="metadata"><source src="${src}" type="${audioMimeFromPath(data.file_path)}"></audio></div></div>`;
+        } else {
+          const fileName = (data.file_path || "").split("/").pop();
+          contentHtml += `<a class="file-card" href="${src}" target="_blank" rel="noopener" download><i class="fa-solid fa-file"></i><span><strong>${escapeHtml(fileName)}</strong><small>${escapeHtml(mediaType.toUpperCase())}</small></span><i class="fa-solid fa-download"></i></a>`;
+        }
+      }
+      const placeholder = bubble.querySelector(".hidden-reveal");
+      if (placeholder) placeholder.outerHTML = contentHtml;
+      showToast("Ujumbe umeonyeshwa");
+    }
+    if (done) done();
+  })
+  .catch(() => {
+    showToast("Tatizo la mtandao");
+    if (done) done();
+  });
+}
+
+function deleteMsg() {
+  if (!activeMsgId || !confirm("Ujumbe utaondoka kwenye chat yako pekee (si kwa mtu mwingine). Endelea?")) return;
+  fetch("{{ url_for('chat_delete', msg_id=0) }}".replace("/0", "/" + activeMsgId), {
+    method: "POST"
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success && activeMsgEl) {
+      activeMsgEl.remove();
+      showToast("Ujumbe umefutwa kwako");
+    } else if (!data.success) {
+      showToast("Imeshindikana kufuta ujumbe");
+    }
+    closeMsgMenu();
+  });
+}
+
+document.addEventListener("click", event => {
+  const menu = document.getElementById("attachMenu");
+  if (!event.target.closest(".attach-btn") && !event.target.closest(".attach-menu")) {
+    menu.classList.remove("show");
+  }
+});
+
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") {
+    closeLightbox();
+    closeMsgMenu();
+    cancelReply();
+  }
+});
+
+/* ===== WEBRTC CALLS (same as before) ===== */
+let pc = null;
+let localStream = null;
+let callActive = false;
+let callIsVideo = false;
+let callIsCaller = false;
+let callPeerId = null;
+let lastSignalId = 0;
+let callSignalPoll = null;
+let callTimerInterval = null;
+let callSeconds = 0;
+let isMuted = false;
+let camOff = false;
+let pendingOffer = null;
+
+const iceServers = {
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" }
+  ]
+};
+
+function sendSignal(type, payload) {
+  return fetch("{{ url_for('call_signal') }}", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      to_user_id: callPeerId || receiverId,
+      type: type,
+      payload: payload || {}
+    })
+  }).then(r => r.json()).catch(() => ({}));
+}
+
+function startCallSignalPoll() {
+  if (callSignalPoll) return;
+  callSignalPoll = setInterval(pollCallSignals, 1500);
+  pollCallSignals();
+}
+
+function pollCallSignals() {
+  fetch("{{ url_for('get_call_signals') }}?after_id=" + lastSignalId)
+    .then(r => r.json())
+    .then(data => {
+      if (!data.signals || !data.signals.length) return;
+      data.signals.forEach(sig => {
+        lastSignalId = Math.max(lastSignalId, sig.id);
+        handleSignal(sig);
+      });
+    })
+    .catch(() => {});
+}
+
+function handleSignal(sig) {
+  let payload = {};
+  try {
+    payload = typeof sig.payload === "string" ? JSON.parse(sig.payload || "{}") : (sig.payload || {});
+  } catch (e) { payload = {}; }
+
+  const fromId = sig.from_user_id;
+
+  if (sig.type === "offer") {
+    if (callActive) {
+      callPeerId = fromId;
+      sendSignal("busy", {});
+      callPeerId = null;
+      return;
+    }
+    pendingOffer = { fromId, payload };
+    callPeerId = fromId;
+    callIsVideo = !!payload.video;
+    callIsCaller = false;
+    showIncomingCall(payload.video);
+  } else if (sig.type === "answer") {
+    if (!pc || !callIsCaller) return;
+    pc.setRemoteDescription(new RTCSessionDescription(payload.sdp)).catch(err => console.error(err));
+  } else if (sig.type === "ice") {
+    if (!pc || !payload.candidate) return;
+    pc.addIceCandidate(new RTCIceCandidate(payload.candidate)).catch(err => console.error(err));
+  } else if (sig.type === "hangup" || sig.type === "reject" || sig.type === "busy") {
+    if (fromId === callPeerId || fromId === receiverId) {
+      endCallUI(sig.type === "busy" ? "Busy" : (sig.type === "reject" ? "Imekataliwa" : "Simu imefungwa"));
+    }
+  }
+}
+
+function showIncomingCall(isVideo) {
+  pauseBgMusic();
+  playRingtone();
+  document.getElementById("callStatus").textContent = isVideo ? "Video call inakuja..." : "Voice call inakuja...";
+  document.getElementById("callTimer").classList.remove("show");
+  document.getElementById("callVideoWrap").classList.remove("show");
+  document.getElementById("callAvatar").classList.add("call-ring-pulse");
+  document.getElementById("callAvatar").style.display = "block";
+  document.getElementById("callActions").innerHTML = `
+    <button type="button" class="call-btn reject" onclick="rejectCall()" title="Kataa"><i class="fa-solid fa-phone-slash"></i></button>
+    <button type="button" class="call-btn accept" onclick="acceptCall()" title="Pokea"><i class="fa-solid fa-phone"></i></button>
+  `;
+  document.getElementById("callOverlay").classList.add("show");
+}
+
+async function startCall(video) {
+  if (callActive) {
+    showToast("Tayari uko kwenye simu");
+    return;
+  }
+  callIsVideo = video;
+  callIsCaller = true;
+  callPeerId = receiverId;
+  callActive = true;
+  pendingOffer = null;
+  pauseBgMusic();
+
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({
+      audio: true,
+      video: video ? { facingMode: "user" } : false
+    });
+  } catch (e) {
+    showToast("Ruhusa ya microphone/camera imekataliwa");
+    callActive = false;
+    return;
+  }
+
+  setupPeerConnection();
+  localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+
+  if (video) {
+    document.getElementById("localVideo").srcObject = localStream;
+    document.getElementById("callVideoWrap").classList.add("show");
+    document.getElementById("callAvatar").style.display = "none";
+  } else {
+    document.getElementById("callVideoWrap").classList.remove("show");
+    document.getElementById("callAvatar").style.display = "block";
+  }
+
+  document.getElementById("callStatus").textContent = "Inaita...";
+  document.getElementById("callTimer").classList.remove("show");
+  document.getElementById("callAvatar").classList.add("call-ring-pulse");
+  document.getElementById("callActions").innerHTML = `
+    <button type="button" class="call-btn hangup" onclick="hangupCall()" title="Funga"><i class="fa-solid fa-phone-slash"></i></button>
+  `;
+  document.getElementById("callOverlay").classList.add("show");
+  playRingtone();
+
+  try {
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    await sendSignal("offer", { sdp: pc.localDescription, video: video });
+  } catch (e) {
+    console.error(e);
+    endCallUI("Hitilafu ya kuanzisha simu");
+  }
+}
+
+async function acceptCall() {
+  if (!pendingOffer) return;
+  stopRingtone();
+  callActive = true;
+  callIsCaller = false;
+  callPeerId = pendingOffer.fromId;
+  callIsVideo = !!pendingOffer.payload.video;
+
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({
+      audio: true,
+      video: callIsVideo ? { facingMode: "user" } : false
+    });
+  } catch (e) {
+    showToast("Ruhusa ya microphone/camera imekataliwa");
+    rejectCall();
+    return;
+  }
+
+  setupPeerConnection();
+  localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+
+  if (callIsVideo) {
+    document.getElementById("localVideo").srcObject = localStream;
+    document.getElementById("callVideoWrap").classList.add("show");
+    document.getElementById("callAvatar").style.display = "none";
+  }
+
+  try {
+    await pc.setRemoteDescription(new RTCSessionDescription(pendingOffer.payload.sdp));
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+    await sendSignal("answer", { sdp: pc.localDescription });
+    pendingOffer = null;
+    onCallConnected();
+  } catch (e) {
+    console.error(e);
+    endCallUI("Hitilafu ya kupokea simu");
+  }
+}
+
+function rejectCall() {
+  stopRingtone();
+  sendSignal("reject", {});
+  pendingOffer = null;
+  callPeerId = null;
+  document.getElementById("callOverlay").classList.remove("show");
+  callActive = false;
+}
+
+function setupPeerConnection() {
+  if (pc) { try { pc.close(); } catch (e) {} }
+  pc = new RTCPeerConnection(iceServers);
+
+  pc.onicecandidate = (event) => {
+    if (event.candidate) sendSignal("ice", { candidate: event.candidate });
+  };
+
+  pc.ontrack = (event) => {
+    const remote = document.getElementById("remoteVideo");
+    if (event.streams && event.streams[0]) remote.srcObject = event.streams[0];
+    else {
+      const ms = new MediaStream();
+      ms.addTrack(event.track);
+      remote.srcObject = ms;
+    }
+  };
+
+  pc.onconnectionstatechange = () => {
+    if (!pc) return;
+    const state = pc.connectionState;
+    if (state === "connected") onCallConnected();
+    else if (state === "failed" || state === "disconnected" || state === "closed") {
+      if (callActive) endCallUI("Muunganisho umekatika");
+    }
+  };
+}
+
+function onCallConnected() {
+  stopRingtone();
+  document.getElementById("callAvatar").classList.remove("call-ring-pulse");
+  document.getElementById("callStatus").textContent = callIsVideo ? "Video call" : "Voice call";
+  startCallTimer();
+  document.getElementById("callActions").innerHTML = `
+    <button type="button" class="call-btn mute" id="muteBtn" onclick="toggleMute()" title="Mute"><i class="fa-solid fa-microphone"></i></button>
+    ${callIsVideo ? `<button type="button" class="call-btn cam" id="camBtn" onclick="toggleCam()" title="Camera"><i class="fa-solid fa-video"></i></button>` : ""}
+    <button type="button" class="call-btn hangup" onclick="hangupCall()" title="Funga"><i class="fa-solid fa-phone-slash"></i></button>
+  `;
+}
+
+function startCallTimer() {
+  callSeconds = 0;
+  const el = document.getElementById("callTimer");
+  el.classList.add("show");
+  el.textContent = "00:00";
+  clearInterval(callTimerInterval);
+  callTimerInterval = setInterval(() => {
+    callSeconds++;
+    const m = String(Math.floor(callSeconds / 60)).padStart(2, "0");
+    const s = String(callSeconds % 60).padStart(2, "0");
+    el.textContent = m + ":" + s;
+  }, 1000);
+}
+
+function toggleMute() {
+  if (!localStream) return;
+  isMuted = !isMuted;
+  localStream.getAudioTracks().forEach(t => { t.enabled = !isMuted; });
+  const btn = document.getElementById("muteBtn");
+  if (btn) {
+    btn.classList.toggle("active", isMuted);
+    btn.innerHTML = isMuted ? '<i class="fa-solid fa-microphone-slash"></i>' : '<i class="fa-solid fa-microphone"></i>';
+  }
+}
+
+function toggleCam() {
+  if (!localStream) return;
+  camOff = !camOff;
+  localStream.getVideoTracks().forEach(t => { t.enabled = !camOff; });
+  const btn = document.getElementById("camBtn");
+  if (btn) {
+    btn.classList.toggle("off", camOff);
+    btn.innerHTML = camOff ? '<i class="fa-solid fa-video-slash"></i>' : '<i class="fa-solid fa-video"></i>';
+  }
+}
+
+function hangupCall(silent) {
+  if (!silent) sendSignal("hangup", {});
+  endCallUI("Simu imefungwa");
+}
+
+function endCallUI(statusText) {
+  stopRingtone();
+  clearInterval(callTimerInterval);
+  if (localStream) {
+    localStream.getTracks().forEach(t => t.stop());
+    localStream = null;
+  }
+  if (pc) { try { pc.close(); } catch (e) {} pc = null; }
+  document.getElementById("remoteVideo").srcObject = null;
+  document.getElementById("localVideo").srcObject = null;
+  document.getElementById("callVideoWrap").classList.remove("show");
+  document.getElementById("callAvatar").style.display = "block";
+  document.getElementById("callAvatar").classList.remove("call-ring-pulse");
+  document.getElementById("callTimer").classList.remove("show");
+  document.getElementById("callStatus").textContent = statusText || "Simu imefungwa";
+  callActive = false;
+  callPeerId = null;
+  pendingOffer = null;
+  isMuted = false;
+  camOff = false;
+  setTimeout(() => document.getElementById("callOverlay").classList.remove("show"), 900);
+}
+
+function playRingtone() {
+  const r = document.getElementById("ringtone");
+  if (r) {
+    // Re-apply volume from Settings (default 30%)
+    const stored = localStorage.getItem('kijiji_ringtone_volume');
+    let vol = 30;
+    if (stored !== null && stored !== '') {
+      const n = parseInt(stored, 10);
+      if (!isNaN(n) && n >= 0 && n <= 100) vol = n;
+    }
+    r.volume = vol / 100;
+    r.play().catch(() => {});
+  }
+}
+
+function stopRingtone() {
+  const r = document.getElementById("ringtone");
+  if (r) { r.pause(); r.currentTime = 0; }
+}
+</script>
+
+{% endblock %}

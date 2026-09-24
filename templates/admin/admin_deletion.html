@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maombi ya Kufuta Akaunti - Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background: #f0f2f5; padding-bottom: 40px; }
+        .topbar {
+            background: #1EB53A; color: white; padding: 14px 18px;
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .topbar h1 { font-size: 17px; display: flex; align-items: center; gap: 8px; }
+        .topbar a { color: white; text-decoration: none; font-size: 13px; background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 6px; }
+        .container { max-width: 800px; margin: 16px auto; padding: 0 12px; }
+        .flash-msg { background: #e7f3ff; color: #1EB53A; padding: 10px; border-radius: 8px; margin-bottom: 14px; text-align: center; font-size: 14px; border: 1px solid #b6d4fe; }
+        .item-row {
+            background: #fff; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+        }
+        .item-info strong { font-size: 15px; color: #333; }
+        .item-info span { display: block; font-size: 12px; color: #777; margin-top: 3px; }
+        .action-btns { margin-top: 12px; }
+        .btn-delete {
+            background: #c0392b; color: white; border: none; padding: 8px 14px;
+            border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: bold;
+        }
+        .empty { color: #777; font-size: 14px; padding: 30px 0; text-align: center; }
+    </style>
+</head>
+<body>
+<div class="topbar">
+    <h1><i class="fa-solid fa-user-slash"></i> Maombi ya Kufuta Akaunti</h1>
+    <a href="{{ url_for('admin_dashboard') }}"><i class="fa-solid fa-arrow-left"></i> Dashboard</a>
+</div>
+
+<div class="container">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="flash-msg">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% if deletion_requests %}
+        {% for d in deletion_requests %}
+        <div class="item-row">
+            <div class="item-info">
+                <strong>
+                    {% if d.username %}
+                    @{{ d.username }}
+                    {% else %}
+                    {{ d.email or 'User #' + d.user_id|string }}
+                    {% endif %}
+                </strong>
+                <span>Ombi #{{ d.id }} · {{ d.created_at }}</span>
+                <span>Email: {{ d.email or '—' }}</span>
+                <span>Hali: <strong style="color:#e74c3c;">{{ d.status }}</strong></span>
+                {% if d.is_verified %}
+                <span style="color:#1877f2;"><i class="fa-solid fa-circle-check"></i> Akaunti ina Verified Badge</span>
+                {% endif %}
+                {% if d.reason %}
+                <span style="margin-top:6px;color:#444;">Sababu: {{ d.reason }}</span>
+                {% endif %}
+            </div>
+            <div class="action-btns">
+                <button type="button" class="btn-delete"
+                        onclick="approveDeletionRequest({{ d.id }}, {{ d.user_id or 0 }}, this)">
+                    <i class="fa-solid fa-trash"></i> Kubali na Futa Akaunti
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p class="empty">
+            <i class="fa-solid fa-circle-check" style="color:#1EB53A;font-size:28px;display:block;margin-bottom:8px;"></i>
+            Hakuna maombi ya kufuta akaunti kwa sasa.
+        </p>
+    {% endif %}
+</div>
+
+<script>
+function approveDeletionRequest(requestId, userId, btn) {
+    if (!confirm('Una uhakika unataka kukubali ombi hili na kufuta akaunti pamoja na data zake kabisa?')) return;
+
+    fetch(`/admin/approve_deletion/${requestId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const row = btn.closest('.item-row');
+            if (row) {
+                row.style.transition = 'opacity 0.3s';
+                row.style.opacity = '0';
+                setTimeout(() => row.remove(), 300);
+            }
+            alert(data.message || 'Ombi limekubaliwa na akaunti imefutwa kabisa.');
+        } else {
+            alert(data.message || 'Imeshindikana kufuta akaunti.');
+        }
+    })
+    .catch(() => alert('Kuna tatizo limetokea wakati wa kufuta akaunti.'));
+}
+</script>
+</body>
+</html>

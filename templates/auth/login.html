@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="{{ current_language or 'sw' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{ t('login') }} - Kijiji Tanzania</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        html, body {
+            width: 100%;
+            min-height: 100%;
+        }
+
+        body {
+            background:
+                radial-gradient(circle at 15% 15%, rgba(255,255,255,0.18), transparent 28%),
+                radial-gradient(circle at 85% 85%, rgba(255,255,255,0.15), transparent 32%),
+                linear-gradient(135deg, #0a7a28 0%, #00A3DD 50%, #FCD116 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        /* =========================
+           MAIN CARD + FLAG FRAME
+        ========================= */
+        .login-container {
+            width: 100%;
+            max-width: 430px;
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(12px);
+            border-radius: 28px;
+            padding: 32px 28px 28px;
+            box-shadow:
+                0 25px 60px rgba(0, 0, 0, 0.22),
+                0 8px 25px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            position: relative;
+            overflow: visible;
+        }
+
+        /* FLAG FRAME inayozunguka card yote + inapumua */
+        .login-container::before {
+            content: "";
+            position: absolute;
+            inset: -5px;
+            border-radius: 32px;
+            padding: 5px;
+            background: linear-gradient(
+                90deg,
+                #1EB53A,
+                #FCD116,
+                #000000,
+                #00A3DD,
+                #1EB53A
+            );
+            background-size: 300% 100%;
+            -webkit-mask: 
+                linear-gradient(#fff 0 0) content-box, 
+                linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            animation: flagPulse 3s ease-in-out infinite, flagMove 6s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes flagPulse {
+            0%, 100% { 
+                opacity: 0.85;
+                transform: scale(1);
+                filter: brightness(1);
+            }
+            50% { 
+                opacity: 1;
+                transform: scale(1.015);
+                filter: brightness(1.15);
+            }
+        }
+
+        @keyframes flagMove {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 300% 50%; }
+        }
+
+        /* =========================
+           BRAND
+        ========================= */
+        .login-container h1 {
+            color: #0f172a;
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 6px;
+            letter-spacing: -0.6px;
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 22px;
+            font-weight: 500;
+        }
+
+        /* =========================
+           LANGUAGE BUTTON
+        ========================= */
+        .lang-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border: 1.5px solid #bae6fd;
+            color: #0369a1;
+            padding: 9px 18px;
+            border-radius: 30px;
+            font-size: 13.5px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 18px;
+            transition: all 0.25s ease;
+            animation: breatheSoft 2.8s ease-in-out infinite;
+        }
+
+        .lang-btn:hover {
+            background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+            border-color: #00A3DD;
+            color: #0284c7;
+            transform: translateY(-1px);
+        }
+
+        /* =========================
+           FORM
+        ========================= */
+        .form-group {
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #1e293b;
+            margin-bottom: 7px;
+            font-weight: 700;
+        }
+
+        .form-group label::before {
+            content: "";
+            width: 4px;
+            height: 14px;
+            border-radius: 10px;
+            background: linear-gradient(to bottom, #1EB53A, #00A3DD);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 46px 14px 16px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px;
+            outline: none;
+            font-size: 15px;
+            background: #f8fafc;
+            color: #0f172a;
+            transition: all 0.2s ease;
+        }
+
+        .form-group input:focus {
+            border-color: #1EB53A;
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(30, 181, 58, 0.12);
+            transform: translateY(-1px);
+        }
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 36px;
+            height: 36px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #64748b;
+            font-size: 16px;
+            border-radius: 10px;
+            transition: all 0.2s;
+        }
+
+        .toggle-password:hover {
+            background: #ecfdf5;
+            color: #1EB53A;
+        }
+
+        .forgot-link {
+            text-align: right;
+            margin-top: 9px;
+            margin-bottom: 4px;
+        }
+
+        .forgot-link a {
+            color: #00A3DD;
+            font-size: 13px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .forgot-link a:hover {
+            color: #1EB53A;
+            text-decoration: underline;
+        }
+
+        /* =========================
+           LOGIN BUTTON
+        ========================= */
+        .btn-login {
+            width: 100%;
+            background: linear-gradient(135deg, #1EB53A, #15803d);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 8px;
+            box-shadow: 0 10px 24px rgba(30, 181, 58, 0.3);
+            transition: all 0.25s ease;
+            animation: breatheGreen 2s ease-in-out infinite;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 14px 30px rgba(30, 181, 58, 0.4);
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+        }
+
+        .btn-login:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        /* =========================
+           DIVIDER
+        ========================= */
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0 16px;
+            color: #94a3b8;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: #e2e8f0;
+        }
+
+        .divider span {
+            padding: 0 14px;
+        }
+
+        /* =========================
+           GOOGLE BUTTON
+        ========================= */
+        .btn-google {
+            width: 100%;
+            background: linear-gradient(135deg, #ffffff, #f1f5f9);
+            color: #334155;
+            border: 2px solid #e2e8f0;
+            padding: 13px;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 11px;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+            animation: breatheWhite 2.6s ease-in-out infinite;
+        }
+
+        .btn-google:hover {
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+            border-color: #00A3DD;
+        }
+
+        .btn-google img {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* =========================
+           FACEBOOK BUTTON
+        ========================= */
+        .btn-facebook {
+            width: 100%;
+            background: linear-gradient(135deg, #1877F2, #0d65d9);
+            color: #ffffff !important;
+            border: none;
+            padding: 14px;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 11px;
+            text-decoration: none;
+            margin-top: 12px;
+            box-shadow: 0 9px 22px rgba(24, 119, 242, 0.28);
+            transition: all 0.25s ease;
+            animation: breatheFacebook 2.6s ease-in-out infinite;
+        }
+
+        .btn-facebook:hover {
+            background: linear-gradient(135deg, #2184f7, #0b5fc9);
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 13px 28px rgba(24, 119, 242, 0.38);
+        }
+
+        .btn-facebook:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .btn-facebook i {
+            font-size: 19px;
+            width: 22px;
+            text-align: center;
+        }
+
+        /* =========================
+           REGISTER LINK (PULSE BOX)
+        ========================= */
+        .footer-text {
+            margin-top: 22px;
+            font-size: 14.5px;
+            color: #64748b;
+            line-height: 1.5;
+        }
+
+        .register-box {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+            padding: 12px 28px;
+            background: linear-gradient(135deg, #00A3DD, #0284c7);
+            color: white !important;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 15px;
+            border-radius: 50px;
+            box-shadow: 0 8px 20px rgba(0, 163, 221, 0.35);
+            transition: all 0.25s ease;
+            animation: breatheBlue 1.9s ease-in-out infinite;
+        }
+
+        .register-box:hover {
+            transform: scale(1.06);
+            box-shadow: 0 12px 28px rgba(0, 163, 221, 0.5);
+            background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+        }
+
+        /* =========================
+           HELP CENTER BUTTON
+        ========================= */
+        .help-footer {
+            margin-top: 18px;
+            padding-top: 6px;
+        }
+
+        .help-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, #FCD116, #eab308);
+            color: #1e293b !important;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 15px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(252, 209, 22, 0.4);
+            transition: all 0.25s ease;
+            animation: breatheYellow 2.1s ease-in-out infinite;
+            letter-spacing: 0.3px;
+        }
+
+        .help-btn:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 14px 32px rgba(252, 209, 22, 0.55);
+            background: linear-gradient(135deg, #fde047, #FCD116);
+        }
+
+        .help-btn i {
+            font-size: 17px;
+        }
+
+        /* =========================
+           ANIMATIONS
+        ========================= */
+        @keyframes breatheGreen {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 8px 20px rgba(30, 181, 58, 0.3);
+            }
+            50% { 
+                transform: scale(1.03);
+                box-shadow: 0 12px 28px rgba(30, 181, 58, 0.45);
+            }
+        }
+
+        @keyframes breatheBlue {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 8px 20px rgba(0, 163, 221, 0.3);
+            }
+            50% { 
+                transform: scale(1.03);
+                box-shadow: 0 12px 28px rgba(0, 163, 221, 0.45);
+            }
+        }
+
+        @keyframes breatheWhite {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+            }
+            50% { 
+                transform: scale(1.02);
+                box-shadow: 0 8px 20px rgba(0, 163, 221, 0.15);
+            }
+        }
+
+        @keyframes breatheYellow {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 8px 20px rgba(252, 209, 22, 0.35);
+            }
+            50% { 
+                transform: scale(1.03);
+                box-shadow: 0 12px 28px rgba(252, 209, 22, 0.5);
+            }
+        }
+
+        @keyframes breatheSoft {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.04); }
+        }
+
+        @keyframes breatheFacebook {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 9px 22px rgba(24, 119, 242, 0.28);
+            }
+            50% {
+                transform: scale(1.025);
+                box-shadow: 0 13px 28px rgba(24, 119, 242, 0.40);
+            }
+        }
+
+        /* =========================
+           FLASH
+        ========================= */
+        .flash-msg {
+            background: #fef2f2;
+            color: #b91c1c;
+            padding: 11px 12px;
+            border-radius: 12px;
+            margin-bottom: 14px;
+            font-size: 13px;
+            border: 1px solid #fecaca;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        /* ========== MODAL YA LUGHA ========== */
+        .lang-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.55);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .lang-modal.active {
+            display: flex;
+        }
+
+        .lang-modal-content {
+            background: white;
+            width: max-content;
+            max-width: calc(100vw - 40px);
+            max-height: 75vh;
+            padding: 22px 20px;
+            border-radius: 22px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            animation: languageCardIn 0.2s ease-out;
+        }
+
+        @keyframes languageCardIn {
+            from {
+                opacity: 0;
+                transform: scale(0.92);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .lang-modal-content h3 {
+            width: max-content;
+            max-width: 100%;
+            margin: 0 0 16px 2px;
+            color: #1EB53A;
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .lang-options-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 9px;
+            max-height: 52vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 2px 5px 4px 2px;
+        }
+
+        .lang-options-wrap::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .lang-options-wrap::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .lang-options-wrap::-webkit-scrollbar-thumb {
+            background: #d0d5dd;
+            border-radius: 10px;
+        }
+
+        .lang-options-wrap form {
+            width: max-content;
+            max-width: 100%;
+            margin: 0;
+        }
+
+        .lang-option {
+            display: inline-flex;
+            align-items: center;
+            gap: 11px;
+            width: max-content;
+            max-width: 100%;
+            padding: 12px 16px;
+            border-radius: 14px;
+            cursor: pointer;
+            border: 1.5px solid #e2e8f0;
+            background: #f8fafc;
+            text-align: left;
+            font-size: 14.5px;
+            color: #334155;
+            font-weight: 500;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: all 0.18s ease;
+        }
+
+        .lang-option:hover {
+            background: #ecfdf5;
+            border-color: #1EB53A;
+            color: #1EB53A;
+            transform: translateX(3px);
+        }
+
+        .lang-option:active {
+            transform: scale(0.98);
+        }
+
+        .lang-option.active {
+            background: #ecfdf5;
+            color: #1EB53A;
+            font-weight: 700;
+            border-color: #1EB53A;
+            box-shadow: 0 0 0 3px rgba(30,181,58,0.15);
+        }
+
+        .lang-option span.flag {
+            font-size: 20px;
+            width: 27px;
+            min-width: 27px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .lang-option span:not(.flag) {
+            white-space: nowrap;
+        }
+
+        /* ==================================================
+           MOBILE
+        ================================================== */
+        @media (max-width: 600px) {
+            body {
+                padding: 12px;
+                min-height: 100vh;
+                min-height: 100dvh;
+                align-items: stretch;
+                background: linear-gradient(145deg, #0c8a1f, #00A3DD 55%, #FCD116);
+            }
+
+            .login-container {
+                width: 100%;
+                max-width: none;
+                min-height: calc(100vh - 24px);
+                min-height: calc(100dvh - 24px);
+                border-radius: 22px;
+                padding: 24px 18px 26px;
+                box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+                overflow: visible;
+                backdrop-filter: none;
+            }
+
+            .login-container::before {
+                inset: -4px;
+                border-radius: 26px;
+                padding: 4px;
+            }
+
+            .login-container h1 {
+                font-size: 25px;
+            }
+
+            .subtitle {
+                font-size: 13.5px;
+                margin-bottom: 18px;
+            }
+
+            .btn-login {
+                padding: 14px;
+                font-size: 15.5px;
+            }
+
+            .btn-google {
+                padding: 13px;
+                font-size: 14.5px;
+            }
+
+            .btn-facebook {
+                padding: 13px;
+                font-size: 14.5px;
+            }
+
+            .register-box {
+                padding: 13px 26px;
+                font-size: 15px;
+            }
+
+            .help-btn {
+                padding: 15px 18px;
+                font-size: 15px;
+                border-radius: 14px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .login-container {
+                padding-left: 14px;
+                padding-right: 14px;
+            }
+
+            .login-container h1 {
+                font-size: 23px;
+            }
+
+            .lang-modal {
+                padding: 15px;
+            }
+
+            .lang-modal-content {
+                max-width: calc(100vw - 30px);
+                padding: 18px 14px;
+                border-radius: 18px;
+            }
+
+            .lang-option {
+                padding: 11px 13px;
+                font-size: 13.5px;
+            }
+
+            .lang-modal-content h3 {
+                font-size: 17px;
+            }
+        }
+
+        @media (max-height: 700px) and (max-width: 600px) {
+            .login-container {
+                padding-top: 18px;
+                padding-bottom: 20px;
+            }
+
+            .login-container h1 {
+                font-size: 23px;
+            }
+
+            .subtitle {
+                margin-bottom: 14px;
+            }
+
+            .form-group {
+                margin-bottom: 12px;
+            }
+
+            .form-group input {
+                padding-top: 12px;
+                padding-bottom: 12px;
+            }
+
+            .btn-login {
+                padding: 13px;
+            }
+
+            .divider {
+                margin: 14px 0 12px;
+            }
+
+            .btn-google {
+                padding: 12px;
+            }
+
+            .btn-facebook {
+                padding: 12px;
+            }
+
+            .footer-text {
+                margin-top: 16px;
+            }
+
+            .register-box {
+                padding: 11px 22px;
+                font-size: 14px;
+            }
+
+            .help-btn {
+                padding: 13px 16px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<audio id="bg-music" loop>
+    <source src="{{ url_for('static', filename='uploads/background.mp3') }}" type="audio/mp3">
+</audio>
+
+<div class="login-container">
+
+    <!-- BUTTON YA LUGHA -->
+    <button type="button" class="lang-btn" onclick="openLangModal()">
+        <i class="fa-solid fa-globe"></i>
+        <span>
+            {{ languages[current_language].flag if current_language in languages else '🇹🇿' }}
+            {{ languages[current_language].name if current_language in languages else 'Kiswahili' }}
+        </span>
+        <i class="fa-solid fa-chevron-down" style="font-size:11px;"></i>
+    </button>
+
+    <h1>Kijiji Tanzania</h1>
+    <p class="subtitle">{{ t('welcome_back') }}</p>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="flash-msg">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form action="/login" method="POST" onsubmit="stopMusicBeforeSubmit()">
+        <div class="form-group">
+            <label for="email">{{ t('email') }}</label>
+            <input type="email" id="email" name="email" placeholder="{{ t('enter_email') }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="password">{{ t('password') }}</label>
+            <div class="password-wrapper">
+                <input type="password" id="password" name="password" placeholder="{{ t('enter_password') }}" required>
+                <button type="button" class="toggle-password" onclick="togglePassword()">
+                    <i class="fa-solid fa-eye" id="eyeIcon"></i>
+                </button>
+            </div>
+            <div class="forgot-link">
+                <a href="{{ url_for('forgot_password') }}">{{ t('forgot_password') }}</a>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-login">{{ t('login') }}</button>
+    </form>
+
+    <div class="divider">
+        <span>{{ t('or') }}</span>
+    </div>
+
+    <button type="button" class="btn-google" onclick="handleGoogleLogin()">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+        {{ t('continue_google') }}
+    </button>
+
+    <!-- FACEBOOK LOGIN -->
+    <a href="{{ url_for('facebook_login') }}" class="btn-facebook">
+        <i class="fa-brands fa-facebook-f"></i>
+        Continue with Facebook
+    </a>
+
+    <!-- JISAJILI HAPA - BOX INAYOPUMUA -->
+    <div class="footer-text">
+        {{ t('no_account') }}
+        <br>
+        <a href="/register" class="register-box">
+            <i class="fa-solid fa-user-plus"></i>
+            {{ t('register_here') }}
+        </a>
+    </div>
+
+    <!-- KITU CHA MSAADA - BUTTON YA KUVUTIA -->
+    <div class="help-footer">
+        <a href="{{ url_for('help_center') }}" class="help-btn">
+            <i class="fa-solid fa-circle-question"></i>
+            {{ t('help_center') }}
+        </a>
+    </div>
+
+</div>
+
+<!-- ========== MODAL YA LUGHA ========== -->
+<div class="lang-modal" id="langModal">
+    <div class="lang-modal-content">
+        <h3>
+            <i class="fa-solid fa-globe"></i>
+            <span>Chagua Lugha</span>
+        </h3>
+        <div class="lang-options-wrap">
+            {% for code, lang in languages.items() %}
+            <form action="{{ url_for('change_language') }}" method="POST" style="margin:0;">
+                <input type="hidden" name="language" value="{{ code }}">
+                <input type="hidden" name="next" value="{{ url_for('login') }}">
+                <button type="submit" class="lang-option {% if current_language == code %}active{% endif %}">
+                    <span class="flag">{{ lang.flag }}</span>
+                    <span>{{ lang.name }}</span>
+                </button>
+            </form>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+    var I18N = {
+        google_load_fail: {{ t('google_load_fail')|tojson }},
+        google_login_fail: {{ t('google_login_fail')|tojson }}
+    };
+
+    const GOOGLE_CLIENT_ID = "1083614983079-k0oeie8lkao98r62m91dc0aqcgomhk15.apps.googleusercontent.com";
+    let googleReady = false;
+
+    function initGoogle() {
+        if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+            google.accounts.id.initialize({
+                client_id: GOOGLE_CLIENT_ID,
+                callback: onGoogleSignIn,
+                auto_select: false,
+                cancel_on_tap_outside: true
+            });
+            googleReady = true;
+        } else {
+            setTimeout(initGoogle, 400);
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const music = document.getElementById('bg-music');
+        if (music) {
+            const stored = localStorage.getItem('kijiji_bg_volume');
+            let vol = 20;
+            if (stored !== null && stored !== '') {
+                const n = parseInt(stored, 10);
+                if (!isNaN(n) && n >= 0 && n <= 100) {
+                    vol = n;
+                }
+            }
+            music.volume = vol / 100;
+            music.play().catch(() => {
+                document.body.addEventListener(
+                    'click',
+                    () => music.play(),
+                    { once: true }
+                );
+            });
+        }
+        initGoogle();
+    });
+
+    function stopMusicBeforeSubmit() {
+        const music = document.getElementById('bg-music');
+        if (music) {
+            music.pause();
+            music.currentTime = 0;
+        }
+    }
+
+    function togglePassword() {
+        const passwordInput = document.getElementById('password');
+        const eyeIcon = document.getElementById('eyeIcon');
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            eyeIcon.classList.remove('fa-eye');
+            eyeIcon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            eyeIcon.classList.remove('fa-eye-slash');
+            eyeIcon.classList.add('fa-eye');
+        }
+    }
+
+    function handleGoogleLogin() {
+        if (!googleReady) {
+            let tries = 0;
+            const wait = setInterval(() => {
+                tries++;
+                if (
+                    typeof google !== 'undefined' &&
+                    google.accounts &&
+                    google.accounts.id
+                ) {
+                    clearInterval(wait);
+                    googleReady = true;
+                    google.accounts.id.initialize({
+                        client_id: GOOGLE_CLIENT_ID,
+                        callback: onGoogleSignIn
+                    });
+                    google.accounts.id.prompt();
+                } else if (tries > 15) {
+                    clearInterval(wait);
+                    alert(I18N.google_load_fail);
+                }
+            }, 400);
+            return;
+        }
+        google.accounts.id.prompt();
+    }
+
+    function onGoogleSignIn(response) {
+        if (!response || !response.credential) {
+            alert(I18N.google_login_fail);
+            return;
+        }
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/auth/google';
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'credential';
+        input.value = response.credential;
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    // ========== LANGUAGE MODAL ==========
+    function openLangModal() {
+        document.getElementById('langModal').classList.add('active');
+    }
+
+    document.getElementById('langModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.remove('active');
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<div class="status-bar">
+        <div class="status-scroll">
+            <!-- Yako -->
+            <button type="button" class="status-item" id="myStatusBtn">
+                <div class="status-ring {% if my_status_info and my_status_info.has_status %}has-status{% endif %}" id="myStatusRing">
+                    <img src="{{ (my_status_info.profile_pic if my_status_info else None)|avatar(my_status_info.full_name if my_status_info and my_status_info.full_name else session.get('full_name') or session.get('username')) }}"
+                         onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ (session.get('username') or 'U')|urlencode }}&background=random&color=fff&size=128&bold=true';"
+                         alt="">
+                    <span class="status-add-badge" onclick="event.stopPropagation(); openStatusCreate();" title="{{ t('add_status') }}"><i class="fa-solid fa-plus"></i></span>
+                </div>
+                <div class="status-name">{{ t('your_status') }}</div>
+            </button>
+
+            {% if status_list %}
+                {% for s in status_list %}
+                    {% if s.user_id != session.get('user_id') %}
+                    <button type="button" class="status-item" data-user-id="{{ s.user_id }}" onclick="openStatusViewer({{ s.user_id }})">
+                        <div class="status-ring has-status {% if s.seen %}seen{% else %}unseen{% endif %}" id="status-ring-{{ s.user_id }}">
+                            <img src="{{ s.profile_pic|avatar(s.full_name or s.username) }}"
+                                 onerror="this.src='https://via.placeholder.com/64'"
+                                 alt="">
+                        </div>
+                        <div class="status-name">{% if s.full_name is defined and s.full_name %}{{ s.full_name }}{% else %}{{ s.username }}{% endif %}</div>
+                    </button>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- CREATE STATUS MODAL -->
+    <div class="status-modal-overlay" id="statusCreateModal" onclick="if(event.target===this) closeStatusCreate()">
+        <div class="status-modal-box">
+            <h3><i class="fa-solid fa-circle-plus" style="color:#1EB53A;"></i> {{ t('add_status') }}</h3>
+            <form action="/status/create" method="POST" enctype="multipart/form-data" onsubmit="return validateStatusForm()">
+                <textarea name="content" id="statusContent" rows="3" placeholder="Andika status (si lazima kama umeweka picha/video)..."></textarea>
+                <label class="status-file-label">
+                    <i class="fa-solid fa-image"></i> Picha / Video
+                    <input type="file" name="file" id="statusFile" accept="image/*,video/*" style="display:none;" onchange="previewStatusFile(this)">
+                </label>
+                <span id="statusFileName" style="font-size:12px;color:#65676b;margin-left:6px;"></span>
+                <div class="status-preview" id="statusPreview"></div>
+                <!-- Music picker -->
+                <div class="status-music-picker" style="margin-top:12px;">
+                    <label style="font-size:13px;font-weight:600;color:#333;display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+                        <i class="fa-solid fa-music" style="color:#1EB53A;"></i> Muziki (si lazima)
+                    </label>
+                    <div id="statusMusicOptions" style="display:flex;flex-wrap:wrap;gap:8px;">
+                        <label class="status-music-opt" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #e1e8ed;border-radius:20px;font-size:12px;cursor:pointer;background:#f8f9fa;">
+                            <input type="radio" name="music_path" value="" checked style="margin:0;" onchange="previewStatusMusic(this)"> Bila muziki
+                        </label>
+                        <label class="status-music-opt" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #e1e8ed;border-radius:20px;font-size:12px;cursor:pointer;background:#f8f9fa;">
+                            <input type="radio" name="music_path" value="music/bongo_chill.mp3" style="margin:0;" onchange="previewStatusMusic(this)"> Bongo Chill
+                        </label>
+                        <label class="status-music-opt" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #e1e8ed;border-radius:20px;font-size:12px;cursor:pointer;background:#f8f9fa;">
+                            <input type="radio" name="music_path" value="music/afro_beat.mp3" style="margin:0;" onchange="previewStatusMusic(this)"> Afro Beat
+                        </label>
+                        <label class="status-music-opt" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #e1e8ed;border-radius:20px;font-size:12px;cursor:pointer;background:#f8f9fa;">
+                            <input type="radio" name="music_path" value="music/gospel_soft.mp3" style="margin:0;" onchange="previewStatusMusic(this)"> Gospel Soft
+                        </label>
+                        <label class="status-music-opt" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #e1e8ed;border-radius:20px;font-size:12px;cursor:pointer;background:#f8f9fa;">
+                            <input type="radio" name="music_path" value="music/romantic.mp3" style="margin:0;" onchange="previewStatusMusic(this)"> Romantic
+                        </label>
+                        <label class="status-music-opt" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #e1e8ed;border-radius:20px;font-size:12px;cursor:pointer;background:#f8f9fa;">
+                            <input type="radio" name="music_path" value="music/upbeat.mp3" style="margin:0;" onchange="previewStatusMusic(this)"> Upbeat
+                        </label>
+                    </div>
+                    <p style="font-size:11px;color:#999;margin-top:6px;">Weka Status Upendayo <code>Enjoy The Day</code></p>
+                </div>
+                <p style="font-size:11px;color:#999;margin-top:6px;">Inaisha baada ya saa 24</p>
+                <div class="status-modal-actions">
+                    <button type="button" class="status-btn-cancel" onclick="closeStatusCreate()">{{ t('cancel') }}</button>
+                    <button type="submit" class="status-btn-save">Chapisha Status</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- STATUS VIEWER -->
+    <div class="status-viewer" id="statusViewer">
+        <div class="status-progress-row" id="statusProgressRow"></div>
+        <div class="status-viewer-top">
+            <a href="#" id="statusViewerProfileLink" style="display:flex;align-items:center;gap:10px;min-width:0;flex:1;text-decoration:none;color:inherit;">
+                <img id="statusViewerAvatar" src="https://via.placeholder.com/36" alt="">
+                <div style="min-width:0; flex:1;">
+                    <strong id="statusViewerName">User</strong>
+                    <small id="statusViewerTime"></small>
+                </div>
+            </a>
+            <button type="button" class="status-viewer-close" onclick="closeStatusViewer()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="status-viewer-body" id="statusViewerBody">
+            <div class="status-tap-left" id="statusTapLeft"></div>
+            <div class="status-tap-right" id="statusTapRight"></div>
+        </div>
+        <div class="status-viewer-caption" id="statusViewerCaption"></div>
+
+        <!-- Bottom actions: react / reply (wengine) | viewers (mmiliki) -->
+        <div class="status-bottom-bar" id="statusBottomBar">
+            <div class="status-react-row" id="statusReactRow">
+                <button type="button" class="status-react-btn" data-emoji="❤️" onclick="statusReact('❤️')">❤️</button>
+                <button type="button" class="status-react-btn" data-emoji="😂" onclick="statusReact('😂')">😂</button>
+                <button type="button" class="status-react-btn" data-emoji="😮" onclick="statusReact('😮')">😮</button>
+                <button type="button" class="status-react-btn" data-emoji="🔥" onclick="statusReact('🔥')">🔥</button>
+                <button type="button" class="status-react-btn" data-emoji="👍" onclick="statusReact('👍')">👍</button>
+                <button type="button" class="status-react-btn" data-emoji="👏" onclick="statusReact('👏')">👏</button>
+            </div>
+            <div class="status-reply-row" id="statusReplyRow">
+                <input type="text" id="statusReplyInput" class="status-reply-input" placeholder="Jibu status..." maxlength="500" autocomplete="off">
+                <button type="button" class="status-reply-send" onclick="statusSendReply()"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+            <div class="status-owner-actions" id="statusOwnerActions" style="display:none; width:100%; gap:8px; flex-wrap:wrap;">
+                <button type="button" class="status-viewers-btn" id="statusViewersBtn" onclick="openStatusViewers()">
+                    <i class="fa-solid fa-eye"></i> <span id="statusViewsCount">0</span> viewers
+                </button>
+                <button type="button" class="status-viewers-btn" id="statusDeleteBtn" onclick="deleteCurrentStatus()" style="background:rgba(220,53,69,0.25);">
+                    <i class="fa-solid fa-trash"></i> Futa status
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status viewers panel -->
+    <div class="status-viewers-overlay" id="statusViewersOverlay" onclick="if(event.target===this) closeStatusViewers()">
+        <div class="status-viewers-sheet">
+            <div class="status-viewers-handle"></div>
+            <h3 id="statusViewersTitle">Viewers</h3>
+            <div id="statusViewersList" class="status-viewers-list"></div>
+            <button type="button" class="status-viewers-close-btn" onclick="closeStatusViewers()">Funga</button>
+        </div>
+    </div>
+

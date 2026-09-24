@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Drafts · Kijiji Tanzania</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root {
+  --bg: #0f1419;
+  --bg2: #1a2332;
+  --bg3: #243044;
+  --card: #1e293b;
+  --border: #334155;
+  --text: #f1f5f9;
+  --muted: #94a3b8;
+  --accent: #22c55e;
+  --accent2: #16a34a;
+  --danger: #ef4444;
+  --warn: #f59e0b;
+  --blue: #3b82f6;
+  --purple: #8A2BE2;
+  --radius: 14px;
+  --shadow: 0 8px 24px rgba(0,0,0,.35);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.45;
+  padding-bottom: 40px;
+}
+a { color: var(--accent); text-decoration: none; }
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(15,20,25,.94);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  display: flex; align-items: center; gap: 12px;
+}
+.topbar h1 { font-size: 1.1rem; font-weight: 700; flex: 1; }
+.topbar .back {
+  color: var(--text); font-size: 1.1rem; padding: 8px 10px;
+  border-radius: 10px; background: var(--bg3);
+}
+.wrap { max-width: 720px; margin: 0 auto; padding: 14px; }
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+}
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  border: none; cursor: pointer; border-radius: 10px;
+  padding: 10px 14px; font-weight: 600; font-size: .9rem;
+  font-family: inherit; transition: .15s ease;
+}
+.btn-primary { background: var(--accent); color: #052e16; }
+.btn-primary:hover { background: var(--accent2); }
+.btn-ghost { background: var(--bg3); color: var(--text); }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-blue { background: var(--blue); color: #fff; }
+.btn-warn { background: var(--warn); color: #1c1917; }
+.btn-sm { padding: 7px 10px; font-size: .8rem; }
+.btn:disabled { opacity: .55; cursor: not-allowed; }
+.muted { color: var(--muted); font-size: .88rem; }
+.input, textarea, select {
+  width: 100%; background: var(--bg2); border: 1px solid var(--border);
+  color: var(--text); border-radius: 10px; padding: 10px 12px; font-size: .95rem;
+  font-family: inherit;
+}
+textarea { min-height: 110px; resize: vertical; line-height: 1.5; }
+.input:focus, textarea:focus, select:focus {
+  outline: none; border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(34,197,94,.15);
+}
+.section-title {
+  font-size: .78rem; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--muted); margin: 16px 0 8px; font-weight: 700;
+}
+.empty {
+  text-align: center; padding: 48px 16px; color: var(--muted);
+}
+.empty i { font-size: 42px; margin-bottom: 12px; opacity: .5; display: block; }
+.badge {
+  font-size: .72rem; padding: 3px 9px; border-radius: 999px;
+  background: var(--bg3); color: var(--muted); font-weight: 600;
+}
+.badge.scheduled { background: #1e3a5f; color: #93c5fd; }
+.badge.due { background: #78350f; color: #fde68a; }
+.badge.draft { background: #334155; color: #cbd5e1; }
+.media-preview {
+  margin-top: 10px; border-radius: 12px; overflow: hidden;
+  background: #000; position: relative; display: none;
+}
+.media-preview.show { display: block; }
+.media-preview img, .media-preview video {
+  width: 100%; max-height: 280px; object-fit: contain; display: block;
+}
+.media-preview .doc {
+  padding: 20px; display: flex; align-items: center; gap: 12px; color: var(--text);
+}
+.media-remove {
+  position: absolute; top: 8px; right: 8px;
+  background: rgba(0,0,0,.7); color: #fff; border: none;
+  width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
+}
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.toolbar {
+  display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0;
+  align-items: center;
+}
+.char-count { font-size: .8rem; color: var(--muted); margin-left: auto; }
+.char-count.warn { color: var(--warn); }
+.char-count.over { color: var(--danger); }
+.autosave {
+  font-size: .78rem; color: var(--muted);
+  display: flex; align-items: center; gap: 6px;
+}
+.autosave.saved { color: var(--accent); }
+.autosave.saving { color: var(--warn); }
+.grid-tools {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;
+}
+@media (max-width: 480px) {
+  .grid-tools { grid-template-columns: 1fr; }
+}
+.filters {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;
+}
+.filters input, .filters select { flex: 1; min-width: 120px; }
+.draft-card .post-text {
+  white-space: pre-wrap; margin-top: 6px; word-break: break-word;
+}
+.draft-card .thumb {
+  width: 100%; max-height: 180px; object-fit: cover;
+  border-radius: 10px; margin-top: 8px; background: #000;
+}
+.countdown {
+  font-size: .82rem; color: #93c5fd; margin-top: 6px;
+  display: flex; align-items: center; gap: 6px;
+}
+.templates {
+  display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0;
+}
+.templates button {
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text); border-radius: 999px; padding: 6px 12px;
+  font-size: .78rem; cursor: pointer; font-family: inherit;
+}
+.templates button:hover { border-color: var(--accent); color: var(--accent); }
+.best-times {
+  display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;
+}
+.best-times button {
+  background: #1e3a5f; border: none; color: #93c5fd;
+  border-radius: 8px; padding: 6px 10px; font-size: .78rem;
+  cursor: pointer; font-family: inherit;
+}
+.view-tabs {
+  display: flex; gap: 6px; margin-bottom: 12px;
+  background: var(--bg2); padding: 4px; border-radius: 12px;
+}
+.view-tabs button {
+  flex: 1; border: none; background: transparent; color: var(--muted);
+  padding: 8px; border-radius: 10px; font-weight: 600; cursor: pointer;
+  font-family: inherit; font-size: .85rem;
+}
+.view-tabs button.active {
+  background: var(--accent); color: #052e16;
+}
+.calendar-day {
+  margin-bottom: 14px;
+}
+.calendar-day h3 {
+  font-size: .85rem; color: var(--muted); margin-bottom: 8px;
+  padding-bottom: 4px; border-bottom: 1px solid var(--border);
+}
+.hashtag { color: #38bdf8; font-weight: 700; }
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: #1e293b; color: #fff; padding: 10px 18px; border-radius: 12px;
+  font-size: .88rem; z-index: 9999; opacity: 0; transition: .25s;
+  pointer-events: none; max-width: 90%;
+}
+.toast.show { opacity: 1; }
+.toast.ok { background: #14532d; }
+.toast.err { background: #7f1d1d; }
+.form-row { margin: 8px 0; }
+.form-row label { display: block; font-size: .82rem; color: var(--muted); margin-bottom: 4px; }
+.stats-mini {
+  display: flex; gap: 10px; margin-bottom: 12px;
+}
+.stats-mini .stat {
+  flex: 1; background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 10px; text-align: center;
+}
+.stats-mini .stat b { display: block; font-size: 1.2rem; color: var(--accent); }
+.stats-mini .stat span { font-size: .72rem; color: var(--muted); }
+.composer-actions {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;
+}
+.file-label {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--bg3); padding: 8px 12px; border-radius: 10px;
+  cursor: pointer; font-size: .85rem; font-weight: 600;
+}
+.file-label input { display: none; }
+.editing-banner {
+  display: none;
+  background: #1e3a5f; color: #93c5fd;
+  padding: 8px 12px; border-radius: 10px; margin-bottom: 10px;
+  font-size: .85rem; align-items: center; justify-content: space-between;
+}
+.editing-banner.show { display: flex; }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="back" href="{{ url_for('home') }}" aria-label="Back"><i class="fa-solid fa-arrow-left"></i></a>
+  <h1><i class="fa-solid fa-file-lines"></i> Drafts</h1>
+  <span class="autosave" id="autosaveStatus"></span>
+</header>
+
+<main class="wrap">
+  <!-- Stats -->
+  <div class="stats-mini">
+    <div class="stat"><b id="statTotal">0</b><span>Jumla</span></div>
+    <div class="stat"><b id="statScheduled">0</b><span>Zimepangwa</span></div>
+    <div class="stat"><b id="statDrafts">0</b><span>Drafts</span></div>
+  </div>
+
+  <!-- Composer -->
+  <div class="card" id="composerCard">
+    <div class="editing-banner" id="editingBanner">
+      <span><i class="fa-solid fa-pen"></i> Unahariri draft #<span id="editingId"></span></span>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="cancelEdit()">Ghairi</button>
+    </div>
+    <form id="draftForm">
+      <input type="hidden" name="draft_id" id="draftId" value="">
+      <input type="hidden" name="remove_media" id="removeMedia" value="0">
+
+      <label class="muted">Templates</label>
+      <div class="templates" id="templates">
+        <button type="button" data-tpl="Habari za asubuhi ☀️ #kijiji">Asubuhi</button>
+        <button type="button" data-tpl="Tangazo: 📢 &#10;&#10;#biashara #tanzania">Tangazo</button>
+        <button type="button" data-tpl="Swali kwa jamii: 🤔 &#10;&#10;Je, ...?">Swali</button>
+        <button type="button" data-tpl="Shukrani 🙏 &#10;&#10;#asante">Shukrani</button>
+        <button type="button" data-tpl="Leo nimejifunza... 💡 #elimu">Elimu</button>
+      </div>
+
+      <div class="form-row">
+        <label>Andika draft</label>
+        <textarea name="content" id="content" placeholder="Andika hapa... unaweza kuweka #hashtag" maxlength="5000"></textarea>
+        <div class="toolbar">
+          <span class="char-count" id="charCount">0 / 5000</span>
+        </div>
+      </div>
+
+      <div class="grid-tools">
+        <div class="form-row">
+          <label>Panga muda (EAT · Tanzania)</label>
+          <input class="input" type="datetime-local" name="scheduled_at" id="scheduledAt">
+          <div class="best-times">
+            <button type="button" data-hours="9">Leo 09:00</button>
+            <button type="button" data-hours="12">12:00</button>
+            <button type="button" data-hours="18">18:00</button>
+            <button type="button" data-hours="20">20:00</button>
+          </div>
+          <p class="muted" style="margin-top:4px;font-size:.75rem">Best times: asubuhi 9, mchana 12, jioni 18–20</p>
+        </div>
+        <div class="form-row">
+          <label>Category</label>
+          <select name="category" id="category" class="input">
+            <option value="general">General</option>
+            <option value="football">Football</option>
+            <option value="music">Music</option>
+            <option value="comedy">Comedy</option>
+            <option value="news">News</option>
+            <option value="technology">Technology</option>
+            <option value="islamic">Islamic</option>
+            <option value="business">Business</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="composer-actions">
+        <label class="file-label">
+          <i class="fa-solid fa-image"></i> Media
+          <input type="file" name="file" id="fileInput" accept="image/*,video/*,.pdf,.doc,.docx,.txt">
+        </label>
+        <button type="button" class="btn btn-ghost btn-sm" id="clearScheduleBtn" onclick="clearScheduleField()">Futa muda</button>
+      </div>
+
+      <div class="media-preview" id="mediaPreview">
+        <button type="button" class="media-remove" onclick="removeMediaPreview()" aria-label="Ondoa"><i class="fa-solid fa-xmark"></i></button>
+        <div id="mediaPreviewInner"></div>
+      </div>
+
+      <div class="actions">
+        <button type="submit" class="btn btn-primary" id="saveBtn" style="flex:1">
+          <i class="fa-solid fa-floppy-disk"></i> Hifadhi Draft
+        </button>
+        <button type="button" class="btn btn-blue" id="publishNowBtn" onclick="saveAndPublish()" style="flex:1">
+          <i class="fa-solid fa-paper-plane"></i> Chapisha sasa
+        </button>
+      </div>
+      <div class="muted" id="draftMsg" style="margin-top:8px"></div>
+    </form>
+  </div>
+
+  <!-- Filters + view -->
+  <div class="view-tabs">
+    <button type="button" class="active" data-view="list" onclick="setView('list')">Orodha</button>
+    <button type="button" data-view="calendar" onclick="setView('calendar')">Kalenda</button>
+  </div>
+  <div class="filters">
+    <input class="input" type="search" id="filterQ" placeholder="Tafuta drafts..." oninput="renderList()">
+    <select class="input" id="filterStatus" onchange="renderList()">
+      <option value="all">Zote</option>
+      <option value="draft">Drafts tu</option>
+      <option value="scheduled">Zimepangwa</option>
+    </select>
+    <select class="input" id="filterSort" onchange="renderList()">
+      <option value="newest">Mpya kwanza</option>
+      <option value="oldest">Zamani kwanza</option>
+      <option value="scheduled">Zilizopangwa kwanza</option>
+    </select>
+  </div>
+
+  <div class="section-title">Drafts zako</div>
+  <div id="listView"></div>
+  <div id="calendarView" style="display:none"></div>
+</main>
+
+<script>
+const DRAFTS = {{ drafts|tojson if drafts is defined else '[]' }};
+const STATIC = {{ url_for('static', filename='uploads/')|tojson }};
+const MAX_CHARS = 5000;
+const AUTO_MS = 3000;
+
+let currentDraftId = null;
+let autosaveTimer = null;
+let dirty = false;
+let existingMedia = null; // {file_path, media_type}
+
+function toast(msg, type) {
+  const t = document.createElement('div');
+  t.className = 'toast ' + (type || '');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 250); }, 2600);
+}
+
+function pad(n) { return String(n).padStart(2, '0'); }
+
+function toLocalInputValue(s) {
+  if (!s) return '';
+  // "2026-09-15 18:00:00" or ISO
+  const m = String(s).replace('T', ' ').slice(0, 16);
+  return m.replace(' ', 'T');
+}
+
+function fromLocalInputValue(v) {
+  if (!v) return '';
+  // datetime-local → "YYYY-MM-DD HH:MM:00"
+  return v.replace('T', ' ') + (v.length === 16 ? ':00' : '');
+}
+
+function setBestTime(hours) {
+  const d = new Date();
+  d.setHours(hours, 0, 0, 0);
+  if (d.getTime() < Date.now()) d.setDate(d.getDate() + 1);
+  const v = d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  document.getElementById('scheduledAt').value = v;
+  dirty = true;
+  scheduleAutosave();
+}
+
+function clearScheduleField() {
+  document.getElementById('scheduledAt').value = '';
+  dirty = true;
+  scheduleAutosave();
+}
+
+function updateCharCount() {
+  const n = (document.getElementById('content').value || '').length;
+  const el = document.getElementById('charCount');
+  el.textContent = n + ' / ' + MAX_CHARS;
+  el.classList.toggle('warn', n > MAX_CHARS * 0.9);
+  el.classList.toggle('over', n > MAX_CHARS);
+}
+
+function setAutosave(state, text) {
+  const el = document.getElementById('autosaveStatus');
+  el.className = 'autosave ' + (state || '');
+  el.innerHTML = text || '';
+}
+
+function scheduleAutosave() {
+  dirty = true;
+  clearTimeout(autosaveTimer);
+  autosaveTimer = setTimeout(() => {
+    if (!dirty) return;
+    const content = document.getElementById('content').value.trim();
+    const hasMedia = existingMedia || document.getElementById('fileInput').files[0];
+    if (!content && !hasMedia && !currentDraftId) return;
+    saveDraft({ silent: true });
+  }, AUTO_MS);
+}
+
+function removeMediaPreview() {
+  document.getElementById('fileInput').value = '';
+  document.getElementById('mediaPreview').classList.remove('show');
+  document.getElementById('mediaPreviewInner').innerHTML = '';
+  if (existingMedia) {
+    document.getElementById('removeMedia').value = '1';
+    existingMedia = null;
+  }
+  dirty = true;
+  scheduleAutosave();
+}
+
+function showMediaPreview(file, url, mediaType) {
+  const box = document.getElementById('mediaPreview');
+  const inner = document.getElementById('mediaPreviewInner');
+  box.classList.add('show');
+  if (mediaType === 'video' || (file && file.type && file.type.startsWith('video/'))) {
+    const src = url || URL.createObjectURL(file);
+    inner.innerHTML = '<video src="' + src + '" controls playsinline></video>';
+  } else if (mediaType === 'image' || (file && file.type && file.type.startsWith('image/'))) {
+    const src = url || URL.createObjectURL(file);
+    inner.innerHTML = '<img src="' + src + '" alt="preview">';
+  } else {
+    const name = file ? file.name : (url || 'Document');
+    inner.innerHTML = '<div class="doc"><i class="fa-solid fa-file" style="font-size:28px;color:var(--accent)"></i><span>' + name + '</span></div>';
+  }
+}
+
+function linkify(text) {
+  return String(text || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/#([A-Za-z0-9_]{1,60})/g, '<span class="hashtag">#$1</span>');
+}
+
+function countdownText(sched) {
+  if (!sched) return '';
+  const t = new Date(sched.replace(' ', 'T') + '+03:00').getTime();
+  const diff = t - Date.now();
+  if (isNaN(t)) return '';
+  if (diff <= 0) return 'Inastahili kuchapishwa sasa';
+  const s = Math.floor(diff / 1000);
+  const d = Math.floor(s / 86400);
+  const h = Math.floor((s % 86400) / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  if (d > 0) return 'Itachapishwa baada ya siku ' + d + ', saa ' + h + ':' + pad(m);
+  if (h > 0) return 'Itachapishwa baada ya saa ' + h + ':' + pad(m);
+  return 'Itachapishwa baada ya dakika ' + m;
+}
+
+function updateStats() {
+  const total = DRAFTS.length;
+  const scheduled = DRAFTS.filter(d => d.scheduled_at).length;
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statScheduled').textContent = scheduled;
+  document.getElementById('statDrafts').textContent = total - scheduled;
+}
+
+function filteredDrafts() {
+  const q = (document.getElementById('filterQ').value || '').toLowerCase().trim();
+  const st = document.getElementById('filterStatus').value;
+  const sort = document.getElementById('filterSort').value;
+  let list = DRAFTS.slice();
+  if (q) list = list.filter(d => (d.content || '').toLowerCase().indexOf(q) >= 0 || String(d.id).indexOf(q) >= 0);
+  if (st === 'draft') list = list.filter(d => !d.scheduled_at);
+  if (st === 'scheduled') list = list.filter(d => !!d.scheduled_at);
+  if (sort === 'newest') list.sort((a,b) => b.id - a.id);
+  if (sort === 'oldest') list.sort((a,b) => a.id - b.id);
+  if (sort === 'scheduled') list.sort((a,b) => {
+    if (!a.scheduled_at && !b.scheduled_at) return b.id - a.id;
+    if (!a.scheduled_at) return 1;
+    if (!b.scheduled_at) return -1;
+    return a.scheduled_at.localeCompare(b.scheduled_at);
+  });
+  return list;
+}
+
+function draftCardHtml(d) {
+  let badge = '<span class="badge draft">Draft</span>';
+  if (d.scheduled_at) {
+    const due = d.status === 'due' || (d.scheduled_at && d.scheduled_at <= new Date().toISOString().slice(0,19).replace('T',' '));
+    badge = due
+      ? '<span class="badge due">Inastahili sasa</span>'
+      : '<span class="badge scheduled">Imepangwa</span>';
+  }
+  let media = '';
+  if (d.file_path) {
+    if (d.media_type === 'video') {
+      media = '<video class="thumb" src="' + STATIC + d.file_path + '" muted playsinline></video>';
+    } else if (d.media_type === 'image') {
+      media = '<img class="thumb" src="' + STATIC + d.file_path + '" alt="">';
+    } else {
+      media = '<div class="muted" style="margin-top:6px"><i class="fa-solid fa-file"></i> ' + d.file_path + '</div>';
+    }
+  }
+  const cd = d.scheduled_at ? '<div class="countdown"><i class="fa-regular fa-clock"></i> ' + countdownText(d.scheduled_at) + '</div>' : '';
+  return (
+    '<article class="card draft-card" id="draft-' + d.id + '" data-id="' + d.id + '">' +
+    '<div class="muted" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">' +
+    badge + ' <span>#' + d.id + '</span> · ' + (d.created_at || '') +
+    (d.scheduled_at ? ' · ⏰ ' + d.scheduled_at : '') +
+    (d.category ? ' · <span class="badge">' + d.category + '</span>' : '') +
+    '</div>' +
+    '<div class="post-text">' + linkify(d.content || '(media only)') + '</div>' +
+    media + cd +
+    '<div class="actions">' +
+    '<button class="btn btn-primary btn-sm" onclick="publishDraft(' + d.id + ')"><i class="fa-solid fa-paper-plane"></i> Chapisha</button>' +
+    '<button class="btn btn-ghost btn-sm" onclick="editDraft(' + d.id + ')"><i class="fa-solid fa-pen"></i> Hariri</button>' +
+    '<button class="btn btn-ghost btn-sm" onclick="duplicateDraft(' + d.id + ')"><i class="fa-solid fa-copy"></i> Nakili</button>' +
+    (d.scheduled_at ? '<button class="btn btn-warn btn-sm" onclick="unscheduleDraft(' + d.id + ')"><i class="fa-solid fa-calendar-xmark"></i> Futa muda</button>' : '') +
+    '<button class="btn btn-danger btn-sm" onclick="deleteDraft(' + d.id + ')"><i class="fa-solid fa-trash"></i> Futa</button>' +
+    '</div></article>'
+  );
+}
+
+function renderList() {
+  const list = filteredDrafts();
+  const el = document.getElementById('listView');
+  if (!list.length) {
+    el.innerHTML = '<div class="empty"><i class="fa-regular fa-folder-open"></i>Hakuna draft<br><span class="muted">Andika draft yako ya kwanza hapo juu</span></div>';
+  } else {
+    el.innerHTML = list.map(draftCardHtml).join('');
+  }
+  renderCalendar();
+  updateStats();
+}
+
+function renderCalendar() {
+  const el = document.getElementById('calendarView');
+  const scheduled = DRAFTS.filter(d => d.scheduled_at).slice();
+  scheduled.sort((a,b) => a.scheduled_at.localeCompare(b.scheduled_at));
+  if (!scheduled.length) {
+    el.innerHTML = '<div class="empty"><i class="fa-regular fa-calendar"></i>Hakuna post zilizopangwa</div>';
+    return;
+  }
+  const groups = {};
+  scheduled.forEach(d => {
+    const day = d.scheduled_at.slice(0, 10);
+    (groups[day] = groups[day] || []).push(d);
+  });
+  el.innerHTML = Object.keys(groups).map(day => {
+    return '<div class="calendar-day"><h3><i class="fa-regular fa-calendar"></i> ' + day + '</h3>' +
+      groups[day].map(draftCardHtml).join('') + '</div>';
+  }).join('');
+}
+
+function setView(name) {
+  document.querySelectorAll('.view-tabs button').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+  document.getElementById('listView').style.display = name === 'list' ? '' : 'none';
+  document.getElementById('calendarView').style.display = name === 'calendar' ? '' : 'none';
+}
+
+function editDraft(id) {
+  const d = DRAFTS.find(x => x.id === id);
+  if (!d) return;
+  currentDraftId = id;
+  document.getElementById('draftId').value = id;
+  document.getElementById('content').value = d.content || '';
+  document.getElementById('scheduledAt').value = toLocalInputValue(d.scheduled_at);
+  document.getElementById('category').value = d.category || 'general';
+  document.getElementById('removeMedia').value = '0';
+  document.getElementById('editingId').textContent = id;
+  document.getElementById('editingBanner').classList.add('show');
+  document.getElementById('saveBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Sasisha Draft';
+  existingMedia = d.file_path ? { file_path: d.file_path, media_type: d.media_type } : null;
+  if (existingMedia) {
+    showMediaPreview(null, STATIC + existingMedia.file_path, existingMedia.media_type);
+  } else {
+    document.getElementById('mediaPreview').classList.remove('show');
+  }
+  updateCharCount();
+  dirty = false;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function cancelEdit() {
+  currentDraftId = null;
+  document.getElementById('draftId').value = '';
+  document.getElementById('content').value = '';
+  document.getElementById('scheduledAt').value = '';
+  document.getElementById('removeMedia').value = '0';
+  document.getElementById('fileInput').value = '';
+  document.getElementById('mediaPreview').classList.remove('show');
+  document.getElementById('editingBanner').classList.remove('show');
+  document.getElementById('saveBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Hifadhi Draft';
+  existingMedia = null;
+  dirty = false;
+  updateCharCount();
+}
+
+async function saveDraft(opts) {
+  opts = opts || {};
+  const form = document.getElementById('draftForm');
+  const fd = new FormData(form);
+  // normalize scheduled
+  const raw = document.getElementById('scheduledAt').value;
+  if (raw) fd.set('scheduled_at', fromLocalInputValue(raw));
+  else fd.set('scheduled_at', '');
+
+  if (!opts.silent) setAutosave('saving', '<i class="fa-solid fa-spinner fa-spin"></i>');
+  const msg = document.getElementById('draftMsg');
+  if (!opts.silent) msg.textContent = 'Inahifadhi...';
+
+  try {
+    const r = await fetch('/drafts/save', { method: 'POST', body: fd });
+    const d = await r.json();
+    if (!d.success) {
+      if (!opts.silent) { msg.textContent = d.message || 'Imeshindikana'; toast(d.message || 'Imeshindikana', 'err'); }
+      setAutosave('', '');
+      return null;
+    }
+    dirty = false;
+    currentDraftId = d.draft_id;
+    document.getElementById('draftId').value = d.draft_id;
+    document.getElementById('fileInput').value = '';
+    document.getElementById('removeMedia').value = '0';
+    if (d.file_path) {
+      existingMedia = { file_path: d.file_path, media_type: d.media_type };
+      showMediaPreview(null, STATIC + d.file_path, d.media_type);
+    }
+    // update local list
+    const idx = DRAFTS.findIndex(x => x.id === d.draft_id);
+    const item = {
+      id: d.draft_id,
+      content: document.getElementById('content').value,
+      file_path: d.file_path || (existingMedia && existingMedia.file_path) || null,
+      media_type: d.media_type || (existingMedia && existingMedia.media_type) || null,
+      scheduled_at: d.scheduled_at || null,
+      created_at: idx >= 0 ? DRAFTS[idx].created_at : new Date().toISOString().slice(0,19).replace('T',' '),
+      category: d.category || document.getElementById('category').value,
+      status: d.scheduled_at ? 'scheduled' : 'draft'
+    };
+    if (idx >= 0) DRAFTS[idx] = item; else DRAFTS.unshift(item);
+    renderList();
+    document.getElementById('editingId').textContent = d.draft_id;
+    document.getElementById('editingBanner').classList.add('show');
+    document.getElementById('saveBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Sasisha Draft';
+    const nowStr = new Date().toLocaleTimeString('sw-TZ', { hour: '2-digit', minute: '2-digit' });
+    setAutosave('saved', '<i class="fa-solid fa-check"></i> ' + nowStr);
+    if (!opts.silent) {
+      msg.textContent = d.message || 'OK';
+      toast(d.message || 'Imehifadhiwa', 'ok');
+    }
+    return d;
+  } catch (e) {
+    if (!opts.silent) { msg.textContent = 'Hitilafu'; toast('Hitilafu', 'err'); }
+    setAutosave('', '');
+    return null;
+  }
+}
+
+async function saveAndPublish() {
+  const saved = await saveDraft({ silent: false });
+  if (!saved || !saved.draft_id) return;
+  await publishDraft(saved.draft_id);
+}
+
+async function publishDraft(id) {
+  if (!confirm('Chapisha draft hii sasa?')) return;
+  try {
+    const r = await fetch('/drafts/publish/' + id, { method: 'POST' });
+    const d = await r.json();
+    if (d.success) {
+      toast('Imechapishwa!', 'ok');
+      setTimeout(() => { location.href = '/home'; }, 500);
+    } else toast(d.message || 'Imeshindikana', 'err');
+  } catch (e) { toast('Hitilafu', 'err'); }
+}
+
+async function deleteDraft(id) {
+  if (!confirm('Futa draft hii kabisa?')) return;
+  try {
+    const r = await fetch('/drafts/delete/' + id, { method: 'POST' });
+    const d = await r.json();
+    if (d.success) {
+      const i = DRAFTS.findIndex(x => x.id === id);
+      if (i >= 0) DRAFTS.splice(i, 1);
+      document.getElementById('draft-' + id)?.remove();
+      if (currentDraftId === id) cancelEdit();
+      renderList();
+      toast('Imefutwa', 'ok');
+    } else toast('Imeshindikana', 'err');
+  } catch (e) { toast('Hitilafu', 'err'); }
+}
+
+async function duplicateDraft(id) {
+  try {
+    const r = await fetch('/drafts/duplicate/' + id, { method: 'POST' });
+    const d = await r.json();
+    if (d.success) {
+      toast('Imenakiliwa', 'ok');
+      setTimeout(() => location.reload(), 400);
+    } else toast(d.message || 'Imeshindikana', 'err');
+  } catch (e) { toast('Hitilafu', 'err'); }
+}
+
+async function unscheduleDraft(id) {
+  try {
+    const r = await fetch('/drafts/unschedule/' + id, { method: 'POST' });
+    const d = await r.json();
+    if (d.success) {
+      const item = DRAFTS.find(x => x.id === id);
+      if (item) { item.scheduled_at = null; item.status = 'draft'; }
+      renderList();
+      toast('Muda umefutwa', 'ok');
+    }
+  } catch (e) { toast('Hitilafu', 'err'); }
+}
+
+// Events
+document.getElementById('draftForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  saveDraft({ silent: false });
+});
+document.getElementById('content').addEventListener('input', function() {
+  updateCharCount();
+  scheduleAutosave();
+});
+document.getElementById('scheduledAt').addEventListener('change', () => { dirty = true; scheduleAutosave(); });
+document.getElementById('category').addEventListener('change', () => { dirty = true; scheduleAutosave(); });
+document.getElementById('fileInput').addEventListener('change', function() {
+  const f = this.files && this.files[0];
+  if (!f) return;
+  // max ~24MB soft check
+  if (f.size > 24 * 1024 * 1024) {
+    toast('File isizidi 24MB', 'err');
+    this.value = '';
+    return;
+  }
+  document.getElementById('removeMedia').value = '0';
+  showMediaPreview(f);
+  dirty = true;
+  scheduleAutosave();
+});
+document.querySelectorAll('#templates button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const ta = document.getElementById('content');
+    ta.value = (ta.value ? ta.value + '\n\n' : '') + btn.getAttribute('data-tpl');
+    updateCharCount();
+    scheduleAutosave();
+  });
+});
+document.querySelectorAll('.best-times button').forEach(btn => {
+  btn.addEventListener('click', () => setBestTime(parseInt(btn.getAttribute('data-hours'), 10)));
+});
+
+// countdown refresh
+setInterval(() => {
+  document.querySelectorAll('.draft-card').forEach(card => {
+    const id = parseInt(card.getAttribute('data-id'), 10);
+    const d = DRAFTS.find(x => x.id === id);
+    if (!d || !d.scheduled_at) return;
+    const cd = card.querySelector('.countdown');
+    if (cd) cd.innerHTML = '<i class="fa-regular fa-clock"></i> ' + countdownText(d.scheduled_at);
+  });
+}, 30000);
+
+updateCharCount();
+renderList();
+</script>
+</body>
+</html>

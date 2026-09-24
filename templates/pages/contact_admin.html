@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wasiliana na Admin - Kijiji Tanzania</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; }
+        .container { max-width: 500px; margin: 40px auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h2 { color: #1EB53A; text-align: center; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
+        input, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; outline: none; box-sizing: border-box; }
+        button { background: #1EB53A; color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 16px; }
+        button:hover { background: #189c32; }
+        .success-box { background: #d4edda; color: #155724; padding: 10px; border-radius: 6px; text-align: center; margin-bottom: 15px; }
+        .back-link { display: block; text-align: center; margin-top: 15px; color: #1EB53A; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Tuma Ujumbe kwa Admin</h2>
+        
+        {% if success %}
+        <div class="success-box">
+            Ujumbe wako umetumwa kwa mafanikio! Admin ataupata kwenye panel yake.
+        </div>
+        {% endif %}
+
+        <form method="POST">
+            <div class="form-group">
+                <label>Jina Lako:</label>
+                <input type="text" name="name" required placeholder="Weka jina lako...">
+            </div>
+            <div class="form-group">
+                <label>Barua Pepe (Email) au Mawasiliano:</label>
+                <input type="text" name="email" required placeholder="Weka email yako...">
+            </div>
+            <div class="form-group">
+                <label>Ujumbe Wako:</label>
+                <textarea name="message" rows="4" required placeholder="Andika tatizo lako hapa..."></textarea>
+            </div>
+            <button type="submit">Tuma Ujumbe</button>
+        </form>
+
+        <a href="{{ url_for('help_center') }}" class="back-link">&larr; Rudi kwenye Help Center</a>
+    </div>
+</body>
+</html>

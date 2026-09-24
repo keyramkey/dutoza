@@ -1,0 +1,53 @@
+<!-- ===== VIDEO DETAIL ARENA (kama screenshot) ===== -->
+<div id="video-detail-arena" aria-hidden="true">
+    <div class="vda-top">
+        <button type="button" class="vda-back" onclick="closeVideoDetail()" aria-label="Back">
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <video id="vda-video" playsinline controls controlslist="nofullscreen nodownload noremoteplayback" disablepictureinpicture></video>
+    </div>
+    <div class="vda-body">
+        <div class="vda-caption" id="vda-caption"></div>
+        <div class="vda-meta" id="vda-meta"></div>
+
+        <div class="vda-user-row">
+            <a href="#" class="vda-avatar-link" id="vda-profile-link">
+                <img class="vda-avatar" id="vda-avatar" src="" alt="">
+            </a>
+            <div class="vda-user-info">
+                <a href="#" id="vda-username-link">@user</a>
+                <small id="vda-followers"></small>
+                <small id="vda-views" style="display:block;margin-top:2px;opacity:0.85;"></small>
+            </div>
+            <button type="button" class="vda-follow-btn" id="vda-follow-btn" onclick="vdaFollow()">Follow</button>
+        </div>
+
+        <div class="vda-actions">
+            <button type="button" id="vda-like-btn" onclick="vdaLike()"><i class="fa-solid fa-thumbs-up"></i> <span id="vda-likes">0</span></button>
+            <button type="button" onclick="vdaShare()"><i class="fa-solid fa-share"></i> Share</button>
+            <button type="button" id="vda-save-btn" onclick="vdaSave()"><i class="fa-regular fa-bookmark"></i> Save</button>
+            <button type="button" id="vda-download-btn" onclick="vdaDownload()"><i class="fa-solid fa-download"></i> Offline</button>
+        </div>
+
+        <div class="vda-comments-box">
+            <div class="vda-comments-head" onclick="vdaToggleComments()">
+                <span id="vda-comments-title">Comments 0</span>
+                <i class="fa-solid fa-chevron-down" id="vda-comments-chevron"></i>
+            </div>
+            <div id="vda-comments-panel">
+                <!-- Feed-power comments (clone kutoka feed) -->
+                <div class="vda-feed-comments" id="vda-feed-comments">
+                    <div class="vda-comment-empty"><i class="fa-regular fa-user"></i> No comments yet. Be the first to comment!</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="vda-upnext-title">Up Next</div>
+        <div id="vda-upnext"></div>
+    </div>
+</div>
+
+
+<div class="ov-bar"><div id="ovProgressBar"></div></div>
+</div>
+

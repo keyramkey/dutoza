@@ -1,0 +1,26 @@
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="flash-msg">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% set _rpid = request.args.get('rejected_post_id') %}
+    {% if request.args.get('nsfw_rejected') == '1' and _rpid and _rpid.isdigit() %}
+    <div style="background:#fff3f3;border:1px solid #f5c2c7;border-radius:10px;padding:12px 14px;margin-bottom:16px;text-align:center;">
+        <div style="font-size:13px;color:#842029;margin-bottom:8px;">
+            Kama unaona chapisho hili si sahihi kukataliwa (si maudhui ya uchi), tuma ombi liangaliwe na Admin.
+        </div>
+        <form action="{{ url_for('request_review', post_id=_rpid) }}" method="POST" onsubmit="return confirm('Tuma ombi kwa Admin akague chapisho hili?');" style="display:inline;">
+            <button type="submit" style="border:none;border-radius:20px;padding:9px 18px;font-weight:700;font-size:13px;color:#fff;cursor:pointer;background:linear-gradient(90deg,#00A3DD,#1EB53A);">
+                Omba Admin akague
+            </button>
+        </form>
+    </div>
+    {% endif %}
+
+    <!-- STATUS BAR -->
+
+
+

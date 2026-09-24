@@ -1,0 +1,4064 @@
+<script>
+/* Profile pic: Google https AU local /static/uploads/ AU letter */
+function avatarSrc(pic, name) {
+  if (pic && (String(pic).indexOf('http://') === 0 || String(pic).indexOf('https://') === 0)) return pic;
+  if (pic) return '/static/uploads/' + pic;
+  var n = encodeURIComponent(name || 'U');
+  return 'https://ui-avatars.com/api/?name=' + n + '&background=random&color=fff&size=128&bold=true';
+}
+</script>
+<script>
+window.CURRENT_USERNAME = {{ (session.get('username') or '')|tojson }};
+
+function switchBackToProfile() {
+    fetch('/linkup/switch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ linkup_id: null })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data && data.success) {
+            window.location.href = data.redirect_url || '/home';
+        } else {
+            alert((data && data.message) || 'Imeshindikana');
+        }
+    })
+    .catch(function() { alert('Imeshindikana'); });
+}
+
+function setOverlayMode(on) {
+
+    document.body.classList.toggle('overlay-open', !!on);
+    document.querySelectorAll('header, nav, .navbar, .navbar-brand, .topbar, .top-bar, .top-header, .app-header, .site-header, .site-title, .brand, .logo, .page-title').forEach(function(el) {
+        if (el.closest('#reels-viewer, #image-lightbox, .card, .container')) return;
+        if (on) {
+            if (!el.hasAttribute('data-ov-prev')) el.setAttribute('data-ov-prev', el.style.display || '');
+            el.style.display = 'none';
+        } else if (el.hasAttribute('data-ov-prev')) {
+            el.style.display = el.getAttribute('data-ov-prev');
+            el.removeAttribute('data-ov-prev');
+        }
+    });
+    // Hide any standalone "Kijiji" title sitting above overlays
+    document.querySelectorAll('h1, h2, h3, span, a, div, p, button').forEach(function(el) {
+        if (el.closest('#reels-viewer, #image-lightbox, .card, script, style')) return;
+        var t = (el.textContent || '').replace(/\s+/g, ' ').trim();
+        if (t !== 'Kijiji') return;
+        if (el.children.length > 2) return;
+        if (on) {
+            if (!el.hasAttribute('data-ov-kijiji')) el.setAttribute('data-ov-kijiji', el.style.display || '');
+            el.style.display = 'none';
+        } else if (el.hasAttribute('data-ov-kijiji')) {
+            el.style.display = el.getAttribute('data-ov-kijiji');
+            el.removeAttribute('data-ov-kijiji');
+        }
+    });
+}
+
+function bindOverlaySeeMore(el) {
+    if (!el) return;
+    if (typeof window.__wlpMakeExpandable === 'function') {
+        window.__wlpMakeExpandable(el, true);
+    }
+}
+
+
+function showToast(message, type = 'success') {
+    const existing = document.querySelector('.toast');
+    if (existing) existing.remove();
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+/* ===== STATUS ENHANCED: viewers, react, reply, hold-pause, queue ===== */
+const STATUS_UPLOAD_BASE = "{{ url_for('static', filename='uploads/') }}";
+let statusItems = [];
+let statusIndex = 0;
+let statusTimer = null;
+let statusProgressTimer = null;
+let statusProgressStart = 0;
+let statusProgressDuration = 5000;
+let statusProgressElapsed = 0;
+let statusPaused = false;
+const STATUS_DURATION = 30000;           // picha pekee
+const STATUS_DURATION_MUSIC = 60000;    // picha + muziki
+const STATUS_DURATION_VIDEO = 90000;    // video max
+let statusUserQueue = [];
+let statusQueuePos = -1;
+let statusCurrentUserId = null;
+let statusIsOwn = false;
+const MY_USER_ID = {{ session.get('user_id') or 0 }};
+
+function buildStatusQueue() {
+    statusUserQueue = [];
+    // others first as shown in bar
+    document.querySelectorAll('.status-scroll .status-item[data-user-id]').forEach(function(el) {
+        const id = parseInt(el.getAttribute('data-user-id'), 10);
+        if (id && statusUserQueue.indexOf(id) === -1) statusUserQueue.push(id);
+    });
+    // my status at start if has status
+    if ({{ 'true' if my_status_info and my_status_info.has_status else 'false' }} && MY_USER_ID) {
+        if (statusUserQueue.indexOf(MY_USER_ID) === -1) statusUserQueue.unshift(MY_USER_ID);
+    }
+}
+
+function onMyStatusClick() {
+    const has = {{ 'true' if my_status_info and my_status_info.has_status else 'false' }};
+    if (has) {
+        openStatusViewer(MY_USER_ID);
+    } else {
+        openStatusCreate();
+    }
+}
+document.addEventListener('DOMContentLoaded', function() {
+    const btn = document.getElementById('myStatusBtn');
+    if (btn) btn.addEventListener('click', function(e) {
+        if (e.target.closest('.status-add-badge')) return;
+        onMyStatusClick();
+    });
+    // bind hold-to-pause on body after viewer exists
+    bindStatusHoldPause();
+    if (typeof applyRelativeTimes === 'function') applyRelativeTimes(document);
+});
+
+/** Relative time: sasa, 5m, 2h, 1d, 1w, 3mo, 1y */
+function timeAgo(ts) {
+    if (!ts) return '';
+    var d = null;
+    if (typeof ts === 'number') {
+        d = new Date(ts);
+    } else {
+        var s = String(ts).trim().replace(' ', 'T');
+        d = new Date(s);
+        if (isNaN(d.getTime())) d = new Date(String(ts).replace(/-/g, '/'));
+    }
+    if (!d || isNaN(d.getTime())) return String(ts).slice(0, 16);
+    var sec = Math.floor((Date.now() - d.getTime()) / 1000);
+    if (sec < 0) sec = 0;
+    if (sec < 60) return 'sasa';
+    if (sec < 3600) return Math.floor(sec / 60) + 'm';
+    if (sec < 86400) return Math.floor(sec / 3600) + 'h';
+    if (sec < 604800) return Math.floor(sec / 86400) + 'd';
+    if (sec < 2592000) return Math.floor(sec / 604800) + 'w';
+    if (sec < 31536000) return Math.floor(sec / 2592000) + 'mo';
+    return Math.floor(sec / 31536000) + 'y';
+}
+
+function applyRelativeTimes(root) {
+    var scope = root || document;
+    scope.querySelectorAll('.rel-time[data-ts]').forEach(function(el) {
+        var ts = el.getAttribute('data-ts');
+        if (ts) el.textContent = timeAgo(ts);
+    });
+}
+
+function openStatusCreate() {
+    document.getElementById('statusCreateModal').classList.add('show');
+}
+function closeStatusCreate() {
+    document.getElementById('statusCreateModal').classList.remove('show');
+    const f = document.getElementById('statusFile');
+    if (f) f.value = '';
+    const p = document.getElementById('statusPreview');
+    if (p) { p.innerHTML = ''; p.classList.remove('show'); }
+    const n = document.getElementById('statusFileName');
+    if (n) n.textContent = '';
+    try {
+        if (typeof _statusMusicPreview !== 'undefined' && _statusMusicPreview) {
+            _statusMusicPreview.pause();
+            _statusMusicPreview = null;
+        }
+    } catch (e) {}
+}
+
+function previewStatusFile(input) {
+    const file = input.files && input.files[0];
+    const preview = document.getElementById('statusPreview');
+    const nameEl = document.getElementById('statusFileName');
+    if (!file) return;
+    const MAX_IMAGE = 24 * 1024 * 1024;
+    const MAX_VIDEO = 24 * 1024 * 1024;
+    if (file.type.startsWith('video/') && file.size > MAX_VIDEO) {
+        alert('Video isizidi 24MB');
+        input.value = '';
+        return;
+    }
+    if (file.type.startsWith('image/') && file.size > MAX_IMAGE) {
+        alert('Picha isizidi 24MB');
+        input.value = '';
+        return;
+    }
+    nameEl.textContent = file.name;
+    preview.innerHTML = '';
+    const url = URL.createObjectURL(file);
+    if (file.type.startsWith('video/')) {
+        const v = document.createElement('video');
+        v.src = url; v.controls = true; v.muted = true; v.playsInline = true;
+        preview.appendChild(v);
+    } else {
+        const img = document.createElement('img');
+        img.src = url; img.alt = 'Preview';
+        preview.appendChild(img);
+    }
+    preview.classList.add('show');
+}
+
+function validateStatusForm() {
+    const content = (document.getElementById('statusContent').value || '').trim();
+    const file = document.getElementById('statusFile');
+    if (!content && !(file && file.files && file.files[0])) {
+        alert('Andika maandishi au weka picha/video');
+        return false;
+    }
+    return true;
+}
+
+function openStatusViewer(userId) {
+    buildStatusQueue();
+    statusCurrentUserId = userId;
+    statusQueuePos = statusUserQueue.indexOf(userId);
+    if (statusQueuePos < 0) {
+        statusUserQueue.push(userId);
+        statusQueuePos = statusUserQueue.length - 1;
+    }
+    loadStatusUser(userId);
+}
+
+function loadStatusUser(userId) {
+    statusCurrentUserId = userId;
+    clearStatusTimers();
+    statusPaused = false;
+    fetch('/status/user/' + userId)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (!data.success || !data.items || !data.items.length) {
+            // skip to next in queue
+            goNextUserInQueue();
+            return;
+        }
+        statusItems = data.items;
+        statusIndex = 0;
+        statusIsOwn = !!(statusItems[0] && statusItems[0].is_own);
+        document.getElementById('statusViewer').classList.add('show');
+        document.body.style.overflow = 'hidden';
+        if (typeof kijijiPushOverlay === 'function') kijijiPushOverlay('status');
+        // Status open → stop feed & reels so only status audio/video plays
+        if (typeof pauseFeedAndReelsVideos === 'function') pauseFeedAndReelsVideos();
+        else if (typeof pauseAllVideosExcept === 'function') pauseAllVideosExcept(null);
+        markStatusRingSeen(userId);
+        renderStatusSlide();
+        bindStatusReplyPause();
+    })
+    .catch(function() {
+        if (typeof showToast === 'function') showToast('Imeshindikana kupakia status', 'error');
+    });
+}
+
+function goNextUserInQueue() {
+    if (statusQueuePos < 0) { closeStatusViewer(); return; }
+    statusQueuePos += 1;
+    if (statusQueuePos >= statusUserQueue.length) {
+        closeStatusViewer();
+        return;
+    }
+    loadStatusUser(statusUserQueue[statusQueuePos]);
+}
+
+function goPrevUserInQueue() {
+    if (statusQueuePos <= 0) {
+        // restart first slide of current
+        statusIndex = 0;
+        renderStatusSlide();
+        return;
+    }
+    statusQueuePos -= 1;
+    loadStatusUser(statusUserQueue[statusQueuePos]);
+}
+
+function stopStatusMusic() {
+    try {
+        var a = document.getElementById('statusBgMusic');
+        if (a) { a.pause(); a.removeAttribute('src'); a.load(); a.remove(); }
+    } catch (e) {}
+}
+
+function playStatusMusic(path) {
+    stopStatusMusic();
+    if (!path) return;
+    var a = document.createElement('audio');
+    a.id = 'statusBgMusic';
+    a.src = '/static/' + path;
+    a.loop = true;
+    a.volume = 0.7;
+    a.setAttribute('playsinline', '');
+    document.body.appendChild(a);
+    a.play().catch(function(){});
+}
+
+/* Preview muziki wakati wa kuchagua kwenye create status */
+var _statusMusicPreview = null;
+function previewStatusMusic(radio) {
+    try {
+        if (_statusMusicPreview) {
+            _statusMusicPreview.pause();
+            _statusMusicPreview.removeAttribute('src');
+            _statusMusicPreview.load();
+            _statusMusicPreview = null;
+        }
+    } catch (e) {}
+    var path = radio && radio.value ? radio.value : '';
+    if (!path) return;
+    var a = document.createElement('audio');
+    a.src = '/static/' + path;
+    a.volume = 0.65;
+    a.setAttribute('playsinline', '');
+    _statusMusicPreview = a;
+    a.play().catch(function(){});
+    setTimeout(function() {
+        if (_statusMusicPreview === a) {
+            try { a.pause(); a.removeAttribute('src'); } catch (e) {}
+            _statusMusicPreview = null;
+        }
+    }, 8000);
+}
+
+function spawnFloatingReactions(emojis) {
+    var body = document.getElementById('statusViewerBody');
+    if (!body || !emojis || !emojis.length) return;
+    // clear old floats
+    body.querySelectorAll('.status-float-emoji').forEach(function(el) { el.remove(); });
+    emojis.slice(0, 12).forEach(function(em, i) {
+        setTimeout(function() {
+            var span = document.createElement('span');
+            span.className = 'status-float-emoji';
+            span.textContent = em;
+            span.style.cssText = 'position:absolute;bottom:80px;left:' + (10 + Math.random() * 70) + '%;font-size:' + (22 + Math.random() * 14) + 'px;opacity:0.95;pointer-events:none;z-index:20;animation:statusFloatUp 2.8s ease-out forwards;';
+            body.appendChild(span);
+            setTimeout(function() { try { span.remove(); } catch(e){} }, 3000);
+        }, i * 220);
+    });
+}
+
+function __closeStatusViewerUI() {
+    clearStatusTimers();
+    stopStatusMusic();
+    statusItems = [];
+    statusIndex = 0;
+    statusPaused = false;
+    statusIsOwn = false;
+    const body = document.getElementById('statusViewerBody');
+    if (body) {
+        const taps = body.querySelectorAll('.status-tap-left, .status-tap-right');
+        body.innerHTML = '';
+        taps.forEach(function(t) { body.appendChild(t); });
+    }
+    var sv = document.getElementById('statusViewer');
+    if (sv) sv.classList.remove('show');
+    var bar = document.getElementById('statusBottomBar');
+    if (bar) bar.classList.remove('own-status');
+    document.body.style.overflow = '';
+    closeStatusViewers();
+}
+function closeStatusViewer(fromHistory) {
+    __closeStatusViewerUI();
+    if (!fromHistory) {
+      var idx = (window.__kijijiOverlayStack || []).lastIndexOf('status');
+      if (idx >= 0) {
+        window.__kijijiOverlayStack.splice(idx, 1);
+        try { if (history.state && history.state.kijijiOverlay === 'status') history.back(); } catch (e) {}
+      }
+    }
+}
+
+function clearStatusTimers() {
+    clearTimeout(statusTimer);
+    clearInterval(statusProgressTimer);
+    statusTimer = null;
+    statusProgressTimer = null;
+}
+
+function renderStatusSlide() {
+    clearStatusTimers();
+    stopStatusMusic();
+    statusPaused = false;
+    const item = statusItems[statusIndex];
+    if (!item) { statusNext(); return; }
+
+    // Rekodi view kila mara (backend inakataa self-view)
+    fetch('/status/view/' + item.id, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data && typeof data.views_count === 'number') {
+            item.views_count = data.views_count;
+            var vc = document.getElementById('statusViewsCount');
+            if (vc && (item.is_own || statusIsOwn)) vc.textContent = data.views_count;
+        }
+    }).catch(function(){});
+
+    // Background music
+    if (item.music_path) {
+        playStatusMusic(item.music_path);
+    }
+
+    const avatar = document.getElementById('statusViewerAvatar');
+    const nameEl = document.getElementById('statusViewerName');
+    const timeEl = document.getElementById('statusViewerTime');
+    const body = document.getElementById('statusViewerBody');
+    const caption = document.getElementById('statusViewerCaption');
+    const progressRow = document.getElementById('statusProgressRow');
+    const viewersBtn = document.getElementById('statusViewersBtn');
+    const replyRow = document.getElementById('statusReplyRow');
+    const reactRow = document.getElementById('statusReactRow');
+
+    if (avatar) {
+        avatar.src = avatarSrc(item.profile_pic, item.full_name || item.username);
+    }
+    if (nameEl) {
+        nameEl.textContent = item.full_name || item.username || 'User';
+    }
+    var profileLink = document.getElementById('statusViewerProfileLink');
+    if (profileLink) {
+        var uname = item.username || '';
+        profileLink.href = uname ? ('/profile/' + encodeURIComponent(uname)) : '#';
+        profileLink.onclick = function(e) {
+            if (!uname) { e.preventDefault(); }
+        };
+    }
+    if (timeEl) {
+        timeEl.textContent = (typeof timeAgo === 'function' && item.created_at)
+            ? timeAgo(item.created_at)
+            : (item.created_at || '');
+    }
+
+    // progress segments
+    progressRow.innerHTML = '';
+    for (let i = 0; i < statusItems.length; i++) {
+        const seg = document.createElement('div');
+        seg.className = 'status-progress-seg';
+        const fill = document.createElement('div');
+        fill.className = 'fill';
+        if (i < statusIndex) fill.style.width = '100%';
+        else if (i === statusIndex) { fill.id = 'statusActiveFill'; fill.style.width = '0%'; }
+        else fill.style.width = '0%';
+        seg.appendChild(fill);
+        progressRow.appendChild(seg);
+    }
+
+    // keep tap zones, clear media
+    const left = document.getElementById('statusTapLeft');
+    const right = document.getElementById('statusTapRight');
+    body.innerHTML = '';
+    if (left) body.appendChild(left);
+    if (right) body.appendChild(right);
+    let hint = document.getElementById('statusPausedHint');
+    if (!hint) {
+        hint = document.createElement('div');
+        hint.id = 'statusPausedHint';
+        hint.className = 'status-paused-hint';
+        hint.textContent = 'Iliyositishwa';
+        body.appendChild(hint);
+    } else body.appendChild(hint);
+
+    caption.textContent = item.content || '';
+
+    // ===== UI: wengine = react + reply; mmiliki = viewers tu =====
+    // Tumia ID pekee (si is_own kutoka API) ili isichanganyike
+    (function applyStatusBottomUI() {
+        var myId = (typeof MY_USER_ID !== 'undefined') ? String(MY_USER_ID) : '0';
+        var ownerId = (item.user_id != null) ? String(item.user_id) : '';
+        statusIsOwn = (myId !== '0' && ownerId !== '' && ownerId === myId);
+        item.is_own = statusIsOwn;
+
+        var bar = document.getElementById('statusBottomBar');
+        if (bar) {
+            bar.style.setProperty('display', 'flex', 'important');
+            bar.style.setProperty('visibility', 'visible', 'important');
+            bar.style.setProperty('opacity', '1', 'important');
+            if (statusIsOwn) {
+                bar.classList.add('own-status');
+            } else {
+                bar.classList.remove('own-status');
+            }
+        }
+
+        if (statusIsOwn) {
+            var vc = document.getElementById('statusViewsCount');
+            if (vc) vc.textContent = item.views_count || 0;
+            if (item.recent_reactions && item.recent_reactions.length) {
+                spawnFloatingReactions(item.recent_reactions);
+            }
+        } else {
+            document.querySelectorAll('.status-react-btn').forEach(function(b) {
+                b.classList.toggle('active', b.getAttribute('data-emoji') === item.my_reaction);
+            });
+            var inp = document.getElementById('statusReplyInput');
+            if (inp) inp.value = '';
+        }
+    })();
+
+    if (item.media_type === 'image' && item.file_path) {
+        const img = document.createElement('img');
+        img.src = STATUS_UPLOAD_BASE + item.file_path;
+        img.alt = 'Status';
+        body.insertBefore(img, left || null);
+        var imgDur = item.music_path ? STATUS_DURATION_MUSIC : STATUS_DURATION;
+        startStatusProgress(imgDur);
+    } else if (item.media_type === 'video' && item.file_path) {
+        const v = document.createElement('video');
+        v.src = STATUS_UPLOAD_BASE + item.file_path;
+        v.autoplay = true;
+        v.playsInline = true;
+        v.controls = false;
+        v.id = 'statusActiveVideo';
+        if (typeof pauseAllVideosExcept === 'function') pauseAllVideosExcept(v);
+        body.insertBefore(v, left || null);
+        v.onended = function() { if (!statusPaused) statusNext(); };
+        v.onloadedmetadata = function() {
+            const dur = Math.max(3000, Math.min((v.duration || 15) * 1000, STATUS_DURATION_VIDEO));
+            startStatusProgress(dur);
+        };
+        setTimeout(function() {
+            const fill = document.getElementById('statusActiveFill');
+            if (fill && fill.style.width === '0%' && !statusPaused) startStatusProgress(STATUS_DURATION_VIDEO);
+        }, 1500);
+    } else {
+        const t = document.createElement('div');
+        t.className = 'status-viewer-text-only';
+        t.textContent = item.content || '';
+        body.insertBefore(t, left || null);
+        caption.textContent = '';
+        var textDur = item.music_path ? STATUS_DURATION_MUSIC : STATUS_DURATION;
+        startStatusProgress(textDur);
+    }
+}
+
+function startStatusProgress(durationMs) {
+    statusProgressDuration = durationMs;
+    statusProgressElapsed = 0;
+    statusProgressStart = Date.now();
+    statusPaused = false;
+    const fill = document.getElementById('statusActiveFill');
+    if (!fill) return;
+    fill.style.width = '0%';
+    clearStatusTimers();
+    statusProgressTimer = setInterval(function() {
+        if (statusPaused) return;
+        const p = Math.min(100, ((Date.now() - statusProgressStart) / statusProgressDuration) * 100);
+        fill.style.width = p + '%';
+        if (p >= 100) clearInterval(statusProgressTimer);
+    }, 40);
+    statusTimer = setTimeout(function() {
+        if (!statusPaused) statusNext();
+    }, durationMs);
+}
+
+function pauseStatus() {
+    if (statusPaused) return;
+    statusPaused = true;
+    statusProgressElapsed = Date.now() - statusProgressStart;
+    clearTimeout(statusTimer);
+    clearInterval(statusProgressTimer);
+    const v = document.getElementById('statusActiveVideo');
+    if (v) try { v.pause(); } catch(e) {}
+    try { var a = document.getElementById('statusBgMusic'); if (a) a.pause(); } catch(e) {}
+    const hint = document.getElementById('statusPausedHint');
+    if (hint) hint.classList.add('show');
+}
+
+function resumeStatus() {
+    if (!statusPaused) return;
+    if (statusReplying) return; // bado anaandika reply
+    statusPaused = false;
+    try { var a = document.getElementById('statusBgMusic'); if (a) a.play().catch(function(){}); } catch(e) {}
+    const hint = document.getElementById('statusPausedHint');
+    if (hint) hint.classList.remove('show');
+    const remaining = Math.max(200, statusProgressDuration - statusProgressElapsed);
+    statusProgressStart = Date.now() - statusProgressElapsed;
+    const fill = document.getElementById('statusActiveFill');
+    clearInterval(statusProgressTimer);
+    statusProgressTimer = setInterval(function() {
+        if (statusPaused) return;
+        const p = Math.min(100, ((Date.now() - statusProgressStart) / statusProgressDuration) * 100);
+        if (fill) fill.style.width = p + '%';
+        if (p >= 100) clearInterval(statusProgressTimer);
+    }, 40);
+    clearTimeout(statusTimer);
+    statusTimer = setTimeout(function() {
+        if (!statusPaused) statusNext();
+    }, remaining);
+    const v = document.getElementById('statusActiveVideo');
+    if (v) try { v.play(); } catch(e) {}
+}
+
+function bindStatusHoldPause() {
+    const body = document.getElementById('statusViewerBody');
+    if (!body || body.dataset.holdBound === '1') return;
+    body.dataset.holdBound = '1';
+    let holdTimer = null;
+    let holding = false;
+    function startHold(e) {
+        if (e.target.closest('.status-bottom-bar')) return;
+        holdTimer = setTimeout(function() {
+            holding = true;
+            pauseStatus();
+        }, 180);
+    }
+    function endHold() {
+        clearTimeout(holdTimer);
+        if (holding) {
+            holding = false;
+            resumeStatus();
+        }
+    }
+    body.addEventListener('touchstart', startHold, { passive: true });
+    body.addEventListener('touchend', endHold);
+    body.addEventListener('touchcancel', endHold);
+    body.addEventListener('mousedown', startHold);
+    body.addEventListener('mouseup', endHold);
+    body.addEventListener('mouseleave', endHold);
+
+    const left = document.getElementById('statusTapLeft');
+    const right = document.getElementById('statusTapRight');
+    if (left) left.onclick = function(e) { e.stopPropagation(); statusPrev(); };
+    if (right) right.onclick = function(e) { e.stopPropagation(); statusNext(); };
+}
+
+function statusNext() {
+    statusIndex += 1;
+    if (statusIndex >= statusItems.length) {
+        goNextUserInQueue();
+    } else {
+        renderStatusSlide();
+    }
+}
+function statusPrev() {
+    if (statusIndex <= 0) {
+        goPrevUserInQueue();
+        return;
+    }
+    statusIndex -= 1;
+    renderStatusSlide();
+}
+
+function statusReact(emoji) {
+    const item = statusItems[statusIndex];
+    if (!item) return;
+    // Double-check own status (usijireact)
+    if (item.is_own || statusIsOwn) return;
+    if (String(item.user_id) === String(MY_USER_ID) && String(MY_USER_ID) !== '0') return;
+    const same = item.my_reaction === emoji;
+    fetch('/status/react/' + item.id, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reaction: same ? '' : emoji })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (!data.success) {
+            if (typeof showToast === 'function') showToast(data.error || 'Imeshindikana', 'error');
+            return;
+        }
+        item.my_reaction = data.reaction;
+        document.querySelectorAll('.status-react-btn').forEach(function(b) {
+            b.classList.toggle('active', b.getAttribute('data-emoji') === data.reaction);
+        });
+        if (typeof showToast === 'function') showToast(data.reaction ? 'Reaction imetumwa' : 'Reaction imeondolewa', 'success');
+    })
+    .catch(function() {
+        if (typeof showToast === 'function') showToast('Tatizo la mtandao', 'error');
+    });
+}
+
+function markStatusRingSeen(userId) {
+    const ring = document.getElementById('status-ring-' + userId);
+    if (!ring) return;
+    ring.classList.remove('unseen');
+    ring.classList.add('seen');
+}
+
+let statusReplyPauseBound = false;
+let statusReplying = false; // true = pause hadi send
+
+function bindStatusReplyPause() {
+    const input = document.getElementById('statusReplyInput');
+    if (!input || statusReplyPauseBound) return;
+    statusReplyPauseBound = true;
+
+    input.addEventListener('focus', function() {
+        statusReplying = true;
+        pauseStatus();
+    });
+
+    // Usifungue pause kwa blur — subiri send (kama user alidai)
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            statusSendReply();
+        }
+    });
+}
+
+function statusSendReply() {
+    const item = statusItems[statusIndex];
+    if (!item) return;
+    // Usijijibu status yako mwenyewe
+    if (item.is_own || statusIsOwn) return;
+    if (String(item.user_id) === String(MY_USER_ID) && String(MY_USER_ID) !== '0') return;
+    const input = document.getElementById('statusReplyInput');
+    if (!input) return;
+    const text = (input.value || '').trim();
+    if (!text) return;
+    // Keep paused while sending
+    statusReplying = true;
+    pauseStatus();
+    const sendBtn = document.querySelector('.status-reply-send');
+    if (sendBtn) sendBtn.disabled = true;
+    // Futa input mapema ili user aone feedback (kama WhatsApp)
+    const sentText = text;
+    input.value = '';
+    fetch('/status/reply/' + item.id, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        body: JSON.stringify({ message: sentText })
+    })
+    .then(function(r) {
+        return r.json().then(function(data) {
+            return { ok: r.ok, status: r.status, data: data || {} };
+        }).catch(function() {
+            return { ok: r.ok, status: r.status, data: {} };
+        });
+    })
+    .then(function(res) {
+        if (sendBtn) sendBtn.disabled = false;
+        if (res.ok && res.data && res.data.success) {
+            input.blur();
+            statusReplying = false;
+            if (typeof showToast === 'function') {
+                showToast('Jibu limetumwa kwenye chat ✓', 'success');
+            }
+            resumeStatus();
+        } else {
+            // Rudisha ujumbe kwenye input kama hakujafanikiwa
+            input.value = sentText;
+            if (typeof showToast === 'function') {
+                showToast((res.data && res.data.error) || 'Imeshindikana kutuma', 'error');
+            }
+        }
+    })
+    .catch(function() {
+        if (sendBtn) sendBtn.disabled = false;
+        input.value = sentText;
+        if (typeof showToast === 'function') showToast('Tatizo la mtandao', 'error');
+    });
+}
+
+function deleteCurrentStatus() {
+    const item = statusItems[statusIndex];
+    if (!item) return;
+    if (!(item.is_own || statusIsOwn)) return;
+    if (!confirm('Una uhakika unataka kufuta status hii?')) return;
+
+    const deletedId = item.id;
+    const delBtn = document.getElementById('statusDeleteBtn');
+    if (delBtn) delBtn.disabled = true;
+
+    // Simamisha timers mara moja (epuka slide iendelee)
+    try { clearStatusTimers(); } catch (e) {}
+    try { stopStatusMusic(); } catch (e) {}
+
+    fetch('/status/delete/' + deletedId, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/json' }
+    })
+    .then(function(r) {
+        return r.json().then(function(data) {
+            return { ok: r.ok, data: data || {} };
+        }).catch(function() {
+            return { ok: r.ok, data: {} };
+        });
+    })
+    .then(function(res) {
+        if (delBtn) delBtn.disabled = false;
+        // success au already_deleted au 403 baada ya kufutwa → ondoa kwenye UI
+        var ok = (res.data && res.data.success) || res.data.already_deleted;
+        if (!ok && res.ok === false && res.data && res.data.error === 'Huna ruhusa') {
+            // Inaweza kuwa tayari imefutwa — ondoa kwenye UI pia
+            ok = true;
+        }
+        if (!ok) {
+            if (typeof showToast === 'function') {
+                showToast((res.data && res.data.error) || 'Imeshindikana kufuta', 'error');
+            }
+            return;
+        }
+        if (typeof showToast === 'function') showToast('Status imefutwa', 'success');
+
+        // Ondoa kwenye list kwa id (si index peke yake)
+        statusItems = (statusItems || []).filter(function(s) {
+            return String(s.id) !== String(deletedId);
+        });
+
+        if (!statusItems.length) {
+            try {
+                var ring = document.getElementById('status-ring-' + statusCurrentUserId);
+                if (ring) {
+                    ring.classList.remove('has-status', 'unseen', 'seen');
+                    // Ondoa item kwenye status bar kama inaweza
+                    var itemEl = ring.closest('.status-item');
+                    if (itemEl && String(statusCurrentUserId) === String(MY_USER_ID)) {
+                        // Keep "add status" ring for self — just clear has-status
+                    }
+                }
+            } catch (e) {}
+            try { closeStatusViewer(); } catch (e) {}
+            return;
+        }
+        if (statusIndex >= statusItems.length) statusIndex = statusItems.length - 1;
+        if (statusIndex < 0) statusIndex = 0;
+        renderStatusSlide();
+    })
+    .catch(function() {
+        if (delBtn) delBtn.disabled = false;
+        if (typeof showToast === 'function') showToast('Tatizo la mtandao', 'error');
+    });
+}
+
+
+/* ===== Open status from chat link (?open_status=ID) ===== */
+(function openStatusFromQuery() {
+  function run() {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      var sid = params.get('open_status');
+      if (!sid) return;
+      var statusId = parseInt(sid, 10);
+      if (!statusId) return;
+      fetch('/status/meta/' + statusId)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (!data || !data.success || !data.user_id) return;
+          var targetUserId = data.user_id;
+          var once = true;
+          var _load = loadStatusUser;
+          loadStatusUser = function(userId) {
+            statusCurrentUserId = userId;
+            clearStatusTimers();
+            statusPaused = false;
+            fetch('/status/user/' + userId)
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+              if (!d.success || !d.items || !d.items.length) {
+                goNextUserInQueue();
+                return;
+              }
+              statusItems = d.items;
+              statusIndex = 0;
+              if (once) {
+                once = false;
+                for (var i = 0; i < statusItems.length; i++) {
+                  if (String(statusItems[i].id) === String(statusId)) {
+                    statusIndex = i;
+                    break;
+                  }
+                }
+                loadStatusUser = _load;
+              }
+              statusIsOwn = !!(statusItems[0] && statusItems[0].is_own);
+              document.getElementById('statusViewer').classList.add('show');
+              document.body.style.overflow = 'hidden';
+              if (typeof pauseFeedAndReelsVideos === 'function') pauseFeedAndReelsVideos();
+              else if (typeof pauseAllVideosExcept === 'function') pauseAllVideosExcept(null);
+              markStatusRingSeen(userId);
+              renderStatusSlide();
+              bindStatusReplyPause();
+            })
+            .catch(function() {
+              if (typeof showToast === 'function') showToast('Imeshindikana kupakia status', 'error');
+            });
+          };
+          openStatusViewer(targetUserId);
+          try {
+            var u = new URL(window.location.href);
+            u.searchParams.delete('open_status');
+            window.history.replaceState({}, '', u.pathname + (u.search || '') + u.hash);
+          } catch (e) {}
+        })
+        .catch(function(){});
+    } catch (e) {}
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+  else setTimeout(run, 300);
+})();
+
+function openStatusViewers() {
+    const item = statusItems[statusIndex];
+    if (!item || !item.is_own) return;
+    pauseStatus();
+    const list = document.getElementById('statusViewersList');
+    list.innerHTML = '<div style="padding:16px;text-align:center;color:#65676b;">Inapakia...</div>';
+    document.getElementById('statusViewersOverlay').classList.add('show');
+    document.getElementById('statusViewersTitle').textContent = 'Viewers (' + (item.views_count || 0) + ')';
+    fetch('/status/viewers/' + item.id)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (!data.success) {
+            list.innerHTML = '<div style="padding:16px;text-align:center;">Huwezi kuona viewers</div>';
+            return;
+        }
+        document.getElementById('statusViewersTitle').textContent = 'Viewers (' + data.count + ')';
+        document.getElementById('statusViewsCount').textContent = data.count;
+        item.views_count = data.count;
+        if (!data.viewers.length) {
+            list.innerHTML = '<div style="padding:16px;text-align:center;color:#65676b;">Bado hakuna aliyetazama</div>';
+            return;
+        }
+        list.innerHTML = data.viewers.map(function(v) {
+            const name = v.full_name || v.username;
+            const pic = avatarSrc(v.profile_pic, v.full_name || v.username);
+            const react = v.reaction ? (' <span>' + v.reaction + '</span>') : '';
+            const row = document.createElement('div');
+            row.className = 'status-viewer-row';
+            const img = document.createElement('img');
+            img.src = pic;
+            img.onerror = function() { this.onerror = null; this.src = 'https://via.placeholder.com/40'; };
+            const info = document.createElement('div');
+            info.style.cssText = 'flex:1;min-width:0;';
+            info.innerHTML = '<strong></strong><small></small>';
+            info.querySelector('strong').textContent = name + (v.reaction ? '' : '');
+            if (v.reaction) {
+                const sp = document.createElement('span');
+                sp.textContent = ' ' + v.reaction;
+                info.querySelector('strong').appendChild(sp);
+            }
+            info.querySelector('small').textContent = '@' + v.username + ' · ' + (v.viewed_at || '');
+            row.appendChild(img);
+            row.appendChild(info);
+            return row.outerHTML;
+        }).join('');
+    })
+    .catch(function() {
+        list.innerHTML = '<div style="padding:16px;text-align:center;">Tatizo la mtandao</div>';
+    });
+}
+
+function closeStatusViewers() {
+    document.getElementById('statusViewersOverlay').classList.remove('show');
+    if (document.getElementById('statusViewer').classList.contains('show')) {
+        resumeStatus();
+    }
+}
+
+document.addEventListener('keydown', function(e) {
+    if (!document.getElementById('statusViewer').classList.contains('show')) return;
+    if (e.key === 'Escape') closeStatusViewer();
+    if (e.key === 'ArrowRight') statusNext();
+    if (e.key === 'ArrowLeft') statusPrev();
+    if (e.key === ' ') { e.preventDefault(); statusPaused ? resumeStatus() : pauseStatus(); }
+});
+
+function toggleMediaPicker(e) {
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    const menu = document.getElementById('mediaPickerMenu');
+    if (!menu) return;
+    menu.classList.toggle('show');
+}
+
+function openMediaInput(inputId) {
+    const menu = document.getElementById('mediaPickerMenu');
+    if (menu) menu.classList.remove('show');
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    input.value = '';
+    // slight delay so menu closes before native picker opens (mobile fix)
+    setTimeout(function() { input.click(); }, 50);
+}
+
+document.addEventListener('click', function(e) {
+    const wrap = document.querySelector('.media-picker-wrap');
+    const menu = document.getElementById('mediaPickerMenu');
+    if (!menu || !wrap) return;
+    if (!wrap.contains(e.target)) menu.classList.remove('show');
+});
+
+/** Copy chosen file into the real form field (name="file") via DataTransfer */
+function assignFileToForm(file) {
+    const formInput = document.getElementById('file');
+    if (!formInput || !file) return false;
+    try {
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        formInput.files = dt.files;
+        return formInput.files && formInput.files.length > 0;
+    } catch (err) {
+        console.error('DataTransfer failed', err);
+        return false;
+    }
+}
+
+function onMediaPicked(sourceInput) {
+    if (!sourceInput || !sourceInput.files || !sourceInput.files[0]) return;
+    const file = sourceInput.files[0];
+    const MAX_MEDIA = 24 * 1024 * 1024;
+    if (file.size > MAX_MEDIA) {
+        alert('File isizidi 24MB. Chagua file ndogo zaidi.');
+        sourceInput.value = '';
+        clearMediaPreview();
+        return;
+    }
+    if (!assignFileToForm(file)) {
+        alert('Imeshindikana kuandaa file. Jaribu tena.');
+        return;
+    }
+    showMediaPreviewFromFile(file);
+}
+
+function showMediaPreviewFromFile(file) {
+    const fileNameDisplay = document.getElementById('file-name-display');
+    const previewBox = document.getElementById('media-preview');
+    const previewContent = document.getElementById('media-preview-content');
+    if (!file || !previewBox || !previewContent) return;
+
+    if (fileNameDisplay) fileNameDisplay.textContent = file.name;
+    previewContent.innerHTML = '';
+    previewBox.style.background = '';
+
+    const url = URL.createObjectURL(file);
+    if (file.type.startsWith('video/')) {
+        const v = document.createElement('video');
+        v.src = url;
+        v.controls = true;
+        v.muted = true;
+        v.playsInline = true;
+        previewContent.appendChild(v);
+        previewBox.classList.add('show');
+    } else if (file.type.startsWith('image/')) {
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = 'Preview';
+        previewContent.appendChild(img);
+        previewBox.classList.add('show');
+    } else {
+        const doc = document.createElement('div');
+        doc.className = 'media-doc-preview';
+        doc.innerHTML = '<i class="fa-solid fa-file-lines"></i><span></span>';
+        doc.querySelector('span').textContent = file.name;
+        previewContent.appendChild(doc);
+        previewBox.classList.add('show');
+        previewBox.style.background = 'transparent';
+    }
+}
+
+function clearMediaPreview() {
+    const previewBox = document.getElementById('media-preview');
+    const previewContent = document.getElementById('media-preview-content');
+    const fileNameDisplay = document.getElementById('file-name-display');
+    ['fileCamera','fileRecord','fileImage','fileVideo','file','shared_file'].forEach(function(id) {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    if (previewContent) previewContent.innerHTML = '';
+    if (previewBox) {
+        previewBox.classList.remove('show');
+        previewBox.style.background = '';
+    }
+    if (fileNameDisplay) fileNameDisplay.textContent = '';
+}
+
+/* ===== Upload progress — real MB + minimize / maximize / cancel ===== */
+var activeUploadXhr = null;
+var uploadIsMinimized = false;
+
+function formatMb(bytes) {
+    if (!bytes || bytes < 0) return '0 MB';
+    var mb = bytes / (1024 * 1024);
+    if (mb < 0.1) {
+        var kb = bytes / 1024;
+        return (kb < 10 ? kb.toFixed(1) : Math.round(kb)) + ' KB';
+    }
+    return (mb < 10 ? mb.toFixed(2) : mb.toFixed(1)) + ' MB';
+}
+
+function showUploadProgress(totalBytes) {
+    var ov = document.getElementById('uploadProgressOverlay');
+    var bar = document.getElementById('uploadProgressBar');
+    var pct = document.getElementById('uploadProgressPct');
+    var title = document.getElementById('uploadProgressTitle');
+    var msg = document.getElementById('uploadProgressMsg');
+    var mbEl = document.getElementById('uploadProgressMb');
+    var remainEl = document.getElementById('uploadProgressRemain');
+    var btnMax = document.getElementById('uploadBtnMaximize');
+    uploadIsMinimized = false;
+    if (ov) {
+        ov.classList.add('show');
+        ov.classList.remove('minimized');
+    }
+    if (bar) bar.style.width = '0%';
+    if (pct) pct.textContent = '0%';
+    if (title) title.textContent = 'Inapakia chapisho...';
+    if (msg) msg.textContent = 'Tafadhali subiri, usifunge ukurasa.';
+    if (mbEl) mbEl.textContent = '0 MB / ' + formatMb(totalBytes || 0);
+    if (remainEl) remainEl.textContent = totalBytes ? ('Zimesalia: ' + formatMb(totalBytes)) : 'Zimesalia: —';
+    if (btnMax) btnMax.style.display = 'none';
+    document.body.style.overflow = 'hidden';
+}
+
+function setUploadProgress(loaded, total, phase) {
+    var bar = document.getElementById('uploadProgressBar');
+    var pct = document.getElementById('uploadProgressPct');
+    var mbEl = document.getElementById('uploadProgressMb');
+    var remainEl = document.getElementById('uploadProgressRemain');
+    var title = document.getElementById('uploadProgressTitle');
+    var msg = document.getElementById('uploadProgressMsg');
+
+    var p = 0;
+    if (total > 0) {
+        p = Math.max(0, Math.min(100, Math.round((loaded / total) * 100)));
+    } else if (phase === 'saving') {
+        p = 100;
+    }
+
+    if (bar) bar.style.width = p + '%';
+    if (pct) pct.textContent = p + '%';
+    if (mbEl) mbEl.textContent = formatMb(loaded) + ' / ' + formatMb(total);
+    if (remainEl) {
+        var left = Math.max(0, (total || 0) - (loaded || 0));
+        remainEl.textContent = left > 0 ? ('Zimesalia: ' + formatMb(left)) : 'Zimesalia: 0 MB';
+    }
+
+    if (phase === 'saving' || p >= 100) {
+        if (title) title.textContent = 'Karibia kumaliza...';
+        if (msg) msg.textContent = 'Inahifadhi chapisho lako kwenye server.';
+        if (remainEl) remainEl.textContent = 'Zimesalia: 0 MB';
+    }
+}
+
+function minimizeUploadProgress() {
+    var ov = document.getElementById('uploadProgressOverlay');
+    var btnMax = document.getElementById('uploadBtnMaximize');
+    if (!ov) return;
+    ov.classList.add('minimized');
+    uploadIsMinimized = true;
+    document.body.style.overflow = ''; // app usable again
+    if (btnMax) btnMax.style.display = 'inline-flex';
+}
+
+function maximizeUploadProgress() {
+    var ov = document.getElementById('uploadProgressOverlay');
+    var btnMax = document.getElementById('uploadBtnMaximize');
+    if (!ov) return;
+    ov.classList.remove('minimized');
+    uploadIsMinimized = false;
+    document.body.style.overflow = 'hidden';
+    if (btnMax) btnMax.style.display = 'none';
+}
+
+function onUploadCardClick(e) {
+    // When minimized, tapping the bar (not Cancel) expands it
+    if (!uploadIsMinimized) return;
+    if (e.target.closest && e.target.closest('button')) return;
+    maximizeUploadProgress();
+}
+
+function cancelUpload() {
+    if (activeUploadXhr) {
+        try { activeUploadXhr.abort(); } catch (err) {}
+        activeUploadXhr = null;
+    }
+    hideUploadProgress();
+    var btn = document.getElementById('btnPostSubmit');
+    if (btn) {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+    }
+    if (typeof showToast === 'function') {
+        showToast('Upload imefutwa', 'error');
+    } else {
+        // soft notice only
+    }
+}
+
+function hideUploadProgress() {
+    var ov = document.getElementById('uploadProgressOverlay');
+    if (ov) {
+        ov.classList.remove('show');
+        ov.classList.remove('minimized');
+    }
+    uploadIsMinimized = false;
+    document.body.style.overflow = '';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var form = document.getElementById('createPostForm');
+    if (!form) return;
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var content = (form.querySelector('textarea[name="content"]') || {}).value || '';
+        var fileInput = document.getElementById('file');
+        var hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+        if (!content.trim() && !hasFile) {
+            alert('Andika kitu au ongeza media kabla ya kuchapisha!');
+            return;
+        }
+
+        var btn = document.getElementById('btnPostSubmit');
+        if (btn) {
+            btn.disabled = true;
+            btn.style.opacity = '0.7';
+        }
+
+        var fd = new FormData(form);
+        var totalBytes = 0;
+        if (hasFile) {
+            fd.set('file', fileInput.files[0], fileInput.files[0].name);
+            totalBytes = fileInput.files[0].size || 0;
+        }
+        try {
+            var textPart = (content || '').length;
+            totalBytes = totalBytes + textPart + 256;
+        } catch (err) {}
+
+        showUploadProgress(totalBytes);
+
+        var xhr = new XMLHttpRequest();
+        activeUploadXhr = xhr;
+        xhr.open('POST', form.action || '/create_post', true);
+        xhr.withCredentials = true;
+
+        xhr.upload.onprogress = function(ev) {
+            if (ev.lengthComputable && ev.total > 0) {
+                setUploadProgress(ev.loaded, ev.total, 'uploading');
+            } else if (totalBytes > 0) {
+                setUploadProgress(Math.min(ev.loaded || 0, totalBytes), totalBytes, 'uploading');
+            }
+        };
+
+        xhr.upload.onload = function() {
+            setUploadProgress(totalBytes || 1, totalBytes || 1, 'saving');
+        };
+
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState !== 4) return;
+            if (xhr.status === 0) {
+                // aborted
+                activeUploadXhr = null;
+                return;
+            }
+            setUploadProgress(totalBytes || 1, totalBytes || 1, 'saving');
+            activeUploadXhr = null;
+            if (xhr.status >= 200 && xhr.status < 400) {
+                var loc = xhr.responseURL || '/home';
+                setTimeout(function() {
+                    window.location.href = loc.indexOf('/create_post') >= 0 ? '/home' : loc;
+                }, 400);
+            } else {
+                hideUploadProgress();
+                if (btn) {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                }
+                alert('Imeshindikana kuchapisha. Jaribu tena.');
+            }
+        };
+
+        xhr.onerror = function() {
+            activeUploadXhr = null;
+            hideUploadProgress();
+            if (btn) {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            }
+            alert('Tatizo la mtandao. Angalia connection yako.');
+        };
+
+        xhr.onabort = function() {
+            activeUploadXhr = null;
+            hideUploadProgress();
+            if (btn) {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            }
+        };
+
+        xhr.send(fd);
+    });
+});
+
+
+
+/* ===== PHONE BACK BUTTON — funga overlay (si kuruka page) ===== */
+window.__kijijiOverlayStack = window.__kijijiOverlayStack || [];
+window.__kijijiHistoryLock = false;
+
+function kijijiPushOverlay(name) {
+  try {
+    if (window.__kijijiHistoryLock) return;
+    // avoid duplicate push for same top
+    var stack = window.__kijijiOverlayStack;
+    if (stack.length && stack[stack.length - 1] === name) return;
+    stack.push(name);
+    history.pushState({ kijijiOverlay: name, t: Date.now() }, '');
+  } catch (e) {}
+}
+
+function kijijiPopOverlayName(name) {
+  var stack = window.__kijijiOverlayStack || [];
+  var idx = stack.lastIndexOf(name);
+  if (idx >= 0) stack.splice(idx, 1);
+}
+
+function kijijiCloseFromHistory() {
+  var stack = window.__kijijiOverlayStack || [];
+  if (!stack.length) return false;
+  var name = stack.pop();
+  window.__kijijiHistoryLock = true;
+  try {
+    if (name === 'image') {
+      if (typeof __closeImageLightboxUI === 'function') __closeImageLightboxUI();
+    } else if (name === 'video') {
+      if (typeof __closeVideoDetailUI === 'function') __closeVideoDetailUI();
+    } else if (name === 'status') {
+      if (typeof __closeStatusViewerUI === 'function') __closeStatusViewerUI();
+    } else if (name === 'status-viewers') {
+      if (typeof closeStatusViewers === 'function') closeStatusViewers();
+    }
+  } catch (e) {}
+  window.__kijijiHistoryLock = false;
+  return true;
+}
+
+if (!window.__kijijiPopstateBound) {
+  window.__kijijiPopstateBound = true;
+  window.addEventListener('popstate', function () {
+    if (window.__kijijiOverlayStack && window.__kijijiOverlayStack.length) {
+      kijijiCloseFromHistory();
+    }
+  });
+}
+
+
+let currentImagePostId = null;
+let currentImageUsername = null;
+
+function openImageLightbox(src) {
+    openImageFullscreen(null, src, null);
+}
+
+function openImageFullscreen(postId, src, el) {
+    currentImagePostId = postId;
+    currentImageUsername = null;
+
+    const lb = document.getElementById('image-lightbox');
+    const img = document.getElementById('lightbox-img');
+    if (!lb || !img) return;
+
+    img.src = src || '';
+    lb.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    if (typeof setOverlayMode === 'function') setOverlayMode(true);
+    if (typeof kijijiPushOverlay === 'function') kijijiPushOverlay('image');
+    // Hakikisha comments panel haionyeshwi kwa bahati
+    closeImageComments();
+
+    let username = '';
+    let profile = '';
+    let likes = '0';
+    let comments = '0';
+    let userLiked = false;
+    let content = '';
+
+    // 1. From data attributes on image-container
+    if (el && el.dataset) {
+        username = el.dataset.username || '';
+        profile = el.dataset.profile || '';
+        likes = el.dataset.likes || '0';
+        comments = el.dataset.comments || '0';
+        userLiked = el.dataset.userLiked === '1' || el.dataset.userLiked === 'true';
+        content = el.dataset.content || '';
+    }
+
+    // 2. Fallback from other image-container with same postId
+    if ((!username || !content) && postId) {
+        try {
+            const containers = document.querySelectorAll('.image-container[data-post-id="' + postId + '"]');
+            if (containers[0] && containers[0].dataset) {
+                if (!username) username = containers[0].dataset.username || '';
+                if (!profile) profile = containers[0].dataset.profile || '';
+                if (likes === '0') likes = containers[0].dataset.likes || likes;
+                if (comments === '0') comments = containers[0].dataset.comments || comments;
+                if (!userLiked) userLiked = containers[0].dataset.userLiked === '1';
+                if (!content) content = containers[0].dataset.content || '';
+            }
+        } catch (e) {}
+    }
+
+    // 3. Fallback from post card + live counts
+    if (postId) {
+        const card = document.getElementById('post-card-' + postId);
+        if (card) {
+            if (!username) {
+                const nameLink = card.querySelector('.post-header-info strong a');
+                if (nameLink) {
+                    const href = nameLink.getAttribute('href') || '';
+                    const m = href.match(/\/profile\/([^\/\?]+)/);
+                    if (m) username = decodeURIComponent(m[1]);
+                }
+            }
+            if (!content) {
+                const pc = card.querySelector('.post-content');
+                if (pc) content = (pc.textContent || '').trim();
+            }
+        }
+        const likesEl = document.getElementById('likes-count-' + postId);
+        const commentsEl = document.getElementById('comments-count-text-' + postId);
+        if (likesEl) likes = (likesEl.textContent || '0').replace(/\D/g, '') || likes;
+        if (commentsEl) comments = (commentsEl.textContent || '0').replace(/\D/g, '') || comments;
+        const likeBtn = document.getElementById('like-btn-' + postId);
+        if (likeBtn) userLiked = likeBtn.classList.contains('liked');
+    }
+
+    currentImageUsername = username;
+
+    const avatar = document.getElementById('img-full-avatar');
+    const nameEl = document.getElementById('img-full-username');
+    const linkEl = document.getElementById('img-full-profile-link');
+    if (nameEl) nameEl.textContent = username ? ('@' + username) : '@user';
+    if (linkEl) {
+        linkEl.href = username ? ('/profile/' + encodeURIComponent(username)) : '#';
+        linkEl.onclick = function(e) {
+            if (!username) { e.preventDefault(); }
+        };
+    }
+    if (avatar) {
+        avatar.src = avatarSrc(profile);
+        avatar.onerror = function() { this.onerror = null; this.src = 'https://via.placeholder.com/40'; };
+    }
+
+    const likesOut = document.getElementById('img-full-likes');
+    const commentsOut = document.getElementById('img-full-comments');
+    if (likesOut) likesOut.textContent = likes;
+    if (commentsOut) commentsOut.textContent = comments;
+
+    const icon = document.getElementById('img-full-like-icon');
+    if (icon) icon.style.color = userLiked ? '#ff2d55' : '#fff';
+
+    const saveIcon = document.getElementById('img-full-save-icon');
+    const saveText = document.getElementById('img-full-save-text');
+    if (saveIcon) saveIcon.className = 'fa-regular fa-bookmark';
+    if (saveText) saveText.textContent = 'Save';
+
+    // Caption + See more (clean)
+    const cap = document.getElementById('img-full-caption');
+    if (cap) {
+        cap.classList.remove('wlp-expandable', 'wlp-stage-0', 'wlp-stage-1', 'wlp-stage-2');
+        cap.dataset.wlpReady = '';
+        cap.dataset.seeMoreBound = '';
+        let next = cap.nextElementSibling;
+        while (next && (next.classList.contains('wlp-more-btn') || next.classList.contains('wlp-more-wrap'))) {
+            const toRemove = next;
+            next = next.nextElementSibling;
+            toRemove.remove();
+        }
+        cap.textContent = content || '';
+        cap.style.display = content ? '' : 'none';
+        if (content && content.trim().length > 60) {
+            bindImageCaptionSeeMore(cap);
+        }
+    }
+
+    const drop = document.getElementById('img-full-dropdown');
+    if (drop) drop.classList.remove('show');
+}
+
+function bindImageCaptionSeeMore(el) {
+    if (!el) return;
+    if (typeof window.__wlpMakeExpandable === 'function') {
+        window.__wlpMakeExpandable(el, true);
+    }
+}
+
+
+function __closeImageLightboxUI() {
+    const lb = document.getElementById('image-lightbox');
+    const img = document.getElementById('lightbox-img');
+    const drop = document.getElementById('img-full-dropdown');
+    if (!lb) return;
+    lb.classList.remove('active');
+    if (img) img.src = '';
+    if (drop) drop.classList.remove('show');
+    if (typeof closeImageComments === 'function') closeImageComments();
+    document.body.style.overflow = '';
+    if (typeof setOverlayMode === 'function') setOverlayMode(false);
+    currentImagePostId = null;
+    currentImageUsername = null;
+}
+function closeImageLightbox(fromHistory) {
+    __closeImageLightboxUI();
+    if (!fromHistory && !window.__kijijiHistoryLock) {
+      kijijiPopOverlayName('image');
+      try {
+        if (history.state && history.state.kijijiOverlay === 'image') history.back();
+      } catch (e) {}
+    }
+}
+
+function toggleImgFullMenu() {
+    const d = document.getElementById('img-full-dropdown');
+    if (d) d.classList.toggle('show');
+}
+
+function imgFullLike() {
+    if (!currentImagePostId) {
+        if (typeof showToast === 'function') showToast('Post haipatikani', 'error');
+        return;
+    }
+    fetch('/like/' + currentImagePostId, { method: 'POST' })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        if (!data.success) return;
+        const likesEl = document.getElementById('img-full-likes');
+        if (likesEl) likesEl.textContent = data.likes_count;
+        const icon = document.getElementById('img-full-like-icon');
+        if (icon) icon.style.color = data.liked ? '#ff2d55' : '#fff';
+        const feedCount = document.getElementById('likes-count-' + currentImagePostId);
+        if (feedCount) feedCount.textContent = data.likes_count + ' Likes';
+        const feedBtn = document.getElementById('like-btn-' + currentImagePostId);
+        if (feedBtn) {
+            if (data.liked) feedBtn.classList.add('liked');
+            else feedBtn.classList.remove('liked');
+        }
+        if (typeof showToast === 'function') showToast(data.liked ? 'Liked' : 'Unliked', 'success');
+    })
+    .catch(function() {
+        if (typeof showToast === 'function') showToast('Imeshindikana', 'error');
+    });
+}
+
+
+/** Rudisha comments section kwenye feed IKIWA IMEEFICHWA (si open) */
+function restoreFeedCommentsSection(section, placeholder) {
+    if (section && placeholder && placeholder.parentNode) {
+        placeholder.parentNode.insertBefore(section, placeholder);
+        placeholder.remove();
+    } else if (section && placeholder) {
+        try { placeholder.remove(); } catch (e) {}
+    }
+    if (section) {
+        section.classList.remove('active');
+        section.style.display = ''; // ondoa inline block → CSS display:none inatumika
+        section.style.removeProperty('display');
+    }
+}
+
+function closeImageComments() {
+    if (window._imgMovedSection) {
+        restoreFeedCommentsSection(window._imgMovedSection, window._imgMovedPlaceholder);
+        window._imgMovedSection = null;
+        window._imgMovedPlaceholder = null;
+    }
+    const panel = document.getElementById('img-comment-panel');
+    if (panel) panel.classList.remove('active');
+    var list = document.getElementById('img-comments-list');
+    if (list) list.innerHTML = '';
+    var outerForm = document.getElementById('img-comment-form');
+    if (outerForm) outerForm.style.display = 'none';
+}
+
+function imgFullComment() {
+    if (!currentImagePostId) {
+        if (typeof showToast === 'function') showToast('Post haipatikani', 'error');
+        return;
+    }
+
+    // TOGGLE: kama panel tayari open → funga
+    var panelCheck = document.getElementById('img-comment-panel');
+    if (panelCheck && panelCheck.classList.contains('active')) {
+        closeImageComments();
+        return;
+    }
+
+    // Restore video-arena / image moved sections back to feed (hidden)
+    if (window._vdaMovedSection) {
+        restoreFeedCommentsSection(window._vdaMovedSection, window._vdaMovedPlaceholder);
+        window._vdaMovedSection = null;
+        window._vdaMovedPlaceholder = null;
+    }
+    if (window._imgMovedSection) {
+        restoreFeedCommentsSection(window._imgMovedSection, window._imgMovedPlaceholder);
+        window._imgMovedSection = null;
+        window._imgMovedPlaceholder = null;
+    }
+
+    const panel = document.getElementById('img-comment-panel');
+    const list = document.getElementById('img-comments-list');
+    if (!panel || !list) return;
+
+    list.innerHTML = '';
+    panel.classList.add('active');
+
+    var outerForm = document.getElementById('img-comment-form');
+    if (outerForm) outerForm.style.display = 'none';
+
+    const section = document.getElementById('comments-section-' + currentImagePostId);
+    if (!section) {
+        list.innerHTML = '<div style="text-align:center;padding:30px;color:#65676b;">Hakuna maoni bado. Kuwa wa kwanza!</div>';
+        if (outerForm) outerForm.style.display = 'flex';
+        return;
+    }
+
+    const placeholder = document.createElement('div');
+    placeholder.id = 'img-placeholder-' + currentImagePostId;
+    placeholder.style.display = 'none';
+    section.parentNode.insertBefore(placeholder, section);
+    list.appendChild(section);
+    section.classList.add('active');
+    section.style.display = 'block';
+
+    window._imgMovedSection = section;
+    window._imgMovedPlaceholder = placeholder;
+
+    setTimeout(function() {
+        list.querySelectorAll('.comment-item p, .reply-item p, .comment-item > p').forEach(function(el) {
+            if (typeof window.__wlpCleanExpandable === 'function') window.__wlpCleanExpandable(el);
+            if ((el.textContent || '').trim().length > 40 && typeof window.__wlpMakeExpandable === 'function') {
+                window.__wlpMakeExpandable(el, true);
+            }
+        });
+        // Hakikisha form ya feed inaonekana ndani, form ya nje imefichwa
+        if (outerForm) outerForm.style.display = 'none';
+        const input = list.querySelector('.comment-form input');
+        if (input) input.focus();
+    }, 100);
+}
+
+function buildFeedStyleCommentHtml(postId, comment) {
+    var cid = comment.id;
+    var uname = comment.username || 'User';
+    var ctext = comment.content || '';
+    return `
+        <div class="comment-item" id="comment-${cid}">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <strong style="display: inline-flex; align-items: center;">
+                    <a href="/profile/${uname}" style="text-decoration: none; color: inherit;">${uname}</a>
+                </strong>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 11px; color: #65676b;">Sasa hivi</span>
+                    <button class="comment-actions-btn" onclick="toggleCommentMenu(${cid})">
+                        <i class="fa-solid fa-ellipsis-vertical"></i>
+                    </button>
+                    <div class="comment-actions-dropdown" id="comment-menu-${cid}">
+                        <button onclick="editComment(${cid})"><i class="fa-solid fa-pen"></i> Edit</button>
+                        <button onclick="deleteComment(${cid})" style="color: #dc3545;"><i class="fa-solid fa-trash"></i> Delete</button>
+                    </div>
+                </div>
+            </div>
+            <p id="comment-text-${cid}" style="margin: 6px 0; color: #050505;">${ctext}</p>
+            <div style="font-size: 11px; display: flex; gap: 15px; color: #65676b; margin-top: 4px;">
+                <button onclick="likeComment(${cid})" style="background:none; border:none; cursor:pointer; font-weight: 600;" id="c-like-btn-${cid}">Like (<span id="c-likes-count-${cid}">0</span>)</button>
+                <button onclick="showReplyBox(${cid})" style="background:none; border:none; cursor:pointer; color:inherit; font-weight: 600;">Reply</button>
+            </div>
+            <div class="replies-list" style="margin-left: 12px; margin-top: 6px; border-left: 2px solid #e4e6eb; padding-left: 8px;" id="replies-list-${cid}"></div>
+            <form class="reply-form" id="reply-form-${cid}" style="display: none; margin-top: 6px; margin-left: 12px;" onsubmit="addReply(event, ${postId}, ${cid})">
+                <div style="display: flex; gap: 6px;">
+                    <input type="text" name="content" placeholder="Type a reply..." required style="flex: 1; padding: 6px 10px; font-size: 12px; border-radius: 12px; border: 1px solid #ccd0d5; outline: none; background: #ffffff;">
+                    <button type="submit" style="padding: 6px 12px; font-size: 11px; background: #1EB53A; color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer;">Tuma</button>
+                </div>
+            </form>
+        </div>
+    `;
+}
+
+function addImageComment(event) {
+    event.preventDefault();
+    var input = document.getElementById('img-comment-input');
+    var content = input ? input.value.trim() : '';
+    if (!content || !currentImagePostId) return;
+
+    var formData = new FormData();
+    formData.append('content', content);
+
+    fetch('/comment/' + currentImagePostId, { method: 'POST', body: formData })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        if (!data.success) {
+            if (typeof showToast === 'function') showToast(data.message || 'Imeshindikana', 'error');
+            return;
+        }
+        var html = buildFeedStyleCommentHtml(currentImagePostId, data.comment);
+        var feedList = document.getElementById('comments-list-' + currentImagePostId);
+        if (feedList) feedList.insertAdjacentHTML('beforeend', html);
+        var list = document.getElementById('img-comments-list');
+        if (list) {
+            if (list.querySelector('div[style*="Hakuna"]')) list.innerHTML = '';
+            list.insertAdjacentHTML('beforeend', html);
+            list.scrollTop = list.scrollHeight;
+        }
+        if (input) input.value = '';
+        var countEl = document.getElementById('img-full-comments');
+        if (countEl) countEl.textContent = parseInt(countEl.textContent || '0', 10) + 1;
+        var feedCount = document.getElementById('comments-count-text-' + currentImagePostId);
+        if (feedCount) feedCount.textContent = parseInt(feedCount.textContent || '0', 10) + 1;
+        if (typeof showToast === 'function') showToast((window.FEED_I18N&&FEED_I18N.comment_added)||'OK', 'success');
+    })
+    .catch(function() {
+        if (typeof showToast === 'function') showToast((window.FEED_I18N&&FEED_I18N.error_occurred)||'Error', 'error');
+    });
+}
+
+function imgFullShare() {
+    if (!currentImagePostId) return;
+    var url = window.location.origin + '/post/' + currentImagePostId;
+    fetch('/share_post/' + currentImagePostId, { method: 'POST' }).catch(function(){});
+    if (navigator.share) {
+        navigator.share({ title: 'Kijiji Tanzania', url: url }).catch(function(){});
+    } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(function() {
+            if (typeof showToast === 'function') showToast((window.FEED_I18N&&FEED_I18N.link_copied)||'Copied', 'success');
+        });
+    } else {
+        prompt('Nakili link:', url);
+    }
+}
+
+function imgFullSave() {
+    if (!currentImagePostId) return;
+    fetch('/save_post/' + currentImagePostId, { method: 'POST' })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        if (!data.success) return;
+        var saveIcon = document.getElementById('img-full-save-icon');
+        var saveText = document.getElementById('img-full-save-text');
+        if (data.saved) {
+            if (saveIcon) saveIcon.className = 'fa-solid fa-bookmark';
+            if (saveText) saveText.textContent = 'Saved';
+        } else {
+            if (saveIcon) saveIcon.className = 'fa-regular fa-bookmark';
+            if (saveText) saveText.textContent = 'Save';
+        }
+        var feedCount = document.getElementById('saved-count-text-' + currentImagePostId);
+        if (feedCount && data.saved_count !== undefined) feedCount.textContent = data.saved_count;
+        if (typeof showToast === 'function') {
+            showToast(data.saved ? 'Imehifadhiwa!' : 'Imeondolewa', 'success');
+        }
+    })
+    .catch(function(){});
+}
+
+function imgFullReport() {
+    if (!currentImagePostId) return;
+    closeImageLightbox();
+    if (typeof openReportModal === 'function') openReportModal(currentImagePostId);
+}
+
+function imgFullNotInterested() {
+    if (!currentImagePostId) return;
+    if (typeof setPostInterest === 'function') setPostInterest(currentImagePostId, 'not_interested');
+    closeImageLightbox();
+}
+
+function imgFullOpenProfile() {
+    if (currentImageUsername) {
+        window.location.href = '/profile/' + encodeURIComponent(currentImageUsername);
+    }
+}
+
+
+function toggleComments(postId) {
+    const section = document.getElementById('comments-section-' + postId);
+    if (!section) return;
+    section.classList.toggle('active');
+    // clear any leftover inline display so class controls visibility
+    if (!section.classList.contains('active')) {
+        section.style.removeProperty('display');
+    } else {
+        section.style.display = 'block';
+    }
+}
+
+
+function followLinkup(linkupId, btnElement) {
+    if (!linkupId) return;
+    if (btnElement) btnElement.disabled = true;
+    fetch('/linkup/' + linkupId + '/follow', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        },
+        credentials: 'same-origin'
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        if (!data || !data.success) {
+            if (btnElement) btnElement.disabled = false;
+            return;
+        }
+        var following = !!data.following;
+        // Update follower counts: "N followers" mstari mmoja
+        if (data.followers_count !== undefined) {
+            document.querySelectorAll('.linkup-followers-count[data-linkup-id="' + linkupId + '"]').forEach(function(el) {
+                el.textContent = data.followers_count + ' followers';
+                el.style.whiteSpace = 'nowrap';
+            });
+        }
+        // Baada ya follow: ficha "Following" kabisa (ondoa batani)
+        document.querySelectorAll('button[data-linkup-id="' + linkupId + '"]').forEach(function(btn) {
+            if (following) {
+                btn.remove();
+            } else {
+                btn.disabled = false;
+                btn.setAttribute('data-following', '0');
+                btn.classList.remove('following');
+                btn.innerHTML = '· Follow';
+            }
+        });
+        // Kama unfollow kutoka sehemu nyingine na batani haipo, refresh si lazima
+        if (typeof showToast === 'function') {
+            showToast(following ? 'Umefollow Linkup' : 'Umeacha kufollow', 'success');
+        }
+    })
+    .catch(function() {
+        if (btnElement) btnElement.disabled = false;
+    });
+}
+
+function followUser(targetUsername, btnElement, postId) {
+    if (!targetUsername) return;
+    if (btnElement) btnElement.disabled = true;
+    fetch('/follow/' + encodeURIComponent(targetUsername), {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ source_post_id: postId || null })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        if (!data.success) {
+            showToast(data.message || 'Imeshindikana kumfuata', 'error');
+            if (btnElement) btnElement.disabled = false;
+            return;
+        }
+        // Update all inline follow buttons for this user
+        document.querySelectorAll('.btn-follow-inline').forEach(function(btn) {
+            var u = btn.getAttribute('data-username') || '';
+            var txt = (btn.textContent || '');
+            var matches = (u && u === targetUsername) || txt.indexOf(targetUsername) >= 0;
+            // also match by onclick username
+            var oc = btn.getAttribute('onclick') || '';
+            if (oc.indexOf("'" + targetUsername + "'") >= 0 || oc.indexOf('"' + targetUsername + '"') >= 0) matches = true;
+            if (!matches && btn === btnElement) matches = true;
+            if (!matches) return;
+            if (data.following) {
+                if (data.friends) {
+                    var span = document.createElement('span');
+                    span.className = 'friends-inline-badge';
+                    span.title = 'Friends';
+                    span.innerHTML = '<i class="fa-solid fa-user-group"></i> Friends';
+                    btn.replaceWith(span);
+                } else {
+                    btn.remove();
+                }
+            }
+        });
+        // Hide menu follow buttons for this user
+        document.querySelectorAll('.post-dropdown button').forEach(function(btn) {
+            var oc = btn.getAttribute('onclick') || '';
+            var t = (btn.textContent || '');
+            if (oc.indexOf(targetUsername) >= 0 || t.indexOf('Follow') >= 0) {
+                if (oc.indexOf(targetUsername) >= 0) btn.style.display = 'none';
+            }
+        });
+        // Update video cards data
+        document.querySelectorAll('[data-is-following]').forEach(function(el) {
+            // no username attr always - skip
+        });
+        showToast(data.message || (data.friends ? 'Mmekuwa friends!' : 'Umeshamfollow!'), 'success');
+    })
+    .catch(function() {
+        showToast((window.FEED_I18N&&FEED_I18N.error_occurred)||'Error', 'error');
+        if (btnElement) btnElement.disabled = false;
+    });
+}
+
+function togglePostMenu(postId) {
+    document.querySelectorAll('.post-dropdown').forEach(d => {
+        if (d.id !== `post-dropdown-${postId}`) {
+            d.style.display = 'none';
+        }
+    });
+    const dropdown = document.getElementById(`post-dropdown-${postId}`);
+    dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+}
+
+window.addEventListener('click', function(e) {
+    if (!e.target.closest('.post-menu-container')) {
+        document.querySelectorAll('.post-dropdown').forEach(d => d.style.display = 'none');
+    }
+    if (!e.target.closest('.comment-item')) {
+        document.querySelectorAll('.comment-actions-dropdown').forEach(d => d.style.display = 'none');
+        document.querySelectorAll('.comment-item.menu-open').forEach(function(el) {
+            el.classList.remove('menu-open');
+        });
+    }
+    if (!e.target.closest('.reels-comment-item')) {
+        document.querySelectorAll('.reels-comment-dropdown').forEach(d => d.style.display = 'none');
+    }
+});
+
+function setPostInterest(postId, actionType) {
+    fetch(`/post_interest/${postId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: actionType })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            if (actionType === 'not_interested') {
+                const card = document.getElementById(`post-card-${postId}`);
+                if (card) {
+                    card.style.transition = 'opacity 0.3s';
+                    card.style.opacity = '0';
+                    setTimeout(() => card.remove(), 300);
+                }
+                showToast('Post imeondolewa kwenye feed yako', 'success');
+            } else {
+                showToast('Asante! Tutakuonyesha machapisho yanayofanana.', 'success');
+            }
+        } else {
+            showToast(data.message || 'Imeshindikana', 'error');
+        }
+    })
+    .catch(() => showToast((window.FEED_I18N&&FEED_I18N.error_occurred)||'Error', 'error'));
+}
+
+// ===== REPOST =====
+let currentRepostId = null;
+
+function repostPost(postId) {
+    currentRepostId = postId;
+    const cap = document.getElementById('repostCaption');
+    if (cap) cap.value = '';
+    const pv = document.getElementById('repostPreview');
+    if (pv) {
+        const card = document.getElementById('post-card-' + postId);
+        const t = card ? card.querySelector('.post-content, .rf-text') : null;
+        const txt = t ? t.textContent.trim().slice(0, 160) : '';
+        pv.textContent = txt;
+        pv.style.display = txt ? 'block' : 'none';
+    }
+    document.getElementById('repostConfirmModal').style.display = 'flex';
+    if (cap) setTimeout(() => cap.focus(), 50);
+}
+
+function closeRepostConfirm() {
+    document.getElementById('repostConfirmModal').style.display = 'none';
+    currentRepostId = null;
+}
+
+document.getElementById('confirmRepostBtn').addEventListener('click', function() {
+    if (!currentRepostId) return;
+    const btn = this;
+    if (btn.disabled) return;
+    btn.disabled = true;
+    const capEl = document.getElementById('repostCaption');
+    const caption = capEl ? capEl.value.trim() : '';
+    fetch(`/repost/${currentRepostId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ caption: caption })
+    })
+    .then(res => res.json())
+    .then(data => {
+        btn.disabled = false;
+        closeRepostConfirm();
+        if (data.success) {
+            showToast('Ume-repost kikamilifu!', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(data.message || 'Imeshindikana ku-repost', 'error');
+        }
+    })
+    .catch(() => {
+        btn.disabled = false;
+        closeRepostConfirm();
+        showToast((window.FEED_I18N&&FEED_I18N.error_occurred)||'Error', 'error');
+    });
+});
+
+// Report
+function openReportModal(postId) {
+    document.getElementById('reportPostId').value = postId;
+    document.getElementById('reportModal').style.display = 'flex';
+}
+function closeReportModal() {
+    document.getElementById('reportModal').style.display = 'none';
+}
+function submitReport(reason) {
+    const postId = document.getElementById('reportPostId').value;
+    fetch(`/report_post/${postId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: reason })
+    })
+    .then(res => res.json())
+    .then(data => {
+        showToast(data.message || 'Ripoti imepokelewa. Asante!', 'success');
+        closeReportModal();
+    })
+    .catch(() => showToast((window.FEED_I18N&&FEED_I18N.error_occurred)||'Error', 'error'));
+}
+function toggleCommentMenu(commentId) {
+    document.querySelectorAll('.comment-actions-dropdown').forEach(d => {
+        if (d.id !== `comment-menu-${commentId}`) {
+            d.style.display = 'none';
+        }
+    });
+    document.querySelectorAll('.comment-item.menu-open').forEach(function(el) {
+        if (!el.querySelector(`#comment-menu-${commentId}`)) {
+            el.classList.remove('menu-open');
+        }
+    });
+    // Toggle all matching menus (feed + overlay clones)
+    document.querySelectorAll(`#comment-menu-${commentId}`).forEach(function(dropdown) {
+        var open = dropdown.style.display === 'block';
+        dropdown.style.display = open ? 'none' : 'block';
+        var item = dropdown.closest('.comment-item');
+        if (item) {
+            if (open) item.classList.remove('menu-open');
+            else item.classList.add('menu-open');
+        }
+    });
+}
+
+function deleteComment(commentId) {
+    if (!confirm('Una uhakika unataka kufuta comment hii?')) return;
+    fetch(`/delete_comment/${commentId}`, { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            document.querySelectorAll(`#comment-${commentId}`).forEach(function(el) { el.remove(); });
+            showToast('Comment imefutwa', 'success');
+        } else {
+            showToast(data.message || 'Imeshindikana', 'error');
+        }
+    })
+    .catch(() => showToast((window.FEED_I18N&&FEED_I18N.error_occurred)||'Error', 'error'));
+}
+
+function hideComment(commentId) {
+    fetch(`/hide_comment/${commentId}`, { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            document.querySelectorAll(`#comment-${commentId}`).forEach(function(el) {
+                el.classList.toggle('hidden-comment');
+            });
+            showToast(data.message || 'Imefanikiwa', 'success');
+        } else {
+            showToast(data.message || 'Imeshindikana', 'error');
+        }
+    })
+    .catch(() => showToast((window.FEED_I18N&&FEED_I18N.error_occurred)||'Error', 'error'));
+}
+
+function blockUser(userId) {
+    if (!confirm('Una uhakika unataka kumblock huyu mtumiaji?')) return;
+    fetch(`/block_user/${userId}`, { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Mtumiaji ameblockiwa', 'success');
+        } else {
+            showToast(data.message || 'Imeshindikana', 'error');
+        }
+    })
+    .catch(() => showToast((window.FEED_I18N&&FEED_I18N.error_occurred)||'Error', 'error'));
+}
+
+function editComment(commentId) {
+    const p = document.querySelector(`#comment-text-${commentId}`);
+    const newText = prompt('Badilisha comment yako:', p ? p.textContent : '');
+    if (newText !== null && newText.trim() !== '') {
+        fetch(`/edit_comment/${commentId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: newText })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                document.querySelectorAll(`#comment-text-${commentId}`).forEach(function(el) {
+                    el.textContent = newText;
+                });
+                showToast('Comment imebadilishwa', 'success');
+            } else {
+                showToast(data.message || 'Imeshindikana', 'error');
+            }
+        })
+        .catch(() => showToast((window.FEED_I18N&&FEED_I18N.error_occurred)||'Error', 'error'));
+    }
+}
+
+function showReplyBox(commentId) {
+    document.querySelectorAll(`#reply-form-${commentId}`).forEach(function(form) {
+        form.style.display = form.style.display === 'none' || form.style.display === '' ? 'block' : 'none';
+    });
+}
+
+function replyToUser(mainCommentId, targetUsername) {
+    document.querySelectorAll(`#reply-form-${mainCommentId}`).forEach(function(form) {
+        form.style.display = 'block';
+        const input = form.querySelector('input[name="content"]');
+        if (input) {
+            input.value = `@${targetUsername} `;
+            input.focus();
+        }
+    });
+}
+
+function likePost(postId) {
+    fetch(`/like/${postId}`, { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const btn = document.getElementById(`like-btn-${postId}`);
+            const countSpan = document.getElementById(`likes-count-${postId}`);
+            countSpan.textContent = `${data.likes_count} Likes`;
+            if (data.liked) {
+                btn.classList.add('liked');
+            } else {
+                btn.classList.remove('liked');
+            }
+        }
+    });
+}
+
+function savePost(postId) {
+    fetch(`/save_post/${postId}`, { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById(`saved-count-text-${postId}`).textContent = data.saved_count;
+            showToast(data.saved ? ((window.FEED_I18N&&FEED_I18N.post_saved)||'Saved') : ((window.FEED_I18N&&FEED_I18N.post_unsaved)||'Removed'), 'success');
+        }
+    });
+}
+
+function sharePost(postId, text) {
+    const shareUrl = window.location.origin + '/post/' + postId;
+    fetch(`/share_post/${postId}`, { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const el = document.getElementById(`share-count-text-${postId}`);
+            if (el) el.textContent = data.shares_count;
+            const reelEl = document.getElementById(`reel-shares-${postId}`);
+            if (reelEl) reelEl.textContent = data.shares_count;
+        }
+    })
+    .catch(() => {});
+
+    if (navigator.share) {
+        navigator.share({
+            title: 'Kijiji Tanzania',
+            text: text || 'Angalia chapisho hili',
+            url: shareUrl
+        }).then(() => {
+            showToast('Imeshirikiwa!', 'success');
+        }).catch(() => {
+            // user cancelled or failed — still copy
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(shareUrl).then(() => showToast((window.FEED_I18N&&FEED_I18N.link_copied)||'Copied', 'success'));
+            }
+        });
+    } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            showToast((window.FEED_I18N&&FEED_I18N.link_copied)||'Copied', 'success');
+        }).catch(() => {
+            showToast('Imeshindikana kushare', 'error');
+        });
+    } else {
+        showToast('Link: ' + shareUrl, 'success');
+    }
+}
+
+function likeComment(commentId) {
+    fetch(`/like_comment/${commentId}`, { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            document.querySelectorAll(`#c-like-btn-${commentId}`).forEach(function(btn) {
+                btn.style.color = data.liked ? '#1EB53A' : 'inherit';
+            });
+            document.querySelectorAll(`#c-likes-count-${commentId}`).forEach(function(el) {
+                el.textContent = data.likes_count;
+            });
+        }
+    });
+}
+
+function reportComment(commentId) {
+    if (!confirm('Unataka kuripoti comment hii?')) return;
+    fetch(`/report_comment/${commentId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: 'Reported by user' })
+    })
+    .then(res => res.json())
+    .then(data => {
+        showToast(data.message || 'Ripoti imepokelewa. Asante!', 'success');
+        document.querySelectorAll('.comment-actions-dropdown').forEach(d => d.style.display = 'none');
+        document.querySelectorAll('.comment-item.menu-open').forEach(el => el.classList.remove('menu-open'));
+    })
+    .catch(() => {
+        // fallback if endpoint missing — still feedback user
+        showToast('Ripoti imepokelewa. Asante!', 'success');
+        document.querySelectorAll('.comment-actions-dropdown').forEach(d => d.style.display = 'none');
+        document.querySelectorAll('.comment-item.menu-open').forEach(el => el.classList.remove('menu-open'));
+    });
+}
+
+function copyCommentText(commentId) {
+    var p = document.querySelector(`#comment-text-${commentId}`);
+    var text = p ? (p.textContent || '').trim() : '';
+    if (!text) {
+        showToast('Hakuna maandishi', 'error');
+        return;
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function() {
+            showToast('Maoni yamenakiliwa!', 'success');
+        }).catch(function() {
+            prompt('Nakili:', text);
+        });
+    } else {
+        prompt('Nakili:', text);
+    }
+    document.querySelectorAll('.comment-actions-dropdown').forEach(d => d.style.display = 'none');
+    document.querySelectorAll('.comment-item.menu-open').forEach(el => el.classList.remove('menu-open'));
+}
+
+function addComment(event, postId) {
+    event.preventDefault();
+    const form = event.target;
+    fetch(`/comment/${postId}`, { method: 'POST', body: new FormData(form) })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const list = document.getElementById(`comments-list-${postId}`);
+            const countSpan = document.getElementById(`comments-count-text-${postId}`);
+            if (countSpan) {
+                countSpan.textContent = parseInt(countSpan.textContent) + 1;
+            }
+            const newDiv = document.createElement('div');
+            newDiv.className = "comment-item";
+            newDiv.id = `comment-${data.comment.id}`;
+            newDiv.style.cssText = 'display:flex;gap:10px;align-items:flex-start;';
+            const c = data.comment || {};
+            const name = c.display_name || c.full_name || c.username || 'User';
+            const uname = c.username || '';
+            const isLu = !!c.is_linkup_comment;
+            const profileUrl = c.profile_url || (isLu ? ('/linkup/' + uname) : ('/profile/' + uname));
+            let pic = c.profile_pic || '';
+            if (pic && pic.indexOf('http') !== 0 && pic.indexOf('/') !== 0) {
+                pic = '/static/uploads/' + pic;
+            }
+            if (!pic) {
+                pic = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name) + '&background=random&color=fff&size=72&bold=true';
+            }
+            const verified = Number(c.is_verified) === 1;
+            const badgeFill = isLu ? '#F5B800' : '#8A2BE2';
+            const badgeSvg = verified ? `<svg class="verified-badge-custom small" viewBox="0 0 24 24" style="width:14px;height:14px;vertical-align:middle;"><path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="${badgeFill}"/><path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#FFFFFF"/></svg>` : '';
+            const luTag = isLu ? '<span style="font-size:10px;background:#f0fdf4;color:#1EB53A;padding:1px 6px;border-radius:8px;font-weight:700;margin-left:4px;">Linkup</span>' : '';
+            newDiv.innerHTML = `
+                <a href="${profileUrl}" style="flex-shrink:0;"><img src="${pic}" alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;background:#e4e6eb;border:1px solid #eee;" onerror="this.src='https://ui-avatars.com/api/?name=U&background=random&color=fff&size=72'"></a>
+                <div style="flex:1;min-width:0;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <strong style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;"><a href="${profileUrl}" style="text-decoration: none; color: inherit;">${name}</a>${badgeSvg}${luTag}</strong>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 11px; color: #65676b;">Sasa hivi</span>
+                        <button class="comment-actions-btn" onclick="toggleCommentMenu(${c.id})">
+                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                        </button>
+                        <div class="comment-actions-dropdown" id="comment-menu-${c.id}">
+                            <button onclick="editComment(${c.id})"><i class="fa-solid fa-pen"></i> Edit</button>
+                            <button onclick="deleteComment(${c.id})" style="color: #dc3545;"><i class="fa-solid fa-trash"></i> {{ t('delete_comment') }}</button>
+                        </div>
+                    </div>
+                </div>
+                <p id="comment-text-${c.id}" style="margin: 6px 0; color: #050505;">${c.content || ''}</p>
+                <div style="font-size: 11px; display: flex; gap: 15px; color: #65676b; margin-top: 4px;">
+                    <button onclick="likeComment(${c.id})" style="background:none; border:none; cursor:pointer; font-weight: 600;" id="c-like-btn-${c.id}">Like (<span id="c-likes-count-${c.id}">0</span>)</button>
+                    <button onclick="showReplyBox(${c.id})" style="background:none; border:none; cursor:pointer; color:inherit; font-weight: 600;">Reply</button>
+                </div>
+                <div class="replies-list" style="margin-left: 12px; margin-top: 6px; border-left: 2px solid #e4e6eb; padding-left: 8px;" id="replies-list-${c.id}"></div>
+                <form class="reply-form" id="reply-form-${c.id}" style="display: none; margin-top: 6px; margin-left: 12px;" onsubmit="addReply(event, ${postId}, ${c.id})">
+                    <div style="display: flex; gap: 6px;">
+                        <input type="text" name="content" placeholder="{{ t('type_reply') }}" required style="flex: 1; padding: 6px 10px; font-size: 12px; border-radius: 12px; border: 1px solid #ccd0d5; outline: none; background: #ffffff;">
+                        <button type="submit" style="padding: 6px 12px; font-size: 11px; background: #1EB53A; color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer;">Tuma</button>
+                    </div>
+                </form></div>
+            `;
+            list.appendChild(newDiv);
+            list.scrollTop = list.scrollHeight;
+            form.reset();
+            showToast((window.FEED_I18N&&FEED_I18N.comment_added)||'OK', 'success');
+        }
+    });
+}
+
+function addReply(event, postId, parentId) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    formData.append('parent_id', parentId);
+    fetch(`/comment/${postId}`, { method: 'POST', body: formData })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const repliesList = document.getElementById(`replies-list-${parentId}`);
+            const c = data.comment || {};
+            const name = c.display_name || c.full_name || c.username || 'User';
+            const uname = c.username || '';
+            const isLu = !!c.is_linkup_comment;
+            const profileUrl = c.profile_url || (isLu ? ('/linkup/' + uname) : ('/profile/' + uname));
+            let pic = c.profile_pic || '';
+            if (pic && pic.indexOf('http') !== 0 && pic.indexOf('/') !== 0) {
+                pic = '/static/uploads/' + pic;
+            }
+            if (!pic) {
+                pic = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name) + '&background=random&color=fff&size=72&bold=true';
+            }
+            const verified = Number(c.is_verified) === 1;
+            const badgeFill = isLu ? '#F5B800' : '#8A2BE2';
+            const badgeSvg = verified
+                ? '<svg class="verified-badge-custom small" viewBox="0 0 24 24" style="width:12px;height:12px;vertical-align:middle;"><path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="' + badgeFill + '"/><path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#FFFFFF"/></svg>'
+                : '';
+            const luTag = isLu ? '<span style="font-size:9px;background:#f0fdf4;color:#1EB53A;padding:0 5px;border-radius:6px;font-weight:700;margin-left:3px;">Linkup</span>' : '';
+            const safeUname = String(uname).replace(/'/g, "\\'");
+            const newDiv = document.createElement('div');
+            newDiv.className = "reply-item";
+            newDiv.id = `comment-${c.id}`;
+            newDiv.style.cssText = "font-size: 12px; background: #f0f2f5; padding: 6px 8px; border-radius: 6px; margin-bottom: 4px; display:flex; gap:8px; align-items:flex-start;";
+            newDiv.innerHTML = `
+                <a href="${profileUrl}" style="flex-shrink:0;"><img src="${pic}" alt="" style="width:28px;height:28px;border-radius:50%;object-fit:cover;background:#e4e6eb;" onerror="this.src='https://ui-avatars.com/api/?name=U&background=random&color=fff&size=56'"></a>
+                <div style="flex:1;min-width:0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <strong style="display:inline-flex;align-items:center;gap:3px;flex-wrap:wrap;"><a href="${profileUrl}" style="text-decoration: none; color: inherit;">${name}</a>${badgeSvg}${luTag}:</strong>
+                        <span style="font-size: 10px; color: #65676b;">Sasa hivi</span>
+                    </div>
+                    <p id="comment-text-${c.id}" style="margin: 3px 0; color: #050505;">${c.content || ''}</p>
+                    <div style="font-size: 11px; margin-top: 2px; display:flex; gap:10px;">
+                        <button onclick="replyToUser(${parentId}, '${safeUname}')" style="background:none; border:none; cursor:pointer; color:#1EB53A; font-weight: 600;">Reply</button>
+                        <button onclick="editComment(${c.id})" style="background:none; border:none; cursor:pointer; color:#65676b;">Edit</button>
+                        <button onclick="deleteComment(${c.id})" style="background:none; border:none; cursor:pointer; color:#dc3545;">Futa</button>
+                    </div>
+                </div>
+            `;
+            if (repliesList) repliesList.appendChild(newDiv);
+            form.reset();
+            form.style.display = 'none';
+            if (typeof showToast === 'function') showToast('Jibu limeongezwa', 'success');
+        }
+    })
+    .catch(function(){});
+}
+
+// ===== YOUTUBE-STYLE VIDEO PLAYER (WITH AUTOHIDE & SINGLE PLAY) =====
+/** Pause every <video> except optional target (feed, reels, status, previews). */
+function pauseAllVideosExcept(targetVideo) {
+    document.querySelectorAll('video').forEach(function(v) {
+        if (v === targetVideo) return;
+        if (!v.paused) {
+            try { v.pause(); } catch (e) {}
+        }
+        // Feed custom player UI
+        var player = v.closest('.custom-video-player');
+        if (player) {
+            player.classList.remove('playing');
+            var pId = player.id.replace('player-', '');
+            var playIcon = document.getElementById('play-icon-' + pId);
+            if (playIcon) playIcon.className = 'fa-solid fa-play';
+        }
+    });
+}
+
+/** Pause feed + reels only (keep status video playing). */
+function pauseFeedAndReelsVideos() {
+    document.querySelectorAll('.custom-video-player video, .reel-video').forEach(function(v) {
+        if (!v.paused) {
+            try { v.pause(); } catch (e) {}
+        }
+        var player = v.closest('.custom-video-player');
+        if (player) {
+            player.classList.remove('playing');
+            var pId = player.id.replace('player-', '');
+            var playIcon = document.getElementById('play-icon-' + pId);
+            if (playIcon) playIcon.className = 'fa-solid fa-play';
+        }
+    });
+}
+
+function togglePlay(postId) {
+    const player = document.getElementById(`player-${postId}`);
+    if (!player) return;
+    const video = player.querySelector('video');
+    const playIcon = document.getElementById(`play-icon-${postId}`);
+
+    if (video.paused) {
+        // Close status if open — only one media source at a time
+        var sv = document.getElementById('statusViewer');
+        if (sv && sv.classList.contains('show') && typeof closeStatusViewer === 'function') {
+            closeStatusViewer();
+        }
+        pauseAllVideosExcept(video);
+        video.play().catch(() => {});
+        player.classList.add('playing');
+        if (playIcon) playIcon.className = 'fa-solid fa-pause';
+        resetControlsTimeout(player);
+    } else {
+        video.pause();
+        player.classList.remove('playing');
+        if (playIcon) playIcon.className = 'fa-solid fa-play';
+        player.classList.remove('hide-controls');
+    }
+}
+
+function toggleMute(postId) {
+    const video = document.querySelector(`#player-${postId} video`);
+    const icon = document.getElementById(`mute-icon-${postId}`);
+    video.muted = !video.muted;
+    icon.className = video.muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
+}
+
+function setVolume(e, postId) {
+    const video = document.querySelector(`#player-${postId} video`);
+    const slider = e.currentTarget;
+    const rect = slider.getBoundingClientRect();
+    const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    video.volume = percent;
+    video.muted = percent === 0;
+    const filledBar = document.getElementById(`volume-filled-${postId}`);
+    if (filledBar) filledBar.style.width = (percent * 100) + '%';
+    const icon = document.getElementById(`mute-icon-${postId}`);
+    if (icon) icon.className = video.muted || percent === 0 ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
+}
+
+function toggleFullscreen(postId) {
+    const player = document.getElementById(`player-${postId}`);
+    if (!document.fullscreenElement) {
+        player.requestFullscreen().catch(err => console.log(err));
+    } else {
+        document.exitFullscreen();
+    }
+}
+
+let seeking = false;
+function startSeek(e, postId) {
+    e.preventDefault();
+    seeking = true;
+    const container = e.currentTarget;
+    container.classList.add('dragging');
+    seekVideo(e, postId);
+
+    const moveHandler = (ev) => seekVideo(ev, postId);
+    const upHandler = () => {
+        seeking = false;
+        container.classList.remove('dragging');
+        document.removeEventListener('mousemove', moveHandler);
+        document.removeEventListener('mouseup', upHandler);
+        document.removeEventListener('touchmove', moveHandler);
+        document.removeEventListener('touchend', upHandler);
+    };
+    document.addEventListener('mousemove', moveHandler);
+    document.addEventListener('mouseup', upHandler);
+    document.addEventListener('touchmove', moveHandler);
+    document.addEventListener('touchend', upHandler);
+}
+
+function seekVideo(e, postId) {
+    const video = document.querySelector(`#player-${postId} video`);
+    const progressContainer = document.querySelector(`#player-${postId} .progress-container`);
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const rect = progressContainer.getBoundingClientRect();
+    const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    if (video.duration) {
+        video.currentTime = percent * video.duration;
+    }
+}
+
+function formatTime(seconds) {
+    if (isNaN(seconds)) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+}
+
+// Controls Autohide Timer (3 Seconds)
+const playerTimers = new Map();
+
+function resetControlsTimeout(player) {
+    const video = player.querySelector('video');
+    player.classList.remove('hide-controls');
+
+    if (playerTimers.has(player)) {
+        clearTimeout(playerTimers.get(player));
+    }
+
+    if (video && !video.paused) {
+        const timer = setTimeout(() => {
+            player.classList.add('hide-controls');
+        }, 3000); // Kujificha baada ya sekunde 3
+        playerTimers.set(player, timer);
+    }
+}
+
+// ===== REELS / TIKTOK MODE =====
+let reelsVideos = [];
+let currentReelIndex = 0;
+let currentReelPostId = null;
+
+function collectVideos() {
+    reelsVideos = [];
+    document.querySelectorAll('.custom-video-player video').forEach(video => {
+        const player = video.closest('.custom-video-player');
+        if (!player) return;
+        const postId = player.dataset.postId;
+        reelsVideos.push({
+            id: postId,
+            src: video.src,
+            currentTime: video.currentTime || 0,
+            username: video.dataset.username,
+            content: video.dataset.content,
+            profile: video.dataset.profile,
+            likes: parseInt(video.dataset.likes) || 0,
+            comments: parseInt(video.dataset.comments) || 0,
+            shares: parseInt(video.dataset.shares) || 0,
+            saved: parseInt(video.dataset.saved) || 0,
+            userLiked: parseInt(video.dataset.userLiked) || 0,
+            isFollowing: parseInt(video.dataset.isFollowing) || 0,
+            verified: parseInt(video.dataset.verified) || 0
+        });
+    });
+}
+
+
+/* ===== VIDEO DETAIL ARENA ===== */
+var _vdaPostId = null;
+var _vdaData = null;
+var _vdaDefaultAvatar = "{{ url_for('static', filename='images/default-avatar.png.jfif') }}";
+
+function openVideoDetail(postId) {
+    var card = document.getElementById('player-' + postId);
+    if (!card) return;
+    var _vdaWasOpen = false;
+    try {
+      var _ar0 = document.getElementById('video-detail-arena');
+      _vdaWasOpen = !!( _ar0 && _ar0.classList.contains('active') );
+    } catch(e){}
+
+    // Pause any playing feed thumbs
+    document.querySelectorAll('.feed-video-thumb').forEach(function(v) { try { v.pause(); } catch(e){} });
+
+    _vdaPostId = postId;
+    _vdaData = {
+        id: postId,
+        src: card.getAttribute('data-src') || '',
+        username: card.getAttribute('data-username') || '',
+        fullname: card.getAttribute('data-fullname') || card.getAttribute('data-username') || '',
+        content: card.getAttribute('data-content') || '',
+        profile: card.getAttribute('data-profile') || '',
+        likes: parseInt(card.getAttribute('data-likes') || '0', 10) || 0,
+        comments: parseInt(card.getAttribute('data-comments') || '0', 10) || 0,
+        shares: parseInt(card.getAttribute('data-shares') || '0', 10) || 0,
+        saved: parseInt(card.getAttribute('data-saved') || '0', 10) || 0,
+        userLiked: parseInt(card.getAttribute('data-user-liked') || '0', 10) || 0,
+        userSaved: parseInt(card.getAttribute('data-user-saved') || '0', 10) || 0,
+        isFollowing: parseInt(card.getAttribute('data-is-following') || '0', 10) || 0,
+        verified: parseInt(card.getAttribute('data-verified') || '0', 10) || 0,
+        created: card.getAttribute('data-created') || ''
+    };
+
+    var arena = document.getElementById('video-detail-arena');
+    var vid = document.getElementById('vda-video');
+    vid.src = _vdaData.src;
+    vid.play().catch(function(){});
+    // Hifadhi video offline (service worker cache)
+    try {
+      if (navigator.serviceWorker && navigator.serviceWorker.controller && _vdaData.src) {
+        navigator.serviceWorker.controller.postMessage({ type: 'CACHE_MEDIA', url: _vdaData.src });
+      }
+    } catch (e) {}
+    if (typeof updateVdaOfflineBtn === 'function') updateVdaOfflineBtn();
+
+    document.getElementById('vda-caption').textContent = _vdaData.content || '';
+    // See more on caption if long
+    setTimeout(function(){
+        var cap = document.getElementById('vda-caption');
+        if (cap && (_vdaData.content || '').length > 90 && typeof window.__wlpMakeExpandable === 'function') {
+            cap.dataset.wlpReady = '';
+            cap.classList.remove('wlp-expandable','wlp-stage-0','wlp-stage-1','wlp-stage-2');
+            var w = cap.parentNode && cap.parentNode.querySelector('.wlp-more-wrap');
+            if (w && w.previousSibling === cap) w.remove();
+            // only direct next sibling wrap
+            var next = cap.nextElementSibling;
+            if (next && next.classList && next.classList.contains('wlp-more-wrap')) next.remove();
+            window.__wlpMakeExpandable(cap);
+        }
+    }, 30);
+    var metaParts = [];
+    if (_vdaData.created) {
+        metaParts.push(typeof timeAgo === 'function' ? timeAgo(_vdaData.created) : String(_vdaData.created).slice(0, 16));
+    }
+    document.getElementById('vda-meta').textContent = metaParts.join(' · ');
+
+    var avUrl = avatarSrc(_vdaData.profile);
+    var av = document.getElementById('vda-avatar');
+    av.src = avUrl;
+    av.onerror = function(){ this.onerror=null; this.src=_vdaDefaultAvatar; };
+
+    var profileUrl = '/profile/' + encodeURIComponent(_vdaData.username);
+    document.getElementById('vda-profile-link').href = profileUrl;
+    var nameLink = document.getElementById('vda-username-link');
+    nameLink.href = profileUrl;
+    nameLink.innerHTML = '';
+    nameLink.textContent = _vdaData.username ? ('@' + _vdaData.username) : '@user';
+    // Verified badge
+    var oldBadge = document.getElementById('vda-verified-badge');
+    if (oldBadge) oldBadge.remove();
+    if (_vdaData.verified == 1 || _vdaData.verified === '1') {
+        var badge = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        badge.setAttribute('id', 'vda-verified-badge');
+        badge.setAttribute('class', 'verified-badge-custom small verified-badge-inline');
+        badge.setAttribute('viewBox', '0 0 24 24');
+        badge.innerHTML = '<path d="M12 0L15.3 3.5L20.1 2.3L20.5 7.3L24 10.4L21.7 14.8L22.9 19.6L18 20.8L15.7 25.2L12 23L8.3 25.2L6 20.8L1.1 19.6L2.3 14.8L0 10.4L3.5 7.3L3.9 2.3L8.7 3.5L12 0Z" fill="#8A2BE2"/><path d="M9.8 15.6L6.2 12L4.8 13.4L9.8 18.4L20 8.2L18.6 6.8L9.8 15.6Z" fill="#FFFFFF"/>';
+        nameLink.parentNode.insertBefore(badge, nameLink.nextSibling);
+    }
+
+    var followBtn = document.getElementById('vda-follow-btn');
+    var myName = (window.CURRENT_USERNAME || '').toLowerCase();
+    var isSelf = myName && (_vdaData.username || '').toLowerCase() === myName;
+    if (followBtn) {
+        if (isSelf) {
+            followBtn.style.display = 'none';
+        } else {
+            followBtn.style.display = '';
+            if (_vdaData.isFollowing) {
+                followBtn.textContent = 'Following';
+                followBtn.classList.add('following');
+            } else {
+                followBtn.textContent = 'Follow';
+                followBtn.classList.remove('following');
+            }
+        }
+    }
+
+    var follEl = document.getElementById('vda-followers');
+    if (follEl) {
+        var fc = card.getAttribute('data-followers') || '';
+        follEl.textContent = fc !== '' ? (fc + ' followers') : '';
+    }
+    var viewsEl = document.getElementById('vda-views');
+    if (viewsEl) {
+        var vc = parseInt(card.getAttribute('data-views') || '0', 10) || 0;
+        viewsEl.innerHTML = '<i class="fa-solid fa-eye" style="margin-right:4px;"></i>' + vc + ' viewers';
+    }
+    try {
+        fetch('/kijiji/view/' + postId, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            body: JSON.stringify({ watch_seconds: 0 })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data && typeof data.views_count === 'number') {
+                card.setAttribute('data-views', String(data.views_count));
+                if (viewsEl) {
+                    viewsEl.innerHTML = '<i class="fa-solid fa-eye" style="margin-right:4px;"></i>' + data.views_count + ' viewers';
+                }
+            }
+        })
+        .catch(function(){});
+    } catch (e) {}
+
+    document.getElementById('vda-likes').textContent = _vdaData.likes;
+    var likeBtn = document.getElementById('vda-like-btn');
+    if (_vdaData.userLiked) likeBtn.classList.add('liked'); else likeBtn.classList.remove('liked');
+
+    var saveBtn = document.getElementById('vda-save-btn');
+    saveBtn.innerHTML = _vdaData.userSaved
+        ? '<i class="fa-solid fa-bookmark"></i> Saved'
+        : '<i class="fa-regular fa-bookmark"></i> Save';
+
+    document.getElementById('vda-comments-title').textContent = 'Comments ' + _vdaData.comments;
+    vdaLoadComments(postId);
+    vdaBuildUpNext(postId);
+
+    // Auto-play next video when current ends
+    vid.onended = function() {
+        try {
+            var cards = Array.prototype.slice.call(document.querySelectorAll('.feed-video-card[data-post-id]'));
+            var ids = cards.map(function(c) { return parseInt(c.getAttribute('data-post-id'), 10); });
+            var idx = ids.indexOf(postId);
+            if (idx >= 0 && idx < ids.length - 1) {
+                openVideoDetail(ids[idx + 1]);
+            }
+        } catch (e) {}
+    };
+
+    arena.classList.add('active');
+    arena.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    if (typeof setOverlayMode === 'function') setOverlayMode(true);
+    if (!_vdaWasOpen && typeof kijijiPushOverlay === 'function') kijijiPushOverlay('video');
+}
+
+function __closeVideoDetailUI() {
+    var arena = document.getElementById('video-detail-arena');
+    var vid = document.getElementById('vda-video');
+    if (vid) { vid.pause(); vid.removeAttribute('src'); vid.load(); }
+
+    // Rudisha comments section kwenye feed IKIWA IMEEFICHWA
+    if (window._vdaMovedSection) {
+        restoreFeedCommentsSection(window._vdaMovedSection, window._vdaMovedPlaceholder);
+        window._vdaMovedSection = null;
+        window._vdaMovedPlaceholder = null;
+    }
+    if (window._imgMovedSection) {
+        restoreFeedCommentsSection(window._imgMovedSection, window._imgMovedPlaceholder);
+        window._imgMovedSection = null;
+        window._imgMovedPlaceholder = null;
+    }
+
+    if (arena) {
+        arena.classList.remove('active');
+        arena.setAttribute('aria-hidden', 'true');
+    }
+    document.body.style.overflow = '';
+    if (typeof setOverlayMode === 'function') setOverlayMode(false);
+    _vdaPostId = null;
+    _vdaData = null;
+}
+
+function closeVideoDetail(fromHistory) {
+    if (typeof __closeVideoDetailUI === 'function') __closeVideoDetailUI();
+    if (!fromHistory && !window.__kijijiHistoryLock) {
+      kijijiPopOverlayName('video');
+      try {
+        if (history.state && history.state.kijijiOverlay === 'video') history.back();
+      } catch (e) {}
+    }
+}
+
+
+function vdaLike() {
+    if (!_vdaPostId) return;
+    fetch('/like/' + _vdaPostId, { method: 'POST' })
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+        if (!data.success && data.likes_count === undefined) return;
+        var count = data.likes_count !== undefined ? data.likes_count : data.count;
+        document.getElementById('vda-likes').textContent = count;
+        var btn = document.getElementById('vda-like-btn');
+        var liked = data.liked || data.status === 'liked';
+        if (liked) btn.classList.add('liked'); else btn.classList.remove('liked');
+        var card = document.getElementById('player-' + _vdaPostId);
+        if (card) {
+            card.setAttribute('data-likes', count);
+            card.setAttribute('data-user-liked', liked ? '1' : '0');
+        }
+        var feedCount = document.getElementById('likes-count-' + _vdaPostId);
+        if (feedCount) feedCount.textContent = count + ' Likes';
+    }).catch(function(){});
+}
+
+function vdaSave() {
+    if (!_vdaPostId) return;
+    fetch('/save_post/' + _vdaPostId, { method: 'POST' })
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+        if (!data.success && data.saved === undefined) return;
+        var saved = !!data.saved;
+        var btn = document.getElementById('vda-save-btn');
+        btn.innerHTML = saved
+            ? '<i class="fa-solid fa-bookmark"></i> Saved'
+            : '<i class="fa-regular fa-bookmark"></i> Save';
+        var card = document.getElementById('player-' + _vdaPostId);
+        if (card) card.setAttribute('data-user-saved', saved ? '1' : '0');
+        if (typeof showToast === 'function') {
+            showToast(saved ? ((window.FEED_I18N&&FEED_I18N.post_saved)||'Saved') : ((window.FEED_I18N&&FEED_I18N.post_unsaved)||'Removed'), 'success');
+        }
+    }).catch(function(){});
+}
+
+function vdaShare() {
+    if (!_vdaPostId) return;
+    fetch('/share_post/' + _vdaPostId, { method: 'POST' }).catch(function(){});
+    var text = (_vdaData && _vdaData.content) || '';
+    var url = window.location.origin + '/home';
+    if (navigator.share) {
+        navigator.share({ title: 'Kijiji Tanzania', text: text, url: url }).catch(function(){});
+    } else {
+        try { navigator.clipboard.writeText(url); } catch(e){}
+        if (typeof showToast === 'function') showToast((window.FEED_I18N&&FEED_I18N.link_copied)||'Copied', 'success');
+    }
+}
+
+/* ===== OFFLINE VIDEO LIBRARY (full download) ===== */
+var OFFLINE_CACHE_NAME = 'jamii-offline-videos';
+var OFFLINE_INDEX_KEY = 'kijiji_offline_videos';
+
+function getOfflineIndex() {
+    try { return JSON.parse(localStorage.getItem(OFFLINE_INDEX_KEY) || '[]'); }
+    catch (e) { return []; }
+}
+function setOfflineIndex(list) {
+    try { localStorage.setItem(OFFLINE_INDEX_KEY, JSON.stringify(list || [])); } catch (e) {}
+}
+function isVideoOffline(src) {
+    if (!src) return false;
+    return getOfflineIndex().some(function (x) { return x.src === src; });
+}
+function updateVdaOfflineBtn() {
+    var btn = document.getElementById('vda-download-btn');
+    if (!btn) return;
+    if (_vdaData && isVideoOffline(_vdaData.src)) {
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Imehifadhiwa';
+        btn.style.opacity = '0.9';
+    } else {
+        btn.innerHTML = '<i class="fa-solid fa-download"></i> Offline';
+        btn.style.opacity = '1';
+    }
+}
+
+function formatBytes(n) {
+    n = Number(n) || 0;
+    if (n < 1024) return n + ' B';
+    if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
+    return (n / 1048576).toFixed(1) + ' MB';
+}
+
+function showOvProgress(show, pct, text) {
+    var w = document.getElementById('ovProgressWrap');
+    var bar = document.getElementById('ovProgressBar');
+    var t = document.getElementById('ovProgressText');
+    if (!w) return;
+    if (show) w.classList.add('show'); else w.classList.remove('show');
+    if (bar) bar.style.width = (pct || 0) + '%';
+    if (t && text) t.textContent = text;
+}
+
+async function vdaDownload() {
+    if (!_vdaData || !_vdaData.src) return;
+    var src = _vdaData.src;
+    var btn = document.getElementById('vda-download-btn');
+
+    // Tayari ipo → fungua orodha
+    if (isVideoOffline(src)) {
+        if (typeof showToast === 'function') showToast('Video tayari ipo offline', 'success');
+        openOfflineVideos();
+        return;
+    }
+
+    if (!navigator.onLine) {
+        if (typeof showToast === 'function') showToast('Unahitaji mtandao kupakua video kamili', 'error');
+        return;
+    }
+
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Inapakua...'; }
+    showOvProgress(true, 5, 'Inaanza kupakua...');
+
+    try {
+        var res = await fetch(src, { credentials: 'same-origin' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+
+        var total = parseInt(res.headers.get('content-length') || '0', 10) || 0;
+        var reader = res.body && res.body.getReader ? res.body.getReader() : null;
+        var chunks = [];
+        var received = 0;
+
+        if (reader) {
+            while (true) {
+                var step = await reader.read();
+                if (step.done) break;
+                chunks.push(step.value);
+                received += step.value.length;
+                var pct = total ? Math.min(99, Math.round((received / total) * 100)) : Math.min(90, 10 + chunks.length);
+                showOvProgress(true, pct, 'Inapakua... ' + pct + '%' + (total ? ' (' + formatBytes(received) + ')' : ''));
+                if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ' + pct + '%';
+            }
+        } else {
+            var buf = await res.arrayBuffer();
+            chunks = [new Uint8Array(buf)];
+            received = buf.byteLength;
+            showOvProgress(true, 90, 'Inahifadhi...');
+        }
+
+        var blob = new Blob(chunks, { type: (res.headers.get('content-type') || 'video/mp4') });
+        showOvProgress(true, 95, 'Inahifadhi kwenye simu...');
+
+        var cache = await caches.open(OFFLINE_CACHE_NAME);
+        await cache.put(src, new Response(blob, {
+            status: 200,
+            headers: {
+                'Content-Type': blob.type || 'video/mp4',
+                'Content-Length': String(blob.size)
+            }
+        }));
+
+        // Also tell SW (optional)
+        try {
+            if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({ type: 'CACHE_MEDIA', url: src });
+            }
+        } catch (e) {}
+
+        var list = getOfflineIndex().filter(function (x) { return x.src !== src; });
+        list.unshift({
+            postId: _vdaPostId,
+            src: src,
+            username: _vdaData.username || '',
+            content: String(_vdaData.content || '').slice(0, 140),
+            profile: _vdaData.profile || '',
+            savedAt: Date.now(),
+            size: blob.size
+        });
+        setOfflineIndex(list);
+
+        showOvProgress(true, 100, 'Imekamilika ✓');
+        setTimeout(function () { showOvProgress(false, 0, ''); }, 1200);
+        if (typeof showToast === 'function') showToast('Video imehifadhiwa offline (' + formatBytes(blob.size) + ')', 'success');
+        updateVdaOfflineBtn();
+    } catch (err) {
+        console.error('offline download', err);
+        showOvProgress(false, 0, '');
+        if (typeof showToast === 'function') showToast('Imeshindikana kupakua. Jaribu tena.', 'error');
+        if (btn) btn.innerHTML = '<i class="fa-solid fa-download"></i> Offline';
+    } finally {
+        if (btn) btn.disabled = false;
+        updateVdaOfflineBtn();
+    }
+}
+
+
+function vdaFollow() {
+    if (!_vdaData || !_vdaData.username) return;
+    var btn = document.getElementById('vda-follow-btn');
+    if (!btn) return;
+    // already following — keep state (API /follow is follow-only)
+    if (btn.classList.contains('following') || _vdaData.isFollowing) {
+        if (typeof showToast === 'function') showToast('Unamfuata tayari', 'success');
+        return;
+    }
+    btn.disabled = true;
+    fetch('/follow/' + encodeURIComponent(_vdaData.username), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+        btn.disabled = false;
+        if (data.success) {
+            btn.classList.add('following');
+            btn.textContent = 'Following';
+            _vdaData.isFollowing = 1;
+            var card = document.getElementById('player-' + _vdaPostId);
+            if (card) card.setAttribute('data-is-following', '1');
+            if (typeof showToast === 'function') showToast(data.message || 'Umeshamfollow!', 'success');
+        } else {
+            if (typeof showToast === 'function') showToast(data.message || 'Imeshindikana', 'error');
+        }
+    })
+    .catch(function(){
+        btn.disabled = false;
+        if (typeof showToast === 'function') showToast('Error', 'error');
+    });
+}
+
+function vdaToggleComments() {
+    var panel = document.getElementById('vda-comments-panel');
+    var chev = document.getElementById('vda-comments-chevron');
+    if (!panel) return;
+    if (panel.style.display === 'none') {
+        panel.style.display = '';
+        if (chev) chev.style.transform = '';
+    } else {
+        panel.style.display = 'none';
+        if (chev) chev.style.transform = 'rotate(-90deg)';
+    }
+}
+
+function vdaLoadComments(postId) {
+    var host = document.getElementById('vda-feed-comments');
+    if (!host) return;
+
+    // Rudisha section yoyote iliyohamishwa awali (hidden)
+    if (window._vdaMovedSection) {
+        restoreFeedCommentsSection(window._vdaMovedSection, window._vdaMovedPlaceholder);
+        window._vdaMovedSection = null;
+        window._vdaMovedPlaceholder = null;
+    }
+    if (window._imgMovedSection) {
+        restoreFeedCommentsSection(window._imgMovedSection, window._imgMovedPlaceholder);
+        window._imgMovedSection = null;
+        window._imgMovedPlaceholder = null;
+    }
+
+    host.innerHTML = '';
+    var section = document.getElementById('comments-section-' + postId);
+    if (!section) {
+        host.innerHTML = '<div class="vda-comment-empty"><i class="fa-regular fa-user"></i> No comments yet. Be the first to comment!</div>';
+        return;
+    }
+
+    // MOVE (si clone) — power kamili ya feed (reply, edit, delete, see more)
+    var placeholder = document.createElement('div');
+    placeholder.id = 'vda-placeholder-' + postId;
+    placeholder.style.display = 'none';
+    section.parentNode.insertBefore(placeholder, section);
+    host.appendChild(section);
+    section.classList.add('active');
+    section.style.display = 'block';
+
+    window._vdaMovedSection = section;
+    window._vdaMovedPlaceholder = placeholder;
+
+    setTimeout(function() {
+        function forceOneLineSeeMore(el) {
+            if (!el) return;
+            var t = (el.textContent || '').replace(/\s+/g,' ').trim();
+            if (t.length < 40) return;
+            // strip old
+            el.dataset.wlpReady = '';
+            el.classList.remove('wlp-expandable','wlp-stage-0','wlp-stage-1','wlp-stage-2');
+            var n = el.nextElementSibling;
+            if (n && n.classList && n.classList.contains('wlp-more-wrap')) n.remove();
+            if (typeof window.__wlpMakeExpandable === 'function') {
+                window.__wlpMakeExpandable(el, true);
+            }
+            // ensure stage 0
+            el.classList.add('wlp-expandable','wlp-stage-0');
+            el.dataset.wlpStage = '0';
+            el.style.display = '-webkit-box';
+            el.style.webkitBoxOrient = 'vertical';
+            el.style.webkitLineClamp = '1';
+            el.style.overflow = 'hidden';
+        }
+        host.querySelectorAll('.comment-item > p, .comment-item p, .reply-item p').forEach(forceOneLineSeeMore);
+        forceOneLineSeeMore(document.getElementById('vda-caption'));
+    }, 100);
+}
+
+function vdaPostComment(e) {
+    // unused — form ya feed inatumia addComment
+    if (e) e.preventDefault();
+}
+
+function vdaBuildUpNext(currentId) {
+    var box = document.getElementById('vda-upnext');
+    if (!box) return;
+    box.innerHTML = '';
+    var cards = document.querySelectorAll('.feed-video-card');
+    var count = 0;
+    cards.forEach(function(card){
+        var id = card.getAttribute('data-post-id');
+        if (String(id) === String(currentId)) return;
+        if (count >= 8) return;
+        count++;
+        var src = card.getAttribute('data-src') || '';
+        var user = card.getAttribute('data-username') || '';
+        var content = card.getAttribute('data-content') || '';
+        var item = document.createElement('div');
+        item.className = 'vda-upnext-item';
+        item.onclick = function(){ openVideoDetail(id); };
+        item.innerHTML = '<video src="'+src+'" muted preload="metadata"></video><div class="vda-upnext-meta"><strong></strong><span></span></div>';
+        item.querySelector('strong').textContent = content || ('Video @' + user);
+        item.querySelector('span').textContent = user ? ('@' + user) : '';
+        box.appendChild(item);
+    });
+    if (count === 0) {
+        box.innerHTML = '<div style="color:#666;font-size:13px;padding:8px 0;">Hakuna video nyingine</div>';
+    }
+}
+
+document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') {
+        var arena = document.getElementById('video-detail-arena');
+        if (arena && arena.classList.contains('active')) closeVideoDetail();
+    }
+});
+
+// Override openReels → openVideoDetail (reels haipo tena)
+function openReels(startPostId) {
+    openVideoDetail(startPostId);
+}
+function closeReels() {
+    closeVideoDetail();
+}
+
+
+function openReels_DISABLED_USE_DETAIL(startPostId) {
+    document.querySelectorAll('.custom-video-player video').forEach(v => v.pause());
+    // Close/pause status if open so reels is alone
+    var sv = document.getElementById('statusViewer');
+    if (sv && sv.classList.contains('show') && typeof closeStatusViewer === 'function') {
+        closeStatusViewer();
+    }
+    if (typeof pauseAllVideosExcept === 'function') pauseAllVideosExcept(null);
+
+    const sourceVideo = document.querySelector(`#player-${startPostId} video`);
+    const currentPos = sourceVideo ? sourceVideo.currentTime : 0;
+
+    collectVideos();
+    if (reelsVideos.length === 0) return;
+
+    const startIndex = reelsVideos.findIndex(v => String(v.id) === String(startPostId));
+    currentReelIndex = startIndex >= 0 ? startIndex : 0;
+    currentReelPostId = reelsVideos[currentReelIndex].id;
+
+    if (reelsVideos[currentReelIndex]) {
+        reelsVideos[currentReelIndex].currentTime = currentPos;
+    }
+
+    const container = document.getElementById('reels-container');
+    container.innerHTML = '';
+
+    reelsVideos.forEach((vid, idx) => {
+        const slide = document.createElement('div');
+        slide.className = 'reel-slide';
+        slide.dataset.index = idx;
+        slide.dataset.postId = vid.id;
+
+        const defaultAvatar = "{{ url_for('static', filename='images/default-avatar.png.jfif') }}";
+        const profileSrc = avatarSrc(vid.profile);
+
+        slide.innerHTML = `
+            <div class="reel-progress"><div class="reel-progress-filled" id="reel-progress-${idx}"></div></div>
+            <video class="reel-video" src="${vid.src}" playsinline loop preload="metadata" data-start-time="${vid.currentTime}"></video>
+
+            <div class="reel-side-actions">
+                <div class="reel-action">
+                    <img src="${profileSrc}" class="reel-profile" onerror="this.src='${defaultAvatar}'" onclick="window.open('/profile/${vid.username}', '_blank')">
+                </div>
+                <div class="reel-action" onclick="reelLike(${vid.id}, this)">
+                    <button class="reel-action-btn ${vid.userLiked > 0 ? 'liked' : ''}">
+                        <i class="fa-solid fa-heart"></i>
+                    </button>
+                    <span id="reel-likes-${vid.id}">${vid.likes}</span>
+                </div>
+                <div class="reel-action" onclick="openReelsComments(${vid.id})">
+                    <button class="reel-action-btn"><i class="fa-solid fa-comment"></i></button>
+                    <span id="reel-comments-count-${vid.id}">${vid.comments}</span>
+                </div>
+                <div class="reel-action" onclick="reelShare(${vid.id}, '${(vid.content || '').replace(/'/g, "\\'")}')">
+                    <button class="reel-action-btn"><i class="fa-solid fa-share"></i></button>
+                    <span id="reel-shares-${vid.id}">${vid.shares}</span>
+                </div>
+                <div class="reel-action" onclick="reelSave(${vid.id}, this)">
+                    <button class="reel-action-btn"><i class="fa-regular fa-bookmark"></i></button>
+                    <span id="reel-saved-${vid.id}">${vid.saved}</span>
+                </div>
+            </div>
+
+            <div class="reel-bottom-info">
+                <div class="reel-username">
+                    <img src="${profileSrc}" class="reel-bottom-avatar" onerror="this.src='${defaultAvatar}'" onclick="window.location.href='/profile/${vid.username}'">
+                    <a href="/profile/${vid.username}">@${vid.username}</a>
+                    ${vid.verified == 1 ? '<i class="fa-solid fa-circle-check" style="color:#8A2BE2;font-size:14px;"></i>' : ''}
+                    ${vid.isFollowing == 0 ? `<button class="reel-follow-btn" onclick="followUser('${vid.username}', this)">Follow</button>` : ''}
+                </div>
+                <div class="reel-caption">${vid.content || ''}</div>
+            </div>
+        `;
+        container.appendChild(slide);
+
+        const videoEl = slide.querySelector('.reel-video');
+        videoEl.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (this.paused) {
+                this.play();
+            } else {
+                this.pause();
+            }
+        });
+    });
+
+    document.getElementById('reels-viewer').classList.add('active');
+    document.body.style.overflow = 'hidden';
+    setOverlayMode(true);
+    setTimeout(function() {
+        document.querySelectorAll('#reels-container .reel-caption').forEach(bindOverlaySeeMore);
+    }, 50);
+
+    const target = container.children[currentReelIndex];
+    if (target) {
+        target.scrollIntoView({ behavior: 'instant', block: 'start' });
+    }
+
+    playCurrentReel();
+
+    setTimeout(() => {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const video = entry.target.querySelector('video');
+                const idx = parseInt(entry.target.dataset.index);
+                if (entry.isIntersecting && entry.intersectionRatio > 0.7) {
+                    currentReelIndex = idx;
+                    currentReelPostId = entry.target.dataset.postId;
+                    playCurrentReel();
+                } else {
+                    video.pause();
+                }
+            });
+        }, { threshold: 0.7 });
+
+        container.querySelectorAll('.reel-slide').forEach(slide => observer.observe(slide));
+    }, 100);
+}
+
+function playCurrentReel() {
+    const slides = document.querySelectorAll('.reel-slide');
+    slides.forEach((slide, i) => {
+        const video = slide.querySelector('video');
+        if (i === currentReelIndex) {
+            pauseAllVideosExcept(video);
+            if (video.dataset.startTime !== undefined) {
+                const st = parseFloat(video.dataset.startTime);
+                if (!isNaN(st) && st > 0) {
+                    video.currentTime = st;
+                }
+                delete video.dataset.startTime;
+            }
+            video.play().catch(() => {});
+            video.muted = false;
+            video.ontimeupdate = () => {
+                if (video.duration) {
+                    const pct = (video.currentTime / video.duration) * 100;
+                    const bar = document.getElementById(`reel-progress-${i}`);
+                    if (bar) bar.style.width = pct + '%';
+                }
+            };
+        } else {
+            video.pause();
+        }
+    });
+}
+
+
+function closeReels() {
+    const activeSlide = document.querySelectorAll('.reel-slide')[currentReelIndex];
+    if (activeSlide) {
+        const reelVid = activeSlide.querySelector('video');
+        if (reelVid && currentReelPostId) {
+            const feedVid = document.querySelector(`#player-${currentReelPostId} video`);
+            if (feedVid) {
+                feedVid.currentTime = reelVid.currentTime;
+            }
+        }
+    }
+
+    document.getElementById('reels-viewer').classList.remove('active');
+    document.body.style.overflow = '';
+    setOverlayMode(false);
+    closeReelsComments();
+    document.querySelectorAll('.reel-video').forEach(v => {
+        v.pause();
+        v.src = '';
+    });
+    document.getElementById('reels-container').innerHTML = '';
+}
+
+function reelLike(postId, el) {
+    fetch(`/like/${postId}`, { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const btn = el.querySelector('.reel-action-btn');
+            const count = document.getElementById(`reel-likes-${postId}`);
+            count.textContent = data.likes_count;
+            if (data.liked) {
+                btn.classList.add('liked');
+            } else {
+                btn.classList.remove('liked');
+            }
+            const feedCount = document.getElementById(`likes-count-${postId}`);
+            if (feedCount) feedCount.textContent = `${data.likes_count} Likes`;
+            const feedBtn = document.getElementById(`like-btn-${postId}`);
+            if (feedBtn) {
+                data.liked ? feedBtn.classList.add('liked') : feedBtn.classList.remove('liked');
+            }
+        }
+    });
+}
+
+function reelShare(postId, text) {
+    fetch(`/share_post/${postId}`, { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const shareCount = document.getElementById(`reel-shares-${postId}`);
+            if (shareCount) shareCount.textContent = data.shares_count;
+            const feedCount = document.getElementById(`share-count-text-${postId}`);
+            if (feedCount) feedCount.textContent = data.shares_count;
+        }
+    });
+
+    if (navigator.share) {
+        navigator.share({ title: 'Kijiji Tanzania', text: text, url: window.location.href }).catch(() => {});
+    } else {
+        navigator.clipboard.writeText(window.location.href);
+        showToast((window.FEED_I18N&&FEED_I18N.link_copied)||'Copied', 'success');
+    }
+}
+
+function reelSave(postId, el) {
+    fetch(`/save_post/${postId}`, { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById(`reel-saved-${postId}`).textContent = data.saved_count;
+            const feedCount = document.getElementById(`saved-count-text-${postId}`);
+            if (feedCount) feedCount.textContent = data.saved_count;
+            showToast(data.saved ? ((window.FEED_I18N&&FEED_I18N.post_saved)||'Saved') : ((window.FEED_I18N&&FEED_I18N.post_unsaved)||'Removed'), 'success');
+        }
+    });
+}
+
+// ===== COMMENT NDANI YA REELS ENHANCED (DOTI TATU KWENYE COMMENTS) =====
+let currentReelReplyParentId = null;
+let currentReelReplyUsername = null;
+
+function toggleReelCommentMenu(commentId, e) {
+    e.stopPropagation();
+    document.querySelectorAll('.reels-comment-dropdown').forEach(d => {
+        if (d.id !== `reels-c-menu-${commentId}`) d.style.display = 'none';
+    });
+    const menu = document.getElementById(`reels-c-menu-${commentId}`);
+    if (menu) menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+}
+
+function openReelsComments(postId) {
+    currentReelPostId = postId;
+    currentReelReplyParentId = null;
+    currentReelReplyUsername = null;
+    cancelReelReply();
+
+    const panel = document.getElementById('reels-comment-panel');
+    const list = document.getElementById('reels-comments-list');
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:#65676b;">Inapakia maoni...</div>';
+
+    const feedComments = document.getElementById(`comments-list-${postId}`);
+    if (feedComments) {
+        list.innerHTML = '';
+        const items = feedComments.querySelectorAll(':scope > .comment-item');
+        if (items.length === 0) {
+            list.innerHTML = '<div style="text-align:center;padding:30px;color:#65676b;">Hakuna maoni bado. Kuwa wa kwanza!</div>';
+        } else {
+            items.forEach(item => {
+                const clone = item.cloneNode(true);
+                clone.querySelectorAll('[data-wlp-ready], .wlp-expandable').forEach(function(el) {
+                    el.dataset.wlpReady = '';
+                    el.dataset.seeMoreBound = '';
+                    el.classList.remove('wlp-expandable','wlp-stage-0','wlp-stage-1','wlp-stage-2');
+                });
+                clone.querySelectorAll('.wlp-more-wrap, .wlp-more-btn').forEach(function(el) { el.remove(); });
+                list.appendChild(clone);
+            });
+        }
+        setTimeout(function() {
+            list.querySelectorAll('.comment-item p, .reply-item p').forEach(function(el) {
+                if ((el.textContent || '').trim().length > 90 && typeof window.__wlpMakeExpandable === 'function') {
+                    window.__wlpMakeExpandable(el);
+                }
+            });
+        }, 30);
+    } else {
+        list.innerHTML = '<div style="text-align:center;padding:30px;color:#65676b;">Hakuna maoni bado. Kuwa wa kwanza!</div>';
+    }
+
+    document.getElementById('reels-comment-title').textContent = `Comments`;
+    panel.classList.add('active');
+}
+
+function closeReelsComments() {
+    document.getElementById('reels-comment-panel').classList.remove('active');
+    cancelReelReply();
+}
+
+function startReelReply(parentId, username) {
+    currentReelReplyParentId = parentId;
+    currentReelReplyUsername = username;
+    const bar = document.getElementById('reels-replying-to');
+    document.getElementById('reels-replying-text').textContent = `Replying to @${username}`;
+    bar.classList.add('active');
+    const input = document.getElementById('reels-comment-input');
+    input.placeholder = `Jibu @${username}...`;
+    input.focus();
+}
+
+function cancelReelReply() {
+    currentReelReplyParentId = null;
+    currentReelReplyUsername = null;
+    const bar = document.getElementById('reels-replying-to');
+    if (bar) bar.classList.remove('active');
+    const input = document.getElementById('reels-comment-input');
+    if (input) {
+        input.placeholder = 'Andika maoni...';
+        input.value = '';
+    }
+}
+
+function addReelComment(event) {
+    event.preventDefault();
+    const input = document.getElementById('reels-comment-input');
+    const content = input.value.trim();
+    if (!content || !currentReelPostId) return;
+
+    const formData = new FormData();
+    formData.append('content', content);
+    if (currentReelReplyParentId) {
+        formData.append('parent_id', currentReelReplyParentId);
+    }
+
+    fetch(`/comment/${currentReelPostId}`, { method: 'POST', body: formData })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const list = document.getElementById('reels-comments-list');
+            if (list && list.querySelector('div[style*="Hakuna"]')) list.innerHTML = '';
+
+            if (currentReelReplyParentId) {
+                // Reply: append feed-style reply to both feed and overlay
+                const replyHtml = `
+                    <div class="reply-item" style="font-size: 12px; background: #f0f2f5; padding: 6px 8px; border-radius: 6px; margin-bottom: 4px;" id="comment-${data.comment.id}">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong style="display: inline-flex; align-items: center;">
+                                <a href="/profile/${data.comment.username}" style="text-decoration: none; color: inherit;">${data.comment.username}</a>:
+                            </strong>
+                            <span style="font-size: 10px; color: #65676b;">Sasa hivi</span>
+                        </div>
+                        <p id="comment-text-${data.comment.id}" style="margin: 3px 0; color: #050505;">${data.comment.content}</p>
+                        <div style="font-size: 11px; margin-top: 2px; display:flex; gap:10px;">
+                            <button onclick="replyToUser(${currentReelReplyParentId}, '${data.comment.username}')" style="background:none; border:none; cursor:pointer; color:#1EB53A; font-weight: 600;">Reply</button>
+                            <button onclick="editComment(${data.comment.id})" style="background:none; border:none; cursor:pointer; color:#65676b;">Edit</button>
+                            <button onclick="deleteComment(${data.comment.id})" style="background:none; border:none; cursor:pointer; color:#dc3545;">Futa</button>
+                        </div>
+                    </div>
+                `;
+                const feedReplies = document.getElementById(`replies-list-${currentReelReplyParentId}`);
+                if (feedReplies) feedReplies.insertAdjacentHTML('beforeend', replyHtml);
+                const overlayParent = list ? list.querySelector(`#comment-${currentReelReplyParentId} .replies-list, #replies-list-${currentReelReplyParentId}`) : null;
+                if (overlayParent) {
+                    overlayParent.insertAdjacentHTML('beforeend', replyHtml);
+                } else if (list) {
+                    list.insertAdjacentHTML('beforeend', replyHtml);
+                }
+            } else {
+                const html = buildFeedStyleCommentHtml(currentReelPostId, data.comment);
+                const feedList = document.getElementById(`comments-list-${currentReelPostId}`);
+                if (feedList) feedList.insertAdjacentHTML('beforeend', html);
+                if (list) list.insertAdjacentHTML('beforeend', html);
+            }
+
+            if (list) list.scrollTop = list.scrollHeight;
+
+            const countEl = document.getElementById(`reel-comments-count-${currentReelPostId}`);
+            if (countEl) countEl.textContent = parseInt(countEl.textContent || 0) + 1;
+            const feedCount = document.getElementById(`comments-count-text-${currentReelPostId}`);
+            if (feedCount) feedCount.textContent = parseInt(feedCount.textContent || 0) + 1;
+            const imgCount = document.getElementById('img-full-comments');
+            if (imgCount && String(currentReelPostId) === String(currentImagePostId)) {
+                imgCount.textContent = parseInt(imgCount.textContent || 0) + 1;
+            }
+
+            input.value = '';
+            cancelReelReply();
+            showToast((window.FEED_I18N&&FEED_I18N.comment_added)||'OK', 'success');
+        }
+    })
+    .catch(() => showToast((window.FEED_I18N&&FEED_I18N.error_occurred)||'Error', 'error'));
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Escape') return;
+    var lb = document.getElementById('image-lightbox');
+    if (lb && lb.classList.contains('active')) closeImageLightbox();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.custom-video-player').forEach(player => {
+        const video = player.querySelector('video');
+        const postId = player.id.replace('player-', '');
+
+        const handleUserInteraction = () => {
+            resetControlsTimeout(player);
+        };
+
+        player.addEventListener('mousemove', handleUserInteraction);
+        player.addEventListener('touchstart', handleUserInteraction, { passive: true });
+        player.addEventListener('mouseleave', () => {
+            if (video && !video.paused) {
+                player.classList.add('hide-controls');
+            }
+        });
+
+        video.addEventListener('timeupdate', () => {
+            const progress = document.getElementById(`progress-${postId}`);
+            const timeDisplay = document.getElementById(`time-${postId}`);
+            if (video.duration) {
+                const percent = (video.currentTime / video.duration) * 100;
+                if (progress) progress.style.width = percent + '%';
+                if (timeDisplay) timeDisplay.textContent = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
+            }
+        });
+
+        video.addEventListener('ended', () => {
+            player.classList.remove('playing');
+            player.classList.remove('hide-controls');
+            const icon = document.getElementById(`play-icon-${postId}`);
+            if (icon) icon.className = 'fa-solid fa-play';
+        });
+
+        // Single click/tap on video = play/pause only (no seek / no double-tap like)
+        video.addEventListener('click', function(e) {
+            if (e.target !== video) return;
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof togglePlay === 'function') togglePlay(postId);
+        });
+
+    });
+});
+
+/* ===== FEED SCROLL AUTOPLAY ===== */
+document.addEventListener('DOMContentLoaded', () => {
+    const players = document.querySelectorAll('.custom-video-player');
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            const player = entry.target;
+            const video = player.querySelector('video');
+            if (!video) return;
+            const postId = player.id.replace('player-', '');
+            const playIcon = document.getElementById(`play-icon-${postId}`);
+
+            if (document.getElementById('reels-viewer').classList.contains('active')) return;
+            // Usicheze feed video wakati status viewer iko wazi
+            var sv = document.getElementById('statusViewer');
+            if (sv && sv.classList.contains('show')) return;
+
+            if (entry.isIntersecting && entry.intersectionRatio >= 0.70) {
+                pauseAllVideosExcept(video);
+                video.play().catch(() => {});
+                player.classList.add('playing');
+                if (playIcon) playIcon.className = 'fa-solid fa-pause';
+                resetControlsTimeout(player);
+            } else if (entry.intersectionRatio < 0.30) {
+                video.pause();
+                player.classList.remove('playing');
+                player.classList.remove('hide-controls');
+                if (playIcon) playIcon.className = 'fa-solid fa-play';
+            }
+        });
+    }, {
+        threshold: [0, 0.30, 0.70, 1]
+    });
+
+    players.forEach(player => observer.observe(player));
+});
+
+/* ===== SEE MORE – SAFI (1 → 15 → full) ===== */
+(function(){
+  // Inject CSS kijani — inashinda styles zote za zamani / cache
+  if (!document.getElementById('wlp-see-more-green')) {
+    var st = document.createElement('style');
+    st.id = 'wlp-see-more-green';
+    st.textContent = '.wlp-more-btn,button.wlp-more-btn{color:#1EB53A!important;background:transparent!important;border:none!important;font-weight:700!important;font-size:13px!important;padding:2px 0!important;cursor:pointer!important;box-shadow:none!important;}.wlp-more-btn:hover{color:#15803d!important;text-decoration:underline!important;}';
+    document.head.appendChild(st);
+  }
+  function cleanExpandable(el) {
+    if (!el) return;
+    el.dataset.wlpReady = '';
+    el.dataset.wlpStage = '';
+    el.classList.remove('wlp-expandable', 'wlp-stage-0', 'wlp-stage-1', 'wlp-stage-2');
+    // remove inline clamp styles that break stages
+    el.style.removeProperty('display');
+    el.style.removeProperty('-webkit-box-orient');
+    el.style.removeProperty('-webkit-line-clamp');
+    el.style.removeProperty('max-height');
+    el.style.removeProperty('overflow');
+    el.style.removeProperty('overflow-y');
+    var n = el.nextElementSibling;
+    while (n && (n.classList.contains('wlp-more-wrap') || n.classList.contains('wlp-more-btn'))) {
+      var rm = n;
+      n = n.nextElementSibling;
+      rm.remove();
+    }
+  }
+
+  function makeExpandable(el, force) {
+    if (!el) return;
+    if (el.dataset.wlpReady === '1' && !force) return;
+
+    cleanExpandable(el);
+
+    var raw = (el.textContent || '').replace(/\s+/g, ' ').trim();
+    if (!raw) return;
+
+    // Only if truly long (more than ~1 line)
+    var longByChars = raw.length > 50;
+    // force layout check
+    var needs = longByChars;
+    if (!needs) {
+      // temporary measure height
+      var prev = el.style.cssText;
+      el.style.display = 'block';
+      el.style.webkitLineClamp = 'unset';
+      el.style.maxHeight = 'none';
+      var fullH = el.scrollHeight;
+      var lh = parseFloat(getComputedStyle(el).lineHeight) || 20;
+      el.style.cssText = prev;
+      if (fullH > lh * 1.6) needs = true;
+    }
+    if (!needs) return;
+
+    el.dataset.wlpReady = '1';
+    el.dataset.wlpStage = '0';
+    el.classList.add('wlp-expandable', 'wlp-stage-0');
+    el.style.display = '-webkit-box';
+    el.style.webkitBoxOrient = 'vertical';
+    el.style.webkitLineClamp = '1';
+    el.style.overflow = 'hidden';
+    el.style.maxHeight = '1.45em';
+    el.style.whiteSpace = 'normal';
+
+    var wrap = document.createElement('div');
+    wrap.className = 'wlp-more-wrap';
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'wlp-more-btn';
+    btn.textContent = (window.FEED_I18N && FEED_I18N.see_more) || 'See more';
+    btn.setAttribute('aria-expanded', 'false');
+    // Rangi kijani — inline ili isishindwe na CSS nyingine / cache
+    btn.style.cssText = 'color:#1EB53A!important;background:transparent!important;border:none!important;font-weight:700!important;font-size:13px!important;padding:2px 0!important;cursor:pointer!important;display:inline-flex!important;align-items:center!important;box-shadow:none!important;';
+
+    function applyStage(stage) {
+      el.classList.remove('wlp-stage-0', 'wlp-stage-1', 'wlp-stage-2');
+      el.dataset.wlpStage = String(stage);
+      // Inline backup – WebView/Android sometimes ignores line-clamp CSS alone
+      if (stage === 0) {
+        el.classList.add('wlp-stage-0');
+        el.style.display = '-webkit-box';
+        el.style.webkitBoxOrient = 'vertical';
+        el.style.webkitLineClamp = '1';
+        el.style.overflow = 'hidden';
+        el.style.maxHeight = '1.45em';
+        el.style.whiteSpace = 'normal';
+        btn.textContent = (window.FEED_I18N && FEED_I18N.see_more) || 'See more';
+        btn.setAttribute('aria-expanded', 'false');
+        btn.style.color = '#1EB53A';
+      } else if (stage === 1) {
+        el.classList.add('wlp-stage-1');
+        el.style.display = '-webkit-box';
+        el.style.webkitBoxOrient = 'vertical';
+        el.style.webkitLineClamp = '15';
+        el.style.overflow = 'hidden';
+        el.style.maxHeight = 'none';
+        el.style.whiteSpace = 'normal';
+        btn.textContent = (window.FEED_I18N && FEED_I18N.see_more) || 'See more';
+        btn.setAttribute('aria-expanded', 'false');
+        btn.style.color = '#1EB53A';
+      } else {
+        el.classList.add('wlp-stage-2');
+        el.style.display = 'block';
+        el.style.webkitLineClamp = 'unset';
+        el.style.overflow = 'visible';
+        el.style.maxHeight = 'none';
+        el.style.whiteSpace = 'pre-wrap';
+        btn.textContent = (window.FEED_I18N && FEED_I18N.see_less) || 'See less';
+        btn.setAttribute('aria-expanded', 'true');
+        btn.style.color = '#1EB53A';
+      }
+    }
+
+    // Start at stage 0 (1 line)
+    applyStage(0);
+
+    var advance = function(e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      var stage = Number(el.dataset.wlpStage || 0);
+      if (stage === 0) applyStage(1);
+      else if (stage === 1) applyStage(2);
+      else applyStage(0);
+    };
+
+    btn.addEventListener('click', advance, { passive: false });
+    btn.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      advance(e);
+    }, { passive: false });
+
+    wrap.appendChild(btn);
+    el.insertAdjacentElement('afterend', wrap);
+  }
+
+  window.__wlpMakeExpandable = makeExpandable;
+  // Re-linkify hashtags after expand stages (innerHTML can wipe links)
+  var _origMake = makeExpandable;
+  window.__wlpMakeExpandable = function(el, force) {
+    _origMake(el, force);
+    setTimeout(function(){
+      if (typeof window.__kijijiLinkifyHashtags === 'function') window.__kijijiLinkifyHashtags();
+    }, 20);
+  };
+
+  window.__wlpCleanExpandable = cleanExpandable;
+
+  function scan() {
+    document.querySelectorAll('.post-content').forEach(function(el) {
+      makeExpandable(el);
+    });
+    document.querySelectorAll('.comment-item p, .reply-item p').forEach(function(el) {
+      var t = (el.textContent || '').trim();
+      if (t.length > 40) makeExpandable(el);
+    });
+    // captions in overlays if present
+    document.querySelectorAll('.img-full-caption, .vda-caption, .reel-caption').forEach(function(el) {
+      var t = (el.textContent || '').trim();
+      if (t.length > 50) makeExpandable(el);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    scan();
+    var observer = new MutationObserver(function() {
+      scan();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  });
+})();
+
+document.addEventListener("DOMContentLoaded", function() {
+  try {
+    var params = new URLSearchParams(window.location.search);
+    if (false && params.get("reels") === "1") {
+      var firstPlayer = document.querySelector(".custom-video-player");
+      if (firstPlayer && typeof openReels === "function") {
+        var postId = parseInt(firstPlayer.id.replace("player-", ""), 10);
+        if (postId) setTimeout(function(){ openReels(postId); }, 500);
+      }
+    }
+  } catch(e) {}
+});
+
+</script>
+
+<script type="application/json" id="pendingShareData">{{ pending_share|tojson if pending_share is defined and pending_share else 'null' }}</script>
+<script>
+(function applyPendingShare() {
+  function run() {
+    var el = document.getElementById('pendingShareData');
+    if (!el) return;
+    var data = null;
+    try { data = JSON.parse(el.textContent || 'null'); } catch (e) { return; }
+    if (!data) return;
+
+    var form = document.getElementById('createPostForm');
+    if (!form) return;
+
+    var ta = form.querySelector('textarea[name="content"]');
+    if (ta && data.content) {
+      ta.value = data.content;
+    }
+
+    var files = data.files || [];
+    if (files.length > 0 && files[0] && files[0].filename) {
+      var fname = files[0].filename;
+      var mtype = files[0].media_type || 'image';
+      var hidden = document.getElementById('shared_file');
+      if (hidden) hidden.value = fname;
+
+      var previewBox = document.getElementById('media-preview');
+      var previewContent = document.getElementById('media-preview-content');
+      if (previewBox && previewContent) {
+        previewContent.innerHTML = '';
+        var src = '/static/uploads/' + encodeURIComponent(fname);
+        if (mtype === 'video') {
+          var v = document.createElement('video');
+          v.src = src;
+          v.controls = true;
+          v.muted = true;
+          v.playsInline = true;
+          previewContent.appendChild(v);
+        } else {
+          var img = document.createElement('img');
+          img.src = src;
+          img.alt = 'Shared';
+          previewContent.appendChild(img);
+        }
+        previewBox.classList.add('show');
+      }
+
+      fetch(src).then(function(r) { return r.blob(); }).then(function(blob) {
+        try {
+          var file = new File([blob], fname, { type: blob.type || (mtype === 'video' ? 'video/mp4' : 'image/jpeg') });
+          if (typeof assignFileToForm === 'function') assignFileToForm(file);
+        } catch (e) {}
+      }).catch(function(){});
+    }
+
+    try {
+      form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (ta) ta.focus();
+    } catch (e) {}
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else {
+    run();
+  }
+})();
+</script>
+
+<script>
+
+/* ===== FEED VIDEO: tulia 2s → play + mute; touch → arena ===== */
+(function(){
+  var dwellTimers = new WeakMap();
+  var DWELL_MS = 2000;
+
+  function pauseAllFeedThumbs(except) {
+    document.querySelectorAll('.feed-video-card').forEach(function(card) {
+      var v = card.querySelector('video.feed-video-thumb');
+      if (!v || v === except) return;
+      try { v.pause(); } catch(e){}
+      card.classList.remove('is-playing');
+    });
+  }
+
+
+window.toggleFeedVideoPlay = function(postId) {
+  var card = document.querySelector('.feed-video-card[data-post-id="'+postId+'"]') || document.getElementById('player-'+postId);
+  if (!card) return;
+  var v = card.querySelector('video.feed-video-thumb');
+  if (!v) return;
+  var icon = card.querySelector('.feed-video-play i');
+  if (v.paused) {
+    document.querySelectorAll('.feed-video-card').forEach(function(c) {
+      if (c === card) return;
+      var ov = c.querySelector('video.feed-video-thumb');
+      if (ov) try { ov.pause(); } catch(e){}
+      c.classList.remove('is-playing');
+      var oi = c.querySelector('.feed-video-play i');
+      if (oi) oi.className = 'fa-solid fa-play';
+    });
+    v.play().then(function(){
+      card.classList.add('is-playing');
+      if (icon) icon.className = 'fa-solid fa-pause';
+    }).catch(function(){});
+  } else {
+    v.pause();
+    card.classList.remove('is-playing');
+    if (icon) icon.className = 'fa-solid fa-play';
+  }
+};
+window.toggleFeedVideoMute = function(btn, postId) {
+    var card = (btn && btn.closest) ? btn.closest('.feed-video-card') : null;
+    if (!card) card = document.querySelector('.feed-video-card[data-post-id="'+postId+'"]');
+    if (!card) return;
+    var v = card.querySelector('video.feed-video-thumb');
+    if (!v) return;
+    v.muted = !v.muted;
+    var icon = btn ? btn.querySelector('i') : card.querySelector('.feed-video-mute i');
+    if (icon) icon.className = v.muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
+  };
+
+  function startDwell(card) {
+    clearDwell(card);
+    var t = setTimeout(function() {
+      var arena = document.getElementById('video-detail-arena');
+      if (arena && arena.classList.contains('active')) return;
+      var sv = document.getElementById('statusViewer');
+      if (sv && sv.classList.contains('show')) return;
+      var v = card.querySelector('video.feed-video-thumb');
+      if (!v) return;
+      pauseAllFeedThumbs(v);
+      v.muted = true;
+      v.play().then(function(){
+        card.classList.add('is-playing');
+        var muteIcon = card.querySelector('.feed-video-mute i');
+        if (muteIcon) muteIcon.className = 'fa-solid fa-volume-xmark';
+        var playIcon = card.querySelector('.feed-video-play i');
+        if (playIcon) playIcon.className = 'fa-solid fa-pause';
+      }).catch(function(){});
+    }, DWELL_MS);
+    dwellTimers.set(card, t);
+  }
+
+  function clearDwell(card) {
+    var t = dwellTimers.get(card);
+    if (t) clearTimeout(t);
+    dwellTimers.delete(card);
+  }
+
+  function setup() {
+    var cards = document.querySelectorAll('.feed-video-card');
+    if (!cards.length) return;
+    var obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        var card = entry.target;
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.55) {
+          startDwell(card);
+        } else {
+          clearDwell(card);
+          var v = card.querySelector('video.feed-video-thumb');
+          if (v) { try { v.pause(); } catch(e){} }
+          card.classList.remove('is-playing');
+          var pi = card.querySelector('.feed-video-play i');
+          if (pi) pi.className = 'fa-solid fa-play';
+        }
+      });
+    }, { threshold: [0, 0.55, 0.8] });
+    cards.forEach(function(c){ obs.observe(c); });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setup);
+  else setup();
+})();
+
+window.FEED_I18N = {
+  likes: {{ t('likes')|tojson }},
+  like: {{ t('like')|tojson }},
+  comments: {{ t('comments')|tojson }},
+  comment: {{ t('comment')|tojson }},
+  share: {{ t('share')|tojson }},
+  save_post: {{ t('save_post')|tojson }},
+  saved: {{ t('saved')|tojson }},
+  reply: {{ t('reply')|tojson }},
+  edit: {{ t('edit')|tojson }},
+  delete: {{ t('delete')|tojson }},
+  see_more: {{ t('see_more')|tojson }},
+  see_less: {{ t('see_less')|tojson }},
+  type_comment: {{ t('type_comment')|tojson }},
+  type_reply: {{ t('type_reply')|tojson }},
+  just_now: {{ t('just_now')|tojson }},
+  no_comments: {{ t('no_comments')|tojson }},
+  loading_comments: {{ t('loading_comments')|tojson }},
+  comment_added: {{ t('comment_added')|tojson }},
+  post_saved: {{ t('post_saved')|tojson }},
+  post_unsaved: {{ t('post_unsaved')|tojson }},
+  link_copied: {{ t('link_copied')|tojson }},
+  error_occurred: {{ t('error_occurred')|tojson }},
+  follow: {{ t('follow')|tojson }},
+  following: {{ t('following')|tojson }},
+  unfollow: {{ t('unfollow')|tojson }}
+};
+</script>
+
+
+<script>
+/* ===== HASHTAG LINKIFY ===== */
+(function() {
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+  function linkifyHashtagsInElement(el) {
+    if (!el) return;
+    if (el.querySelector && el.querySelector('a.hashtag-link')) return;
+    var raw = el.textContent || '';
+    if (!raw || raw.indexOf('#') === -1) return;
+    var html = escapeHtml(raw).replace(
+      /#([A-Za-z0-9_\u00C0-\u024F\u0400-\u04FF]{1,60})/g,
+      function(match, tag) {
+        return '<a class="hashtag-link" href="/hashtag/' + encodeURIComponent(tag) + '">#' + tag + '</a>';
+      }
+    );
+    if (html.indexOf('hashtag-link') !== -1) {
+      el.innerHTML = html;
+    }
+  }
+  function scanHashtags() {
+    document.querySelectorAll('.post-content').forEach(linkifyHashtagsInElement);
+    document.querySelectorAll('.img-full-caption, .vda-caption, .reel-caption, .post-content-text').forEach(linkifyHashtagsInElement);
+  }
+  window.__kijijiLinkifyHashtags = scanHashtags;
+  function boot() {
+    scanHashtags();
+    setTimeout(scanHashtags, 200);
+    setTimeout(scanHashtags, 800);
+    setTimeout(scanHashtags, 2000);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+  try {
+    var obs = new MutationObserver(function() {
+      clearTimeout(window.__htScanT);
+      window.__htScanT = setTimeout(scanHashtags, 150);
+    });
+    obs.observe(document.body, { childList: true, subtree: true });
+  } catch (e) {}
+})();
+</script>
+
+
+{% if identity_is_linkup and identity_url %}
+<script>
+/* Linkup mode: bottom/top nav profile links → Linkup page */
+(function () {
+  var linkupUrl = {{ identity_url|tojson }};
+  var myUser = {{ (identity_username or session.get('username') or '')|tojson }};
+  function isOwnProfileHref(href) {
+    if (!href) return false;
+    try {
+      var path = href.split('?')[0];
+      var m = path.match(/\/profile\/([^\/#]+)/);
+      if (!m) return false;
+      var u = decodeURIComponent(m[1]);
+      return !myUser || u.toLowerCase() === String(myUser).toLowerCase();
+    } catch (e) { return false; }
+  }
+  document.querySelectorAll('a[href*="/profile/"]').forEach(function (a) {
+    if (!isOwnProfileHref(a.getAttribute('href'))) return;
+    // nav / header only — si majina ya watu kwenye posts
+    var inNav = a.closest('.bottom-nav, .bottom-bar, nav, .navbar, .top-nav, .app-header, header, .site-header, .tab-bar');
+    if (!inNav) return;
+    a.setAttribute('href', linkupUrl);
+    var icon = a.querySelector('i.fa-user, i.fa-solid.fa-user, i.fa-regular.fa-user');
+    if (icon) {
+      icon.className = 'fa-solid fa-link';
+    }
+    a.setAttribute('title', {{ (identity_name or 'Linkup')|tojson }});
+  });
+})();
+</script>
+{% endif %}
+

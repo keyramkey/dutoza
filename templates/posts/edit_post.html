@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .edit-container { max-width: 500px; margin: 40px auto; background: #ffffff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .edit-container h3 { margin-bottom: 20px; color: #1c1e21; }
+    textarea { width: 100%; height: 150px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; resize: vertical; margin-bottom: 15px; outline: none; }
+    textarea:focus { border-color: #1EB53A; }
+    .btn-save { background: #1EB53A; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; width: 100%; font-size: 16px; }
+    .btn-save:hover { background: #189c32; }
+    .btn-cancel { display: block; text-align: center; margin-top: 15px; color: #65676b; text-decoration: none; font-size: 14px; }
+</style>
+
+<div class="edit-container">
+    <h3>Hariri Post Yako</h3>
+    <form action="/edit_post/{{ post.id }}" method="POST">
+        <textarea name="content" required>{{ post.content }}</textarea>
+        <button type="submit" class="btn-save">Hifadhi Mabadiliko</button>
+    </form>
+    <a href="{{ url_for('home') }}" class="btn-cancel">Ghairi</a>
+</div>
+{% endblock %}

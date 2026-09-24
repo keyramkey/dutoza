@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Kijiji Tanzania</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background-color: #f0f2f5; padding-bottom: 50px; }
+        header { background: #1EB53A; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        header h1 { font-size: 18px; display: flex; align-items: center; gap: 10px; }
+        header a { color: white; text-decoration: none; font-size: 14px; background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 6px; }
+        .hamburger-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 18px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .hamburger-btn:hover { background: rgba(255, 255, 255, 0.35); }
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.5);
+            z-index: 2500;
+        }
+        .sidebar-overlay.active { display: block; }
+        .admin-sidebar {
+            position: fixed;
+            top: 0; left: -290px;
+            width: 280px; height: 100vh;
+            background: #fff;
+            z-index: 3000;
+            transition: left 0.3s ease;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+        }
+        .admin-sidebar.active { left: 0; }
+        .sidebar-header {
+            padding: 18px 20px;
+            background: #1EB53A;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sidebar-header h2 { font-size: 17px; display: flex; align-items: center; gap: 8px; }
+        .close-sidebar-btn { background: none; border: none; color: white; font-size: 20px; cursor: pointer; }
+        .sidebar-menu { padding: 15px 10px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border: 1px solid #e1e8ed;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            text-align: left;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        .menu-item:hover {
+            background: #eef5ff;
+            border-color: #1EB53A;
+            transform: translateX(4px);
+        }
+        .menu-item i { font-size: 16px; width: 20px; text-align: center; }
+        .menu-badge {
+            margin-left: auto;
+            background: #dc3545;
+            color: #fff;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        .container { max-width: 900px; margin: 20px auto; padding: 0 10px; }
+        .flash-msg { background: #e7f3ff; color: #1EB53A; padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center; font-size: 14px; border: 1px solid #b6d4fe; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center; cursor: pointer; transition: transform 0.15s; }
+        .stat-card:hover { transform: translateY(-2px); }
+        .stat-card h3 { font-size: 28px; color: #1EB53A; margin-bottom: 5px; }
+        .stat-card p { color: #65676b; font-size: 13px; font-weight: bold; }
+        .search-box { background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .search-box input { width: 100%; padding: 10px 15px; border: 1px solid #ccd0d5; border-radius: 8px; font-size: 14px; outline: none; }
+        .search-box input:focus { border-color: #1EB53A; }
+        #searchResults { margin-top: 12px; display: none; }
+        .search-result-item { padding: 10px; border-bottom: 1px solid #eee; font-size: 13px; }
+        .search-result-item strong { color: #1EB53A; }
+    </style>
+</head>
+<body>
+<header>
+    <div style="display: flex; align-items: center; gap: 12px;">
+        <button class="hamburger-btn" onclick="toggleSidebar()" title="Fungua Menyu">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+        <h1><i class="fa-solid fa-shield-halved"></i> Admin Control</h1>
+    </div>
+    <a href="/"><i class="fa-solid fa-house"></i> Feed</a>
+</header>
+
+<div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+<div id="adminSidebar" class="admin-sidebar">
+    <div class="sidebar-header">
+        <h2><i class="fa-solid fa-sliders"></i> Menyu ya Admin</h2>
+        <button class="close-sidebar-btn" onclick="toggleSidebar()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="sidebar-menu">
+        <a class="menu-item" href="{{ url_for('admin_messages') }}">
+            <i class="fa-solid fa-envelope" style="color: #1EB53A;"></i> Ujumbe wa Watumiaji
+        </a>
+        <a class="menu-item" href="{{ url_for('admin_badges') }}">
+            <i class="fa-solid fa-certificate" style="color: #00A3DD;"></i> Maombi ya Badge
+            {% if pending_badge_requests %}
+            <span class="menu-badge">{{ pending_badge_requests|length }}</span>
+            {% endif %}
+        </a>
+        <a class="menu-item" href="{{ url_for('admin_deletion') }}">
+            <i class="fa-solid fa-user-slash" style="color: #e74c3c;"></i> Maombi ya Kufuta Akaunti
+            {% if deletion_requests %}
+            <span class="menu-badge">{{ deletion_requests|length }}</span>
+            {% endif %}
+        </a>
+        <a class="menu-item" href="{{ url_for('admin_broadcast_page') }}">
+            <i class="fa-solid fa-bullhorn" style="color: #e67e22;"></i> Tuma Taarifa (Broadcast)
+        </a>
+
+        <a class="menu-item" href="{{ url_for('admin_users') }}">
+            <i class="fa-solid fa-user-gear" style="color: #2ecc71;"></i> Simamia Watumiaji
+        </a>
+        <a class="menu-item" href="{{ url_for('admin_posts') }}">
+            <i class="fa-solid fa-newspaper" style="color: #e74c3c;"></i> Simamia Machapisho
+        </a>
+        <a class="menu-item" href="{{ url_for('admin_reports') }}">
+            <i class="fa-solid fa-flag" style="color: #dc3545;"></i> Ripoti za Posts
+            {% if reports_count %}
+            <span class="menu-badge">{{ reports_count }}</span>
+            {% endif %}
+        </a>
+        <a class="menu-item" href="{{ url_for('admin_moderation', status='pending') }}">
+            <i class="fa-solid fa-shield-halved" style="color: #8e44ad;"></i> NSFW Moderation
+            {% if moderation_pending_count %}
+            <span class="menu-badge" style="background:#8e44ad;">{{ moderation_pending_count }}</span>
+            {% endif %}
+        </a>
+        <a class="menu-item" href="/admin/linkups">
+            <i class="fa-solid fa-link" style="color: #F5B800;"></i> Linkups
+        </a>
+
+    </div>
+</div>
+
+<div class="container">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="flash-msg">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="stats-grid">
+        <div class="stat-card" onclick="location.href='{{ url_for('admin_users') }}'">
+            <h3>{{ users_count }}</h3>
+            <p><i class="fa-solid fa-users"></i> Jumla ya Watumiaji</p>
+        </div>
+        <div class="stat-card" onclick="location.href='{{ url_for('admin_badges') }}'">
+            <h3>{{ pending_badge_requests|length if pending_badge_requests else 0 }}</h3>
+            <p><i class="fa-solid fa-certificate" style="color:#00A3DD;"></i> Maombi ya Badge</p>
+        </div>
+        <div class="stat-card" onclick="location.href='{{ url_for('admin_posts') }}'">
+            <h3>{{ posts_count }}</h3>
+            <p><i class="fa-solid fa-newspaper"></i> Jumla ya Machapisho</p>
+        </div>
+        <div class="stat-card" onclick="location.href='{{ url_for('admin_moderation', status='pending') }}'">
+            <h3 style="color:#8e44ad;">{{ moderation_pending_count or 0 }}</h3>
+            <p><i class="fa-solid fa-shield-halved" style="color:#8e44ad;"></i> NSFW Pending</p>
+        </div>
+    </div>
+
+    <div class="search-box">
+        <input type="text" id="liveSearchInput" placeholder="Tafuta mtumiaji au post yoyote..." onkeyup="performLiveSearch()">
+        <div id="searchResults"></div>
+    </div>
+</div>
+
+<script>
+    function toggleSidebar() {
+        document.getElementById('adminSidebar').classList.toggle('active');
+        document.getElementById('sidebarOverlay').classList.toggle('active');
+    }
+
+    let searchTimeout = null;
+    function performLiveSearch() {
+        clearTimeout(searchTimeout);
+        const query = document.getElementById('liveSearchInput').value.trim();
+        const resultsBox = document.getElementById('searchResults');
+
+        if (query.length < 2) {
+            resultsBox.style.display = 'none';
+            resultsBox.innerHTML = '';
+            return;
+        }
+
+        searchTimeout = setTimeout(() => {
+            fetch(`/admin/search_live?q=${encodeURIComponent(query)}`)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) {
+                    resultsBox.innerHTML = '<p style="color:#777;font-size:13px;">Hakuna matokeo</p>';
+                    resultsBox.style.display = 'block';
+                    return;
+                }
+                let html = '';
+                if (data.users && data.users.length) {
+                    html += '<p style="font-size:12px;color:#65676b;margin:8px 0 4px;"><strong>Watumiaji</strong></p>';
+                    data.users.forEach(u => {
+                        html += `<div class="search-result-item">
+                            <strong>@${u.username}</strong> · ${u.email || ''}
+                            ${u.is_verified ? ' ✓' : ''} ${u.is_blocked ? ' (Blocked)' : ''}
+                        </div>`;
+                    });
+                }
+                if (data.posts && data.posts.length) {
+                    html += '<p style="font-size:12px;color:#65676b;margin:8px 0 4px;"><strong>Posts</strong></p>';
+                    data.posts.forEach(p => {
+                        html += `<div class="search-result-item">
+                            <strong>@${p.username}</strong>: ${(p.content || '').substring(0, 60)}...
+                        </div>`;
+                    });
+                }
+                if (!html) html = '<p style="color:#777;font-size:13px;">Hakuna matokeo</p>';
+                resultsBox.innerHTML = html;
+                resultsBox.style.display = 'block';
+            })
+            .catch(() => {
+                resultsBox.innerHTML = '<p style="color:#c00;font-size:13px;">Hitilafu ya mtandao</p>';
+                resultsBox.style.display = 'block';
+            });
+        }, 300);
+    }
+</script>
+</body>
+</html>

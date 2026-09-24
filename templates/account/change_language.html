@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="{{ current_language or 'sw' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{ t('change_language', 'Badilisha lugha') }} - Kijiji Tanzania</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background: #f0f2f5; color: #050505; min-height: 100vh; padding-bottom: 40px; }
+        .header {
+            background: #fff;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border-bottom: 3px solid #FCD116;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header a {
+            color: #1EB53A;
+            font-size: 20px;
+            text-decoration: none;
+            width: 36px; height: 36px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%;
+            background: #f0f2f5;
+        }
+        .header h1 { font-size: 18px; color: #1EB53A; font-weight: 700; }
+        .wrap { max-width: 520px; margin: 0 auto; padding: 16px 12px; }
+        .intro {
+            background: #fff;
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border-left: 4px solid #1EB53A;
+        }
+        .intro p { color: #65676b; font-size: 14px; line-height: 1.45; }
+        .intro strong { color: #050505; }
+        .lang-list { display: flex; flex-direction: column; gap: 10px; }
+        .lang-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            width: 100%;
+            padding: 14px 16px;
+            background: #fff;
+            border: 2px solid #e4e6eb;
+            border-radius: 14px;
+            cursor: pointer;
+            text-align: left;
+            font: inherit;
+            color: inherit;
+            transition: 0.15s ease;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+        .lang-item:hover {
+            border-color: #1EB53A;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(30,181,58,0.12);
+        }
+        .lang-item.active {
+            border-color: #1EB53A;
+            background: linear-gradient(145deg, #f3fff5, #ffffff);
+            box-shadow: 0 0 0 3px rgba(30,181,58,0.15);
+        }
+        .lang-flag { font-size: 28px; line-height: 1; flex-shrink: 0; }
+        .lang-info { flex: 1; min-width: 0; }
+        .lang-info strong { display: block; font-size: 15px; font-weight: 700; }
+        .lang-info small { color: #65676b; font-size: 12px; }
+        .lang-check {
+            width: 26px; height: 26px;
+            border-radius: 50%;
+            border: 2px solid #ccd0d5;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+        .lang-item.active .lang-check {
+            background: #1EB53A;
+            border-color: #1EB53A;
+        }
+        .flash {
+            background: #e7f6ec;
+            color: #0d7c3a;
+            padding: 12px 14px;
+            border-radius: 10px;
+            margin-bottom: 14px;
+            font-size: 14px;
+            font-weight: 600;
+            border: 1px solid #b7e4c7;
+        }
+        .hint {
+            margin-top: 18px;
+            text-align: center;
+            color: #65676b;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="{{ url_for('settings') if session.get('user_id') else url_for('login') }}" aria-label="Back">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
+        <h1>{{ t('change_language', 'Badilisha lugha') }}</h1>
+    </div>
+
+    <div class="wrap">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for m in messages %}
+                <div class="flash">{{ m }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="intro">
+            <p>
+                <strong>{{ t('select_language', 'Chagua lugha unayopendelea') }}</strong><br>
+                {{ t('current', 'Ya sasa') }}:
+                {{ languages[current_language].flag }} {{ languages[current_language].name }}
+            </p>
+        </div>
+
+        <form method="POST" action="{{ url_for('change_language') }}" id="langForm">
+            <input type="hidden" name="language" id="languageInput" value="{{ current_language }}">
+            <div class="lang-list">
+                {% for code, lang in languages.items() %}
+                <button type="button"
+                        class="lang-item {% if code == current_language %}active{% endif %}"
+                        data-code="{{ code }}"
+                        onclick="pickLanguage('{{ code }}')">
+                    <span class="lang-flag">{{ lang.flag }}</span>
+                    <span class="lang-info">
+                        <strong>{{ lang.name }}</strong>
+                        <small>{{ code|upper }}</small>
+                    </span>
+                    <span class="lang-check">
+                        {% if code == current_language %}<i class="fa-solid fa-check"></i>{% endif %}
+                    </span>
+                </button>
+                {% endfor %}
+            </div>
+        </form>
+
+        <p class="hint">Kijiji Tanzania · 12 languages</p>
+    </div>
+
+    <script>
+        function pickLanguage(code) {
+            document.getElementById('languageInput').value = code;
+            document.querySelectorAll('.lang-item').forEach(function(el) {
+                el.classList.toggle('active', el.getAttribute('data-code') === code);
+                var check = el.querySelector('.lang-check');
+                if (check) {
+                    check.innerHTML = (el.getAttribute('data-code') === code)
+                        ? '<i class="fa-solid fa-check"></i>'
+                        : '';
+                }
+            });
+            // Auto-submit on select
+            document.getElementById('langForm').submit();
+        }
+    </script>
+</body>
+</html>

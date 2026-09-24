@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.community-wrap{max-width:800px;margin:auto;padding:16px 14px 30px}
+.community-wrap a{color:#1EB53A;text-decoration:none;font-weight:600}
+h1{color:#1EB53A;margin:12px 0 8px;font-size:22px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+.tabs span{padding:10px 14px;background:#f1f5f2;border-radius:20px;font-size:13px;font-weight:600;color:#333}
+.info{background:#fff;border-radius:14px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-top:10px}
+.info p{color:#555;font-size:14px;line-height:1.5;margin:0}
+</style>
+<div class="community-wrap">
+    <a href="/community">← Community</a>
+    <h1>🌱 Agriculture & Business</h1>
+    <div class="tabs">
+        <span>Kilimo</span>
+        <span>Ufugaji</span>
+        <span>Business</span>
+        <span>All</span>
+    </div>
+    <div class="info">
+        <p>Wakulima, wafugaji na wafanyabiashara kukutana, kushare taarifa na kujadili fursa.</p>
+        <p style="margin-top:12px"><a href="/community/find-group">🔎 Tafuta / unda group →</a></p>
+    </div>
+</div>
+{% endblock %}
