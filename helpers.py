@@ -930,6 +930,11 @@ def suggest_usernames(conn, desired, limit=6, exclude_email=None):
 
 
 def send_otp_email(to_email, otp, purpose="register"):
+    # ===== OTP EMAIL DISABLED (temporary) — Render SMTP timeout =====
+    print(f"[OTP DISABLED] email={to_email} otp={otp} purpose={purpose}")
+    return True
+    # ===== END DISABLE — ondoa lines hapo juu ili kuwasha tena =====
+
     if purpose == "register":
         subject = "OTP yako ya Usajili - Thibitisha Akaunti"
         message = f"""
@@ -966,7 +971,7 @@ Asante.
     msg.attach(MIMEText(message, 'plain'))
 
     try:
-        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server = smtplib.SMTP('smtp.gmail.com', 587, timeout=10)
         server.starttls()
         server.login(GMAIL_ADDRESS, GMAIL_APP_PASSWORD)
         server.send_message(msg)
