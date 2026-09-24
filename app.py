@@ -49,7 +49,6 @@ from helpers import (
     resolve_active_linkup, set_active_linkup_id, get_active_linkup_id,
     enrich_posts_with_linkup, publish_due_scheduled_posts, muted_ids_for,
     notify_user, create_notification, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_CLAIMS,
-    # Re-export for admin.py / community.py (they do "from app import ...")
     now_tz, allowed_file, allowed_video, sanitize_username, generate_otp,
     send_otp_email, record_user_session, send_web_push, flag_post_for_admin,
     register_nsfw_violation, get_user_restriction_status, extract_hashtags,
@@ -62,16 +61,6 @@ from helpers import (
     suggest_usernames, GMAIL_ADDRESS, GMAIL_APP_PASSWORD,
 )
 
-
-# =============================================================================
-# COMPAT for admin.py + community.py  (they do: from app import ...)
-# Majina haya YANAPASWA kuwa kwenye module app — usifute block hii.
-# =============================================================================
-# From db:
-#   get_db_connection, BASE_DIR, UPLOAD_FOLDER, UPLOAD_BADGES_FOLDER, allowed_badge_file
-# From helpers:
-#   now_tz, login_required, register_nsfw_violation, create_notification
-# (tayari zimeimport hapo juu — hakikisha zipo)
 assert get_db_connection is not None
 assert now_tz is not None
 assert login_required is not None
@@ -82,7 +71,6 @@ assert BASE_DIR is not None
 assert allowed_badge_file is not None
 assert create_notification is not None
 
-# Auth / route modules
 from auth import register_auth_routes
 from posts import register_posts_routes
 from profile import register_profile_routes
@@ -96,14 +84,12 @@ VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY", "BDLkkmrKM007eSEby3amhKG3o
 VAPID_CLAIMS = {"sub": "mailto:keyaramadhan0@gmail.com"}
 
 app = Flask(__name__)
-app.secret_key = 'siri_yangu_ya_mradi_huu_123'
+app.secret_key = os.environ.get('SECRET_KEY', 'siri_yangu_ya_mradi_huu_123_badilisha')
 
-# ========== PERMANENT SESSION (kama TikTok) ==========
 app.permanent_session_lifetime = timedelta(days=90)
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
-# ====================== BABEL CONFIG ======================
 app.config['BABEL_DEFAULT_LOCALE'] = 'sw'
 app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
 
@@ -112,10 +98,9 @@ def get_locale():
 
 babel = Babel(app, locale_selector=get_locale)
 
-# ========== GOOGLE / FACEBOOK ==========
-GOOGLE_CLIENT_ID = "1083614983079-k0oeie8lkao98r62m91dc0aqcgomhk15.apps.googleusercontent.com"
-FACEBOOK_APP_ID = "28132131163112538"
-FACEBOOK_APP_SECRET = "613688758b4443fc4adb0b3429be4196"
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "1083614983079-k0oeie8lkao98r62m91dc0aqcgomhk15.apps.googleusercontent.com")
+FACEBOOK_APP_ID = os.environ.get("FACEBOOK_APP_ID", "28132131163112538")
+FACEBOOK_APP_SECRET = os.environ.get("FACEBOOK_APP_SECRET", "")
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['UPLOAD_BADGES_FOLDER'] = UPLOAD_BADGES_FOLDER
@@ -123,17 +108,15 @@ app.config['MAX_CONTENT_LENGTH'] = 24 * 1024 * 1024
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(UPLOAD_BADGES_FOLDER, exist_ok=True)
 
-# Init helpers with app + keys
 init_helpers(
     app,
     vapid_private=VAPID_PRIVATE_KEY,
     vapid_public=VAPID_PUBLIC_KEY,
     vapid_claims=VAPID_CLAIMS,
-    gmail_address="matondomaduhu135@gmail.com",
-    gmail_app_password="neftrxmcxidjourc",
+    gmail_address=os.environ.get("GMAIL_ADDRESS", "matondomaduhu135@gmail.com"),
+    gmail_app_password=os.environ.get("GMAIL_APP_PASSWORD", ""),
 )
 
-# Context processors & filters (must stay on real app)
 @app.context_processor
 def inject_language():
     language = session.get('language', 'sw')
@@ -248,7 +231,6 @@ def request_entity_too_large(error):
     flash('File ni kubwa sana. Picha na Video max 24MB.')
     return redirect(request.referrer or url_for('home'))
 
-# Register all modular routes
 register_auth_routes(app)
 register_posts_routes(app)
 register_profile_routes(app)
@@ -257,11 +239,9 @@ register_kijiji_routes(app)
 register_linkup_routes(app)
 register_account_routes(app)
 
-# Remaining API routes that were at the end of original
 @app.route('/api/feed')
 @login_required
 def api_feed():
-
     publish_due_scheduled_posts()
     user_id = session['user_id']
     cursor = request.args.get('cursor', 0, type=int)
@@ -321,8 +301,6 @@ def api_feed():
         'has_more': len(items) >= limit,
     })
 
-
-
 @app.route('/api/kijiji')
 @login_required
 def api_kijiji():
@@ -372,9 +350,6 @@ def api_kijiji():
         'has_more': len(items) >= limit,
     })
 
-
-
-# ===== COMMUNITY + ADMIN =====
 register_community_routes(app)
 register_admin_routes(app)
 
