@@ -778,7 +778,7 @@ def register_account_routes(app):
             "AND COALESCE(p.moderation_status, 'approved') = 'approved' "
             "AND (u.is_blocked = 0 OR u.is_blocked IS NULL) "
             "AND (u.is_deactivated = 0 OR u.is_deactivated IS NULL) "
-            "AND p.created_at >= datetime('now', '-7 days') "
+            "AND p.created_at >= NOW() - INTERVAL '7 days' "
             "ORDER BY likes_count DESC, comments_count DESC, p.id DESC LIMIT 40",
             (user_id,)
         ).fetchall()
@@ -1973,6 +1973,3 @@ def register_account_routes(app):
             active_linkup=active_lu,
             max_linkups=MAX_LINKUPS_PER_USER,
         )
-
-
-
